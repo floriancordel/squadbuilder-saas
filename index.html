@@ -122,7 +122,7 @@
   .tc-abs .cell-wrap::before{content:'';position:absolute;top:21px;height:3px;width:40px;background:var(--conn);border-radius:2px}
   .tc-side.left  .cell-wrap::before{left:100%}
   .tc-side.right .cell-wrap::before{right:100%}
-  .cell{width:236px;background:#fff;border:1px solid var(--border);border-top:3px solid var(--cellc);border-radius:12px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .cell{width:202px;background:#fff;border:1px solid var(--border);border-top:3px solid var(--cellc);border-radius:12px;box-shadow:var(--shadow);position:relative;overflow:hidden}
   .badge-sc{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--cellc);background:#e6faf5;border:1px solid #bfeae2;border-radius:20px;padding:1px 6px;flex:0 0 auto}
   .cell-head{display:flex;align-items:center;gap:7px;padding:8px 10px;background:#f0fdfa;border-bottom:1px solid #cfeae5;border-radius:11px 11px 0 0;cursor:pointer}
   .cell-head .cdot{width:8px;height:8px;border-radius:50%;background:var(--cellc);flex:0 0 auto}
@@ -131,7 +131,8 @@
   .cell.iscoll .cell-head{border-bottom:0;border-radius:11px}
   .bucket.iscoll .bucket-head{border-bottom:0;border-radius:14px}
   .foldbtn.sqfold,.foldbtn.cellfold{width:24px;height:24px;font-size:12px}
-  .cell-body{padding:9px;display:flex;flex-direction:column;gap:6px}
+  .cell-body{padding:9px;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .cell-body .add-mini{width:176px}
   .cres{position:relative;background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 8px 6px 11px;overflow:hidden;cursor:pointer;transition:.12s}
   .cres:hover{border-color:var(--line);box-shadow:var(--shadow)}
   .cres .accent{position:absolute;left:0;top:0;bottom:0;width:3px}
@@ -159,8 +160,8 @@
   /* ---------- Duo (cartes liées) ---------- */
   .duo{position:relative;display:flex;align-items:stretch;gap:26px}
   .duo::before{content:'';position:absolute;top:38px;left:24px;right:24px;height:2px;background:var(--line);z-index:0}
-  /* ---------- Cartes personnes UNIFIÉES (leads + membres) ---------- */
-  .card,.mini{position:relative;z-index:1;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow);padding:8px 11px 9px 14px;text-align:left;overflow:hidden;cursor:pointer;transition:.13s}
+  /* ---------- Cartes personnes UNIFIÉES : MÊME taille partout ---------- */
+  .card,.mini{position:relative;z-index:1;box-sizing:border-box;width:176px;min-height:60px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow);padding:9px 12px 10px 15px;text-align:left;overflow:hidden;cursor:pointer;transition:.13s}
   .card:hover,.mini:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);border-color:var(--line)}
   .card .accent,.mini .accent{position:absolute;left:0;top:0;bottom:0;width:3px}
   .card.produit .accent,.mini.produit .accent{background:var(--produit)}
@@ -185,9 +186,6 @@
   .badge.status{background:var(--open-bg);color:var(--open);border:1px solid var(--open-bd)}
   .badge.temp{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:700}
   .temp-date{font-size:9px;color:#92400e;margin-top:2px}
-  .leads-row .card{width:166px}
-  .node-direction .card{width:188px}
-  .node-direction .card .name{font-size:14px}
 
   /* ---------- Chips compacts cohérents (Hub/COE, TEMP, alloc) ---------- */
   .chip{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:20px;white-space:nowrap;line-height:1.5;display:inline-block}
@@ -211,11 +209,8 @@
   .leads-row{display:flex;gap:16px;justify-content:center;flex-wrap:nowrap;align-items:stretch}
   .add-lead{align-self:center;min-width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--line);border-radius:9px;color:var(--muted);font-size:16px;font-weight:700;cursor:pointer;background:#fcfdff;transition:.12s;padding:0 4px}
   .add-lead:hover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
-  .node-direction .leads-row{gap:16px;padding:14px 18px}
-  .tribe .node-head .leads-row .card{width:158px}
-  .bucket .leads-row{gap:11px;margin-bottom:12px}
-  .bucket .leads-row .card{width:135px}
-  .bucket .leads-row .card .name{font-size:12.5px}
+  .node-direction .leads-row{gap:10px;padding:14px 18px}
+  .bucket .leads-row{gap:10px;margin-bottom:12px}
   /* ---------- Header de bloc unifié (Direction / Tribu / Squad / Cell) ---------- */
   .blk-head{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer}
   .blk-head .blk-dot{width:8px;height:8px;border-radius:3px;margin-top:4px;flex:0 0 auto}
@@ -236,7 +231,8 @@
   .bucket.iscoll .blk-head{border-bottom:0;border-radius:0}
 
   /* ---------- Bucket Squad ---------- */
-  .bucket{background:#fff;border:1px solid var(--border);border-top:3px solid var(--squad);border-radius:14px;box-shadow:var(--shadow);width:328px;overflow:hidden}
+  .bucket{background:#fff;border:1px solid var(--border);border-top:3px solid var(--squad);border-radius:14px;box-shadow:var(--shadow);width:400px;overflow:hidden}
+  .bucket .leads-row{flex-wrap:wrap}
   .bucket-head{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;background:#eef2ff;border-bottom:1px solid #e0e4f5;cursor:pointer}
   .bucket-head .sq{width:8px;height:8px;border-radius:2px;background:var(--squad);margin-top:4px;flex:0 0 auto}
   .bucket.flying{border:1.5px dashed #c4b5fd;border-top:3px solid var(--dir)}
@@ -258,9 +254,7 @@
   .bucket .duo .card .role{font-size:9.5px}
   .rnd-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin:2px 0 8px;display:flex;align-items:center;gap:6px}
   .rnd-title::after{content:'';flex:1;height:1px;background:var(--border)}
-  .rnd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .mini .m-name{font-size:12.5px}
-  .cell-body .mini .m-name{font-size:12.5px}
+  .rnd-grid{display:grid;grid-template-columns:repeat(2,176px);gap:8px;justify-content:center}
   .add-mini{display:flex;align-items:center;justify-content:center;gap:5px;border:1px dashed var(--line);border-radius:9px;padding:9px;color:var(--muted);font-size:11.5px;font-weight:600;cursor:pointer;background:#fcfdff;transition:.12s}
   .add-mini:hover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
 
