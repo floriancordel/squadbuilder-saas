@@ -70,6 +70,13 @@
   .tree li:only-child::after{content:'';display:block;top:0;left:50%;right:auto;width:50%;height:52px;border:0;border-left:3px solid var(--conn);border-radius:0}
   .tree li.rootnode{padding-top:0!important}
   .tree li.rootnode::before,.tree li.rootnode::after{display:none!important;border:0!important}
+  /* Tribu décalée par une support cell latérale : on recale les connecteurs
+     (haut + bas) sur le centre RÉEL de la tribu via --coreoff, pour éviter les
+     espaces vides symétriques tout en gardant les liaisons alignées. */
+  .tree li.offc::before{right:calc(50% - var(--coreoff));width:calc(50% + var(--coreoff))}
+  .tree li.offc::after{left:calc(50% + var(--coreoff));width:calc(50% - var(--coreoff))}
+  .tree li.offc:only-child::after{left:calc(50% + var(--coreoff))}
+  .tree li.offc > ul{transform:translateX(var(--coreoff))}
 
   .node-content{position:relative;display:flex;flex-direction:column;align-items:center}
 
@@ -104,7 +111,7 @@
      À L'INTÉRIEUR du slot → elles n'ajoutent aucune hauteur, la tribu reste
      directement au-dessus de ses squads et le connecteur n'est jamais cassé. */
   .tribe-row{display:flex;align-items:flex-start;justify-content:center;gap:40px}
-  .tc-side{flex:0 0 236px;width:236px;position:relative;align-self:stretch}
+  .tc-side{flex:0 0 236px;width:236px;position:relative}
   .tc-abs{position:absolute;top:0;display:flex;flex-direction:column;gap:20px;width:236px}
   .tc-side.left .tc-abs{right:0;align-items:flex-end}
   .tc-side.right .tc-abs{left:0;align-items:flex-start}
@@ -974,12 +981,18 @@ function headHTML(h){
   const wrapCell=c=>`<div class="cell-wrap">${cellHTML(c)}</div>`;
   const leftCells=cells.filter((_,i)=>i%2===0);   // 1re, 3e… à gauche
   const rightCells=cells.filter((_,i)=>i%2===1);  // 2e, 4e… à droite
-  const inner=(cells.length && !isColl)
-    ? `<div class="tribe-row"><div class="tc-side left"><div class="tc-abs">${leftCells.map(wrapCell).join('')}</div></div>${core}<div class="tc-side right"><div class="tc-abs">${rightCells.map(wrapCell).join('')}</div></div></div>`
-    : core;
+  const hasL=leftCells.length>0, hasR=rightCells.length>0;
+  const leftSlot=hasL?`<div class="tc-side left"><div class="tc-abs">${leftCells.map(wrapCell).join('')}</div></div>`:'';
+  const rightSlot=hasR?`<div class="tc-side right"><div class="tc-abs">${rightCells.map(wrapCell).join('')}</div></div>`:'';
+  const show=cells.length && !isColl;
+  const inner=show ? `<div class="tribe-row">${leftSlot}${core}${rightSlot}</div>` : core;
+  // décalage du centre réel de la tribu quand une seule côté porte une cell
+  const coreoff=show?((hasL?138:0)-(hasR?138:0)):0;
   const squadLis=h.squads.map(sq=>`<li><div class="node-content">${squadHTML(sq)}</div></li>`).join('');
   const kids=h.squads.length?`<ul>${squadLis}</ul>`:'';
-  return `<li class="${isColl?'collapsed':''}">${inner}${kids}</li>`;
+  const cls=`${isColl?'collapsed':''}${coreoff?' offc':''}`.trim();
+  const style=coreoff?` style="--coreoff:${coreoff}px"`:'';
+  return `<li class="${cls}"${style}>${inner}${kids}</li>`;
 }
 
 function render(){
