@@ -724,6 +724,24 @@
   .resp-item button:hover{color:#dc2626}
   .resp-input{border:1px dashed var(--line);border-radius:8px;padding:8px 11px;font-size:12.5px;font-family:inherit;width:100%;color:var(--ink);background:#fcfdff}
   .resp-input:focus{outline:none;border-color:var(--tech);border-style:solid}
+  /* barre haut de l'arbre + mode édition */
+  .gtree-top{display:flex;gap:8px;padding:12px 12px 0}
+  .gtree-add{flex:1;margin:0}
+  .gtree-edit{flex:0 0 auto;border:1px solid var(--border);background:#fff;border-radius:9px;padding:0 11px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer}
+  .gtree-edit:hover{background:#f2f4f7;color:var(--ink)}
+  .gtree-edit.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .gtree-hint{font-size:11px;color:var(--tech);background:var(--tech-soft);border-radius:8px;margin:10px 12px 0;padding:7px 10px}
+  .gt-grip{color:var(--faint);font-size:11px;letter-spacing:-1px;cursor:grab;flex:0 0 auto}
+  .gloss2.editing .gt-role{cursor:grab}
+  .gt-role.gt-dragging{opacity:.4}
+  .gt-roles.famover{background:var(--tech-soft);outline:2px dashed var(--tech);outline-offset:-2px;border-radius:8px}
+  /* cases à cocher blocs */
+  .blk-checks{display:flex;flex-wrap:wrap;gap:8px}
+  .blk-check{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:9px;padding:7px 11px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;background:#fff;user-select:none}
+  .blk-check:hover{border-color:var(--line)}
+  .blk-check.on{border-color:var(--tech);background:var(--tech-soft);color:var(--tech)}
+  .blk-check input{width:auto;accent-color:var(--tech);cursor:pointer}
+  .fiche-hint{font-size:11px;color:var(--faint);margin-top:8px;line-height:1.5}
 
   @media print{
     header,#overlay,#editor,#poolPanel,.actions,.toggle,.add-mini,.zoom{display:none!important}
@@ -879,9 +897,10 @@
     <div class="field"><label>Nom du rôle</label><input id="rd-name" placeholder="ex. Staff Engineer, Growth PM…" autocomplete="off"></div>
     <div class="row2">
       <div class="field"><label>Filière</label><div class="seg" id="rd-side"><button data-v="produit">Produit</button><button data-v="tech" class="on tech">Tech</button></div></div>
-      <div class="field"><label>Catégorie</label><select id="rd-cat"></select></div>
+      <div class="field"><label>Famille de métier</label><select id="rd-fam"></select></div>
     </div>
-    <div class="field"><label>Description</label><textarea class="f" id="rd-desc" placeholder="Missions, responsabilités, périmètre…"></textarea></div>
+    <div class="field"><label>Disponible dans les blocs</label><div class="blk-checks" id="rd-blocks"></div></div>
+    <div class="field"><label>Description / mission</label><textarea class="f" id="rd-desc" placeholder="Rôle, mission, périmètre…"></textarea></div>
   </div>
   <div class="rd-foot"><button class="btn" id="rd-cancel">Annuler</button><button class="btn primary" id="rd-save">＋ Enregistrer le rôle</button></div>
 </div>
@@ -1096,77 +1115,62 @@ const TRANSVERSE_ROLES_DEFAULT=['QA Engineer','Software Architect','UX Designer'
 let TRANSVERSE_ROLES=TRANSVERSE_ROLES_DEFAULT.slice();
 
 /* ---------------- Référentiel des rôles (glossaire) ---------------- */
-const GLOSS_CATS=[
-  {key:'direction',label:'Direction',desc:"Le sommet de l'organisation : sponsors produit et technique."},
-  {key:'lead',label:'Leads — Tribu & Squad',desc:"Les binômes de pilotage : Head of Product / Engineering Manager (tribu), Product Manager / Tech Lead (squad)."},
-  {key:'squad',label:'Équipe R&D (Squad)',desc:"Les rôles d'individus contributeurs proposés dans les membres d'une squad."},
-  {key:'support',label:'Support Cell (transverse)',desc:"Les rôles transverses/experts proposés dans les Support Cells."}
+// Familles de métier (structurent l'arbre du référentiel)
+const FAMILIES=[
+  {key:'management',label:'Management & Leadership'},
+  {key:'produit',label:'Produit'},
+  {key:'design',label:'Design & Recherche'},
+  {key:'engineering',label:'Engineering'},
+  {key:'data',label:'Data & IA'},
+  {key:'quality',label:'Qualité'},
+  {key:'delivery',label:'Agile & Delivery'},
 ];
-const ROLE_DEFS={
-  'CPO':"Chief Product Officer — définit la vision et la stratégie produit, arbitre la roadmap globale.",
-  'CTO':"Chief Technology Officer — porte la vision technique, l'architecture et les choix technologiques.",
-  'Head of Product':"Dirige le produit d'une tribu : priorisation, discovery, alignement business.",
-  'Engineering Manager':"Manage les ingénieurs d'une tribu : delivery, qualité, montée en compétences.",
-  'Product Manager':"Responsable du produit d'une squad : besoin utilisateur, backlog, mesure d'impact.",
-  'Tech Lead':"Réfère technique de la squad : architecture, revue de code, qualité et delivery.",
-  'Frontend Engineer':"Développe les interfaces utilisateur et l'expérience côté client.",
-  'Backend Engineer':"Développe les services, APIs et la logique métier côté serveur.",
-  'Fullstack Engineer':"Intervient sur l'ensemble de la stack, du front au back.",
-  'Mobile Engineer':"Développe les applications mobiles (iOS / Android).",
-  'Product Designer':"Conçoit l'expérience et les interfaces, du parcours au design d'écran.",
-  'UX Designer':"Conçoit les parcours et l'ergonomie centrés utilisateur.",
-  'UI Designer':"Conçoit l'interface visuelle : composants, design system, styles.",
-  'UX Researcher':"Mène la recherche utilisateur : entretiens, tests, insights.",
-  'Data Analyst':"Analyse les données produit et construit les indicateurs de pilotage.",
-  'Data Engineer':"Construit et maintient les pipelines et l'infrastructure de données.",
-  'Data Scientist':"Modélise et exploite les données (statistiques, ML) pour créer de la valeur.",
-  'DevOps Engineer':"Automatise le CI/CD, l'infrastructure et le déploiement.",
-  'SRE':"Site Reliability Engineer — garantit fiabilité, disponibilité et observabilité.",
-  'QA Engineer':"Assure la qualité : stratégie de test, automatisation, non-régression.",
-  'Software Architect':"Définit l'architecture logicielle et les standards techniques transverses.",
-  'Security Engineer':"Sécurise l'application et l'infrastructure, gère les risques et la conformité.",
-  'ML Engineer':"Industrialise les modèles de machine learning en production.",
-  'Performance Engineer':"Optimise les performances, la scalabilité et les coûts.",
-  'Tech Writer':"Rédige la documentation technique et produit.",
-  'Product Ops':"Outille et fluidifie les process de l'organisation produit.",
-  'Agile Coach':"Accompagne les équipes sur les pratiques agiles et l'amélioration continue.",
-  'Scrum Master':"Facilite le cadre Scrum et lève les obstacles de l'équipe.",
-  'Business Analyst':"Traduit les besoins métier en spécifications exploitables.",
-  'Accessibility Expert':"Garantit l'accessibilité (RGAA / WCAG) des produits.",
-  'UX Writer':"Conçoit les contenus et micro-copies de l'interface."
-};
-const SKILL_DEFAULTS={
-  'CPO':['Vision produit','Stratégie','Roadmap','Leadership'],
-  'CTO':['Architecture','Vision technique','Scalabilité','Leadership'],
-  'Head of Product':['Discovery','Priorisation','Analytics','Stakeholders'],
-  'Engineering Manager':['Delivery','Management','Qualité','Coaching'],
-  'Product Manager':['User research','Backlog','Roadmap','Data'],
-  'Tech Lead':['Architecture','Code review','Mentorat','CI/CD'],
-  'Frontend Engineer':['React','TypeScript','HTML/CSS','Accessibilité'],
-  'Backend Engineer':['API','SQL','Node/Java','Sécurité'],
-  'Fullstack Engineer':['Frontend','Backend','API','DevOps'],
-  'Mobile Engineer':['iOS','Android','React Native','UX mobile'],
-  'Product Designer':['Figma','UX','UI','Prototypage'],
-  'UX Designer':['Wireframes','Parcours','Tests','Recherche'],
-  'UI Designer':['Design system','Figma','Typographie','Motion'],
-  'Data Analyst':['SQL','Dataviz','KPIs','Statistiques'],
-  'Data Engineer':['ETL','Spark','SQL','Cloud'],
-  'QA Engineer':['Automatisation','Cypress','Tests','CI'],
-  'DevOps Engineer':['CI/CD','Docker','Kubernetes','Cloud'],
-  'Software Architect':['Architecture','Patterns','Cloud','Sécurité']
-};
-const SUPPORT_ROLES_SET=new Set(['Software Architect','SRE','DevOps Engineer','Security Engineer','Data Engineer','ML Engineer','Performance Engineer','Tech Writer','Product Ops','Agile Coach','Scrum Master','Business Analyst','Accessibility Expert','UX Writer','QA Engineer','UX Researcher']);
-function newRole(name,category,side){ return {id:uid(),name,category,side,definition:ROLE_DEFS[name]||'',skills:(SKILL_DEFAULTS[name]||[]).slice(),responsibilities:[],seniority:'',jobProfile:''}; }
-function defaultGlossary(){
-  const out=[];
-  out.push(newRole('CPO','direction','produit'));
-  out.push(newRole('CTO','direction','tech'));
-  [['Head of Product','produit'],['Engineering Manager','tech'],['Product Manager','produit'],['Tech Lead','tech']]
-    .forEach(([n,s])=>out.push(newRole(n,'lead',s)));
-  const ics=[...new Set([...MEMBER_ROLES_DEFAULT,...TRANSVERSE_ROLES_DEFAULT])];
-  ics.forEach(n=>out.push(newRole(n,SUPPORT_ROLES_SET.has(n)?'support':'squad',guessSide(n))));
-  return out;
-}
+// Types de bloc où un rôle peut être placé (cases à cocher dans la fiche)
+const BLOCK_TYPES=[
+  {key:'direction',label:'Direction'},
+  {key:'tribe',label:'Tribu (lead)'},
+  {key:'squad',label:'Squad (lead)'},
+  {key:'member',label:'Équipe R&D'},
+  {key:'cell',label:'Support Cell'},
+];
+// Bibliothèque de rôles : famille (f), blocs (b), filière (s), def (d), compétences (sk), responsabilités (r)
+const ROLE_LIB=[
+  {n:'CPO',f:'management',b:['direction'],s:'produit',d:"Chief Product Officer — porte la vision et la stratégie produit de l'organisation.",sk:['Vision produit','Stratégie','Priorisation','Leadership'],r:["Définir la vision et la stratégie produit","Arbitrer la roadmap au niveau organisation","Aligner le produit sur les objectifs business"]},
+  {n:'CTO',f:'management',b:['direction'],s:'tech',d:"Chief Technology Officer — porte la vision technique et les choix technologiques.",sk:['Vision technique','Architecture','Scalabilité','Leadership'],r:["Définir la stratégie et les choix technologiques","Garantir l'architecture et la scalabilité","Structurer et faire grandir les équipes tech"]},
+  {n:'Head of Product',f:'management',b:['tribe'],s:'produit',d:"Dirige le produit d'une tribu : discovery, priorisation, alignement business.",sk:['Discovery','Priorisation','Stakeholders','Analytics'],r:["Définir la roadmap de la tribu","Prioriser selon la valeur et l'impact","Aligner les parties prenantes"]},
+  {n:'Engineering Manager',f:'management',b:['tribe'],s:'tech',d:"Manage les ingénieurs d'une tribu : delivery, qualité, montée en compétences.",sk:['Management','Delivery','Coaching','Qualité'],r:["Garantir le delivery et la qualité de la tribu","Manager et faire grandir les ingénieurs","Fluidifier l'organisation des squads"]},
+  {n:'Product Manager',f:'produit',b:['squad'],s:'produit',d:"Responsable du produit d'une squad : besoin utilisateur, backlog, impact.",sk:['User research','Backlog','Roadmap','Analytics'],r:["Porter la vision produit de la squad","Construire et prioriser le backlog","Mesurer l'impact des livraisons"]},
+  {n:'Product Ops',f:'produit',b:['cell','member'],s:'produit',d:"Outille et fluidifie les process de l'organisation produit.",sk:['Process','Outillage','Analytics','Documentation'],r:["Standardiser rituels et outils produit","Outiller la mesure et le reporting","Fluidifier la collaboration entre squads"]},
+  {n:'Business Analyst',f:'produit',b:['member','cell'],s:'produit',d:"Traduit les besoins métier en spécifications exploitables.",sk:['Analyse métier','Spécifications','Modélisation','SQL'],r:["Recueillir et cadrer les besoins métier","Rédiger des spécifications claires","Faire le lien métier / équipe"]},
+  {n:'Product Designer',f:'design',b:['member'],s:'produit',d:"Conçoit l'expérience et les interfaces, du parcours au design d'écran.",sk:['Figma','UX','UI','Prototypage'],r:["Concevoir parcours et maquettes","Tester et itérer avec les utilisateurs","Contribuer au design system"]},
+  {n:'UX Designer',f:'design',b:['member','cell'],s:'produit',d:"Conçoit les parcours et l'ergonomie centrés utilisateur.",sk:['Wireframes','Parcours','Tests utilisateurs','Ergonomie'],r:["Concevoir des parcours centrés utilisateur","Réaliser wireframes et prototypes","Valider par des tests"]},
+  {n:'UI Designer',f:'design',b:['member','cell'],s:'produit',d:"Conçoit l'interface visuelle : composants, design system, styles.",sk:['Design system','Figma','Typographie','Motion'],r:["Concevoir l'interface visuelle","Maintenir le design system","Garantir la cohérence visuelle"]},
+  {n:'UX Researcher',f:'design',b:['cell','member'],s:'produit',d:"Mène la recherche utilisateur : entretiens, tests, insights.",sk:['Entretiens','Tests utilisateurs','Analyse','Synthèse'],r:["Planifier et mener la recherche utilisateur","Synthétiser les insights","Nourrir la discovery produit"]},
+  {n:'UX Writer',f:'design',b:['cell','member'],s:'produit',d:"Conçoit les contenus et micro-copies de l'interface.",sk:['Rédaction UX','Ton & voix','Contenu','Localisation'],r:["Rédiger les contenus d'interface","Garantir la cohérence éditoriale","Améliorer la clarté des parcours"]},
+  {n:'Accessibility Expert',f:'design',b:['cell'],s:'produit',d:"Garantit l'accessibilité (RGAA / WCAG) des produits.",sk:['RGAA / WCAG','Audit','ARIA','Tests'],r:["Auditer l'accessibilité des produits","Former les équipes aux bonnes pratiques","Garantir la conformité RGAA/WCAG"]},
+  {n:'Tech Lead',f:'engineering',b:['squad'],s:'tech',d:"Référent technique de la squad : architecture, revue de code, delivery.",sk:['Architecture','Revue de code','Mentorat','CI/CD'],r:["Cadrer les choix techniques de la squad","Garantir la qualité et la revue de code","Accompagner les développeurs"]},
+  {n:'Frontend Engineer',f:'engineering',b:['member','cell'],s:'tech',d:"Développe les interfaces utilisateur et l'expérience côté client.",sk:['React','TypeScript','HTML/CSS','Accessibilité'],r:["Développer les interfaces utilisateur","Garantir performance et accessibilité front","Contribuer aux composants partagés"]},
+  {n:'Backend Engineer',f:'engineering',b:['member','cell'],s:'tech',d:"Développe les services, APIs et la logique métier côté serveur.",sk:['API','SQL','Node/Java','Sécurité'],r:["Développer services et APIs","Garantir fiabilité et sécurité","Modéliser les données"]},
+  {n:'Fullstack Engineer',f:'engineering',b:['member','cell'],s:'tech',d:"Intervient sur l'ensemble de la stack, du front au back.",sk:['Frontend','Backend','API','CI/CD'],r:["Développer de bout en bout","Livrer des features complètes","Contribuer front et back"]},
+  {n:'Mobile Engineer',f:'engineering',b:['member','cell'],s:'tech',d:"Développe les applications mobiles (iOS / Android).",sk:['iOS','Android','React Native','UX mobile'],r:["Développer les applications mobiles","Optimiser l'expérience mobile","Gérer les publications sur les stores"]},
+  {n:'Software Architect',f:'engineering',b:['cell','member'],s:'tech',d:"Définit l'architecture logicielle et les standards techniques transverses.",sk:['Architecture','Patterns','Cloud','Sécurité'],r:["Définir l'architecture et les standards","Cadrer les choix techniques transverses","Accompagner les équipes sur l'archi"]},
+  {n:'DevOps Engineer',f:'engineering',b:['cell','member'],s:'tech',d:"Automatise le CI/CD, l'infrastructure et le déploiement.",sk:['CI/CD','Docker','Kubernetes','Cloud'],r:["Automatiser build, test et déploiement","Gérer l'infrastructure as code","Fiabiliser les environnements"]},
+  {n:'SRE',f:'engineering',b:['cell'],s:'tech',d:"Site Reliability Engineer — garantit fiabilité, disponibilité et observabilité.",sk:['Observabilité','Incidents','SLO','Cloud'],r:["Garantir disponibilité et fiabilité","Gérer l'observabilité et les incidents","Définir et suivre les SLO"]},
+  {n:'Security Engineer',f:'engineering',b:['cell'],s:'tech',d:"Sécurise l'application et l'infrastructure, gère les risques et la conformité.",sk:['AppSec','Audit','Conformité','Cloud security'],r:["Sécuriser applications et infrastructure","Gérer risques et vulnérabilités","Garantir la conformité"]},
+  {n:'Performance Engineer',f:'engineering',b:['cell'],s:'tech',d:"Optimise les performances, la scalabilité et les coûts.",sk:['Profiling','Scalabilité','Coûts','Monitoring'],r:["Optimiser performances et scalabilité","Réduire les coûts d'infrastructure","Mesurer et suivre la performance"]},
+  {n:'Tech Writer',f:'engineering',b:['cell','member'],s:'tech',d:"Rédige la documentation technique et produit.",sk:['Documentation','Rédaction technique','API docs','Markdown'],r:["Rédiger la documentation technique et produit","Maintenir guides et références","Améliorer l'onboarding"]},
+  {n:'Data Analyst',f:'data',b:['member','cell'],s:'tech',d:"Analyse les données produit et construit les indicateurs de pilotage.",sk:['SQL','Dataviz','KPIs','Statistiques'],r:["Analyser les données produit","Construire dashboards et KPIs","Éclairer les décisions par la donnée"]},
+  {n:'Data Engineer',f:'data',b:['cell','member'],s:'tech',d:"Construit et maintient les pipelines et l'infrastructure de données.",sk:['ETL','Spark','SQL','Cloud'],r:["Construire et maintenir les pipelines","Garantir la qualité des données","Industrialiser l'accès à la donnée"]},
+  {n:'Data Scientist',f:'data',b:['member','cell'],s:'tech',d:"Modélise et exploite les données (statistiques, ML) pour créer de la valeur.",sk:['Statistiques','Machine Learning','Python','Expérimentation'],r:["Modéliser et exploiter les données","Concevoir et évaluer des modèles","Traduire la donnée en valeur"]},
+  {n:'ML Engineer',f:'data',b:['cell','member'],s:'tech',d:"Industrialise les modèles de machine learning en production.",sk:['MLOps','Python','Modèles','Déploiement'],r:["Industrialiser les modèles en production","Mettre en place le MLOps","Surveiller la performance des modèles"]},
+  {n:'QA Engineer',f:'quality',b:['member','cell'],s:'tech',d:"Assure la qualité : stratégie de test, automatisation, non-régression.",sk:['Automatisation','Cypress','Stratégie de test','CI'],r:["Définir la stratégie de test","Automatiser tests et non-régression","Garantir la qualité des livraisons"]},
+  {n:'Agile Coach',f:'delivery',b:['cell'],s:'produit',d:"Accompagne les équipes sur les pratiques agiles et l'amélioration continue.",sk:['Agilité','Coaching','Facilitation','Amélioration continue'],r:["Accompagner les équipes sur l'agilité","Animer l'amélioration continue","Faire monter en maturité les rituels"]},
+  {n:'Scrum Master',f:'delivery',b:['cell','squad'],s:'produit',d:"Facilite le cadre Scrum et lève les obstacles de l'équipe.",sk:['Scrum','Facilitation','Rituels','Résolution d\'obstacles'],r:["Faciliter le cadre Scrum","Lever les obstacles de l'équipe","Protéger et fluidifier le delivery"]},
+];
+const ROLE_LIB_MAP={}; ROLE_LIB.forEach(x=>ROLE_LIB_MAP[x.n]=x);
+function familyGuess(name,side){ side=side||guessSide(name); return side==='produit'?'produit':'engineering'; }
+function newRole(name){ const m=ROLE_LIB_MAP[name]||{}; const side=m.s||guessSide(name); return {id:uid(),name,family:m.f||familyGuess(name,side),blocks:(m.b||['member','cell']).slice(),side,definition:m.d||'',skills:(m.sk||[]).slice(),responsibilities:(m.r||[]).slice(),jobProfile:''}; }
+function defaultGlossary(){ return ROLE_LIB.map(x=>newRole(x.n)); }
 function rebuildRoleLists(){
   const names=[...new Set((state.glossary||[]).map(g=>(g.name||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
   MEMBER_ROLES=names; TRANSVERSE_ROLES=names;
@@ -1214,7 +1218,16 @@ function migrate(){
   if(!Array.isArray(state.squads))state.squads=[];
   if(!Array.isArray(state.pool))state.pool=[];
   if(!Array.isArray(state.glossary)||!state.glossary.length)state.glossary=defaultGlossary();
-  state.glossary.forEach(g=>{ if(!Array.isArray(g.skills))g.skills=(SKILL_DEFAULTS[g.name]||[]).slice(); if(!Array.isArray(g.responsibilities))g.responsibilities=[]; if(g.seniority===undefined)g.seniority=''; if(g.jobProfile===undefined)g.jobProfile=''; });
+  const CAT2BLOCKS={direction:['direction'],lead:['tribe','squad'],squad:['member','cell'],support:['cell','member']};
+  state.glossary.forEach(g=>{
+    const m=ROLE_LIB_MAP[g.name]||{};
+    if(!g.family){ g.family=m.f||(g.category==='direction'||g.category==='lead'?'management':familyGuess(g.name,g.side)); }
+    if(!Array.isArray(g.blocks)||!g.blocks.length){ g.blocks=(m.b||CAT2BLOCKS[g.category]||['member','cell']).slice(); }
+    delete g.category; delete g.seniority;
+    if(!Array.isArray(g.skills))g.skills=(m.sk||[]).slice();
+    if(!Array.isArray(g.responsibilities))g.responsibilities=(m.r||[]).slice();
+    if(g.jobProfile===undefined)g.jobProfile='';
+  });
   const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.temp===undefined)p.temp=(p.status==='TEMP'); if(p.status==='TEMP')p.status=p.name?'Occupé':'Ouvert'; if(!p.status)p.status=p.name?'Occupé':'Ouvert'; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
   // direction {product,tech} -> {leads:[]}
   const d=state.direction||{};
@@ -1486,11 +1499,12 @@ function containerByKind(kind,ctxId){
   if(kind==='squad')return findSquad(ctxId);
   return null;
 }
-function catForKind(kind){ return kind==='direction'?'direction':'lead'; }
-function rolesInCat(cat){ return (state.glossary||[]).filter(g=>g.category===cat); }
+function blockForKind(kind){ return kind; } // 'direction' | 'tribe' | 'squad'
+function rolesForBlock(block){ return (state.glossary||[]).filter(g=>(g.blocks||[]).includes(block)); }
+function blockOfLocateKind(k){ return {'dir-lead':'direction','tribe-lead':'tribe','squad-lead':'squad','member':'member','cell':'cell','pool':'member'}[k]||'member'; }
 function addLead(kind,ctxId){
   const c=containerByKind(kind,ctxId); if(!c)return;
-  const roles=rolesInCat(catForKind(kind)); const def=roles[0];
+  const roles=rolesForBlock(blockForKind(kind)); const def=roles[0];
   const p=person(def?def.name:'Nouveau rôle', def?def.side:'produit');
   c.leads=c.leads||[]; c.leads.push(reg(p));
   commit(); openEditor(p,'person');
@@ -1549,13 +1563,11 @@ function openEditor(obj,kind){
     $('#edSave').onclick=()=>{ if(!isDir)obj.name=$('#f-tname').value.trim(); obj.desc=$('#f-tdesc').value.trim(); commit(); closeEditor(); };
     if(!isDir)$('#edDelTribe').onclick=()=>{ askConfirm({title:'Supprimer la tribu',message:'Cette tribu, ses squads et Support Cells seront supprimés.',confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.heads=state.heads.filter(x=>x.id!==obj.id); collapsed.delete(obj.id); commit(); closeEditor(); } }); };
   } else {
-    const p=obj; const loc0=locate(p.pid); const cat=loc0?loc0.cat:'squad';
+    const p=obj; const loc0=locate(p.pid);
     const kindLabel={'dir-lead':'Direction','tribe-lead':'Lead de tribu','squad-lead':'Lead de squad','member':'Membre R&D','cell':'Ressource transverse','pool':'Vivier'}[loc0?loc0.kind:'']||'Poste';
     $('#edKind').textContent=kindLabel;
-    let roleNames;
-    if(cat==='direction') roleNames=rolesInCat('direction').map(g=>g.name);
-    else if(cat==='lead') roleNames=rolesInCat('lead').map(g=>g.name);
-    else roleNames=[...rolesInCat('squad'),...rolesInCat('support')].map(g=>g.name);
+    const block=blockOfLocateKind(loc0?loc0.kind:'member');
+    let roleNames=rolesForBlock(block).map(g=>g.name);
     roleNames=[...new Set(roleNames)].sort((a,b)=>a.localeCompare(b,'fr'));
     const gdef=glossFor(p.role);
     const roleField=`<div class="field"><label>Rôle / poste</label>
@@ -1756,22 +1768,27 @@ let rdSide='tech';
 function openRoleDlg(){
   rdSide='tech';
   $('#rd-name').value=''; $('#rd-desc').value='';
-  const defCat=(glossSel&&glossRoleById(glossSel))?glossRoleById(glossSel).category:'squad';
-  $('#rd-cat').innerHTML=GLOSS_CATS.map(c=>`<option value="${c.key}" ${c.key===defCat?'selected':''}>${esc(c.label)}</option>`).join('');
+  const sel=glossSel&&glossRoleById(glossSel);
+  const defFam=sel?sel.family:'engineering';
+  $('#rd-fam').innerHTML=FAMILIES.map(f=>`<option value="${f.key}" ${f.key===defFam?'selected':''}>${esc(f.label)}</option>`).join('');
+  const defBlocks=sel?(sel.blocks||[]):['member','cell'];
+  $('#rd-blocks').innerHTML=BLOCK_TYPES.map(b=>`<label class="blk-check ${defBlocks.includes(b.key)?'on':''}"><input type="checkbox" value="${b.key}" ${defBlocks.includes(b.key)?'checked':''}>${esc(b.label)}</label>`).join('');
   $('#rd-side').querySelectorAll('button').forEach(b=>b.className=(b.dataset.v==='tech'?'on tech':''));
   $('#roleDlgOv').classList.add('open'); $('#roleDlg').classList.add('open');
   setTimeout(()=>$('#rd-name').focus(),40);
 }
 function closeRoleDlg(){ $('#roleDlgOv').classList.remove('open'); $('#roleDlg').classList.remove('open'); }
 $('#rd-side').querySelectorAll('button').forEach(b=>b.onclick=()=>{ rdSide=b.dataset.v; $('#rd-side').querySelectorAll('button').forEach(x=>x.className=(x.dataset.v===rdSide?'on '+(rdSide==='produit'?'produit':'tech'):'')); });
+$('#rd-blocks').addEventListener('click',e=>{ const l=e.target.closest('.blk-check'); if(!l)return; setTimeout(()=>{ l.classList.toggle('on',l.querySelector('input').checked); },0); });
 $('#rdClose').onclick=closeRoleDlg; $('#roleDlgOv').onclick=closeRoleDlg; $('#rd-cancel').onclick=closeRoleDlg;
 $('#rd-save').onclick=()=>{
   const name=$('#rd-name').value.trim();
   if(!name){ $('#rd-name').focus(); $('#rd-name').style.borderColor='#dc2626'; return; }
-  const cat=$('#rd-cat').value;
-  const role={id:uid(),name,category:cat,side:rdSide,definition:$('#rd-desc').value.trim(),skills:[],responsibilities:[],seniority:'',jobProfile:''};
+  const fam=$('#rd-fam').value;
+  const blocks=[...$('#rd-blocks').querySelectorAll('input:checked')].map(i=>i.value);
+  const role={id:uid(),name,family:fam,blocks:blocks.length?blocks:['member','cell'],side:rdSide,definition:$('#rd-desc').value.trim(),skills:[],responsibilities:[],jobProfile:''};
   state.glossary.push(role); save(); rebuildRoleLists();
-  glossSel=role.id; if(glossExpanded)glossExpanded.add(cat);
+  glossSel=role.id; if(glossExpanded)glossExpanded.add(fam);
   closeRoleDlg(); renderGlossary();
   toast('Rôle « '+name+' » ajouté');
   const rn=document.querySelector('.gt-role[data-role="'+role.id+'"]'); if(rn){ rn.classList.add('justadded'); rn.scrollIntoView({block:'nearest'}); }
@@ -1875,44 +1892,45 @@ function renderDashboard(){
 }
 
 /* ---- Référentiel des rôles ---- */
-let glossSel=null, glossExpanded=null;
+let glossSel=null, glossExpanded=null, glossEdit=false;
 function glossRoleById(id){ return (state.glossary||[]).find(g=>g.id===id)||null; }
+function famLabel(key){ const f=FAMILIES.find(x=>x.key===key); return f?f.label:key; }
 function ensureGlossSel(){
   const gl=state.glossary||[];
-  if(!glossExpanded) glossExpanded=new Set(GLOSS_CATS.map(c=>c.key));
+  if(!glossExpanded) glossExpanded=new Set(FAMILIES.map(f=>f.key));
   if(!glossSel || !glossRoleById(glossSel)) glossSel = gl.length?gl.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'))[0].id:null;
-  const g=glossSel?glossRoleById(glossSel):null; if(g)glossExpanded.add(g.category);
+  const g=glossSel?glossRoleById(glossSel):null; if(g)glossExpanded.add(g.family);
 }
 function glossTreeHTML(){
   const gl=state.glossary||[];
-  return GLOSS_CATS.map(c=>{
-    const roles=gl.filter(g=>g.category===c.key).sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
-    const open=glossExpanded.has(c.key);
-    const rolesHTML=roles.length?roles.map(g=>`<div class="gt-role ${g.side} ${glossSel===g.id?'sel':''}" data-role="${g.id}"><span class="gt-role-dot"></span><span class="gt-role-name">${esc(g.name)}</span></div>`).join(''):`<div class="gt-empty">Aucun rôle</div>`;
-    return `<div class="gt-cat ${open?'open':''}">
-      <div class="gt-cat-head" data-cat-toggle="${c.key}"><span class="gt-chev">▸</span><span class="gt-cat-label">${esc(c.label)}</span><span class="gt-count">${roles.length}</span></div>
-      <div class="gt-roles">${rolesHTML}</div>
+  return FAMILIES.map(fam=>{
+    const roles=gl.filter(g=>g.family===fam.key).sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
+    const open=glossExpanded.has(fam.key);
+    const rolesHTML=roles.length?roles.map(g=>`<div class="gt-role ${g.side} ${glossSel===g.id?'sel':''}" data-role="${g.id}" ${glossEdit?`draggable="true" data-drag-role="${g.id}"`:''}>${glossEdit?'<span class="gt-grip">⠿</span>':''}<span class="gt-role-dot"></span><span class="gt-role-name">${esc(g.name)}</span></div>`).join(''):`<div class="gt-empty">—</div>`;
+    return `<div class="gt-cat ${open?'open':''}" data-fam="${fam.key}">
+      <div class="gt-cat-head" data-cat-toggle="${fam.key}"><span class="gt-chev">▸</span><span class="gt-cat-label">${esc(fam.label)}</span><span class="gt-count">${roles.length}</span></div>
+      <div class="gt-roles" data-fam-drop="${fam.key}">${rolesHTML}</div>
     </div>`;
   }).join('');
 }
 function ficheHTML(g){
   if(!g) return `<div class="fiche-empty"><div class="fe-ic">📖</div><h3>Aucun rôle sélectionné</h3><p>Sélectionne un rôle dans l'arbre à gauche, ou crée-en un nouveau.</p></div>`;
-  const cat=GLOSS_CATS.find(c=>c.key===g.category);
   const skills=(g.skills||[]).map((s,i)=>`<span class="skill-chip">${esc(s)}<button data-skill-del="${i}" title="Retirer">×</button></span>`).join('');
   const resp=(g.responsibilities||[]).map((r,i)=>`<li class="resp-item"><span>${esc(r)}</span><button data-resp-del="${i}" title="Retirer">×</button></li>`).join('');
   const jp=g.jobProfile?`<a class="rc-jp-open" href="${esc(g.jobProfile)}" target="_blank" rel="noopener">Ouvrir ↗</a>`:'';
+  const blocks=BLOCK_TYPES.map(b=>`<label class="blk-check ${(g.blocks||[]).includes(b.key)?'on':''}"><input type="checkbox" data-block="${b.key}" ${(g.blocks||[]).includes(b.key)?'checked':''}>${esc(b.label)}</label>`).join('');
   return `<div class="fiche ${g.side==='produit'?'produit':''}" data-id="${g.id}">
     <div class="fiche-head">
       <span class="fiche-badge ${g.side}">${g.side==='produit'?'Produit':'Tech'}</span>
-      <span class="fiche-cat">${esc(cat?cat.label:'')}</span>
+      <span class="fiche-cat">${esc(famLabel(g.family))}</span>
       <button class="fiche-del" data-gdel>🗑 Supprimer</button>
     </div>
     <input class="fiche-name" data-gf="name" value="${esc(g.name)}" placeholder="Nom du rôle">
     <div class="fiche-controls">
       <div class="fc"><label>Filière</label><div class="seg" id="fiche-side"><button data-gs="produit" class="${g.side==='produit'?'on produit':''}">Produit</button><button data-gs="tech" class="${g.side==='tech'?'on tech':''}">Tech</button></div></div>
-      <div class="fc"><label>Catégorie</label><select data-gf="category">${GLOSS_CATS.map(c=>`<option value="${c.key}" ${c.key===g.category?'selected':''}>${esc(c.label)}</option>`).join('')}</select></div>
-      <div class="fc"><label>Séniorité</label><select data-gf="seniority"><option value="">— indifférent —</option>${['Junior','Confirmé','Senior','Lead','Principal'].map(s=>`<option ${g.seniority===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="fc"><label>Famille de métier</label><select data-gf="family">${FAMILIES.map(f=>`<option value="${f.key}" ${f.key===g.family?'selected':''}>${esc(f.label)}</option>`).join('')}</select></div>
     </div>
+    <section class="fiche-sec"><h4>Disponible dans les blocs</h4><div class="blk-checks">${blocks}</div><div class="fiche-hint">Coche les types de bloc où ce rôle peut être ajouté (Direction, Tribu, Squad, Équipe R&D, Support Cell).</div></section>
     <section class="fiche-sec"><h4>Description / mission</h4><textarea class="fiche-def" data-gf="definition" placeholder="Rôle, mission, périmètre…">${esc(g.definition||'')}</textarea></section>
     <section class="fiche-sec"><h4>Responsabilités clés</h4><ul class="resp-list">${resp}</ul><input class="resp-input" placeholder="+ responsabilité, Entrée pour ajouter"></section>
     <section class="fiche-sec"><h4>Compétences</h4><div class="rc-skills">${skills}<input class="skill-input" placeholder="+ compétence, Entrée pour ajouter"></div></section>
@@ -1922,9 +1940,13 @@ function ficheHTML(g){
 function renderGlossary(){
   ensureGlossSel();
   $('#sheetBody').innerHTML=`
-    <div class="gloss2">
+    <div class="gloss2 ${glossEdit?'editing':''}">
       <div class="gtree">
-        <button class="gtree-add" id="glossAdd">＋ Nouveau rôle</button>
+        <div class="gtree-top">
+          <button class="gtree-add" id="glossAdd">＋ Nouveau rôle</button>
+          <button class="gtree-edit ${glossEdit?'on':''}" id="glossEditBtn" title="Réorganiser les rôles">${glossEdit?'✓ Terminer':'✎ Réorganiser'}</button>
+        </div>
+        ${glossEdit?'<div class="gtree-hint">Glisse un rôle dans une autre famille de métier.</div>':''}
         <div class="gtree-body">${glossTreeHTML()}</div>
       </div>
       <div class="gfiche" id="gfiche">${ficheHTML(glossRoleById(glossSel))}</div>
@@ -1934,6 +1956,7 @@ function renderFiche(){ const el=$('#gfiche'); if(el)el.innerHTML=ficheHTML(glos
 function ficheRole(el){ const f=el.closest('.fiche'); return f?glossRoleById(f.dataset.id):null; }
 $('#sheetBody').addEventListener('click',e=>{
   if(sheetView!=='gloss')return;
+  const eb=e.target.closest('#glossEditBtn'); if(eb){ glossEdit=!glossEdit; renderGlossary(); return; }
   const ct=e.target.closest('[data-cat-toggle]'); if(ct){ const k=ct.dataset.catToggle; glossExpanded.has(k)?glossExpanded.delete(k):glossExpanded.add(k); ct.closest('.gt-cat').classList.toggle('open'); return; }
   const rn=e.target.closest('[data-role]'); if(rn){ glossSel=rn.dataset.role; document.querySelectorAll('.gt-role.sel').forEach(x=>x.classList.remove('sel')); rn.classList.add('sel'); renderFiche(); return; }
   const add=e.target.closest('#glossAdd'); if(add){ openRoleDlg(); return; }
@@ -1941,6 +1964,7 @@ $('#sheetBody').addEventListener('click',e=>{
   const sideBtn=e.target.closest('[data-gs]'); if(sideBtn){ const g=ficheRole(sideBtn); if(g){ g.side=sideBtn.dataset.gs; save(); renderGlossary(); } return; }
   const sd=e.target.closest('[data-skill-del]'); if(sd){ const g=ficheRole(sd); if(g){ g.skills.splice(+sd.dataset.skillDel,1); save(); renderFiche(); } return; }
   const rd=e.target.closest('[data-resp-del]'); if(rd){ const g=ficheRole(rd); if(g){ g.responsibilities.splice(+rd.dataset.respDel,1); save(); renderFiche(); } return; }
+  const bc=e.target.closest('[data-block]'); if(bc){ const g=ficheRole(bc); if(g){ g.blocks=g.blocks||[]; const k=bc.dataset.block; const i=g.blocks.indexOf(k); if(i>=0)g.blocks.splice(i,1); else g.blocks.push(k); save(); bc.closest('.blk-check').classList.toggle('on',g.blocks.includes(k)); } return; }
 });
 $('#sheetBody').addEventListener('keydown',e=>{
   if(sheetView!=='gloss')return;
@@ -1953,10 +1977,16 @@ $('#sheetBody').addEventListener('input',e=>{
   const f=e.target.closest('[data-gf]'); if(!f)return;
   const g=ficheRole(f); if(!g)return;
   const field=f.dataset.gf;
-  if(field==='category'){ g.category=f.value; save(); glossExpanded.add(f.value); renderGlossary(); return; }
+  if(field==='family'){ g.family=f.value; save(); glossExpanded.add(f.value); renderGlossary(); return; }
   g[field]=f.value; save();
   if(field==='name'){ rebuildRoleLists(); const lbl=document.querySelector('.gt-role[data-role="'+g.id+'"] .gt-role-name'); if(lbl)lbl.textContent=f.value||'Sans nom'; }
 });
+// Drag & drop des rôles entre familles (mode édition)
+let _dragRole=null;
+$('#sheetBody').addEventListener('dragstart',e=>{ const el=e.target.closest('[data-drag-role]'); if(!el)return; _dragRole=el.dataset.dragRole; e.dataTransfer.effectAllowed='move'; el.classList.add('gt-dragging'); });
+$('#sheetBody').addEventListener('dragend',e=>{ const el=e.target.closest('[data-drag-role]'); if(el)el.classList.remove('gt-dragging'); document.querySelectorAll('.gt-roles.famover').forEach(n=>n.classList.remove('famover')); _dragRole=null; });
+$('#sheetBody').addEventListener('dragover',e=>{ if(!_dragRole)return; const z=e.target.closest('[data-fam-drop]'); if(!z)return; e.preventDefault(); document.querySelectorAll('.gt-roles.famover').forEach(n=>{if(n!==z)n.classList.remove('famover');}); z.classList.add('famover'); });
+$('#sheetBody').addEventListener('drop',e=>{ if(!_dragRole)return; const z=e.target.closest('[data-fam-drop]'); if(!z)return; e.preventDefault(); const g=glossRoleById(_dragRole); const fam=z.dataset.famDrop; if(g&&g.family!==fam){ g.family=fam; glossSel=g.id; glossExpanded.add(fam); save(); toast('« '+g.name+' » déplacé vers '+famLabel(fam)); renderGlossary(); } _dragRole=null; });
 
 /* ================= Administration (utilisateurs & accès) ================= */
 async function adminInvoke(action, payload){
