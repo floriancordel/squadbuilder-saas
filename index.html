@@ -173,8 +173,37 @@
   .badge.temp{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:700}
   .temp-date{font-size:9px;color:#92400e;margin-top:2px}
   .card.isopen{border-style:dashed;border-color:var(--open-bd);background:var(--open-bg)}
-  .node-direction .card{width:216px}
+  .node-direction .card{width:206px}
   .node-direction .card .name{font-size:16px}
+
+  /* ---------- Chips compacts cohérents (Hub/COE, TEMP, alloc) ---------- */
+  .chip{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:20px;white-space:nowrap;line-height:1.5;display:inline-block}
+  .chip.fr{background:var(--fr-bg);color:var(--fr-ink)}
+  .chip.coe{background:var(--coe-bg);color:var(--coe-ink)}
+  .chip.temp{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+  .chip.alloc{background:#eef2ff;color:#4338ca}
+  .chip.over{background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5}
+
+  /* ---------- TEMP : détourage + teinte ; surcharge : liseré rouge ---------- */
+  .card.istemp,.mini.istemp,.cres.istemp{border-color:#f59e0b;background:linear-gradient(0deg,#fffbeb,#fff)}
+  .card.istemp{box-shadow:0 0 0 1.5px #fcd34d, var(--shadow)}
+  .mini.istemp,.cres.istemp{box-shadow:0 0 0 1.5px #fcd34d}
+  .card.istemp .accent,.mini.istemp .accent,.cres.istemp .accent{background:#f59e0b!important}
+  .card.isover,.mini.isover,.cres.isover{border-color:#f87171}
+  .cres .alloc.over{background:#fee2e2;color:#b91c1c}
+
+  /* ---------- Rangée de leads dynamique + ajout de rôle ---------- */
+  .leads-row{display:flex;gap:16px;justify-content:center;flex-wrap:nowrap;align-items:stretch}
+  .add-lead{align-self:center;min-width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--line);border-radius:9px;color:var(--muted);font-size:16px;font-weight:700;cursor:pointer;background:#fcfdff;transition:.12s;padding:0 4px}
+  .add-lead:hover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
+  .node-direction .leads-row{gap:18px}
+  .tribe .node-head .leads-row .card{width:172px}
+  .bucket .leads-row{gap:12px;margin-bottom:12px}
+  .bucket .leads-row .card{width:138px;padding:9px 10px}
+  .bucket .leads-row .card .name{font-size:12.5px}
+  .bucket .leads-row .card .role{font-size:9.5px}
+  .tribe-desc{font-size:11px;color:var(--muted);line-height:1.4;margin:0 0 9px;text-align:center;max-width:440px;margin-left:auto;margin-right:auto}
+  .direction-tribe .tribe-desc,.node-direction .tribe-desc{max-width:480px}
 
   /* ---------- Bucket Squad ---------- */
   .bucket{background:#fff;border:1px solid var(--border);border-top:3px solid var(--squad);border-radius:14px;box-shadow:var(--shadow);width:328px;overflow:hidden}
@@ -257,6 +286,11 @@
   .ed-foot{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:8px}
   .ed-foot .btn{flex:1;justify-content:center}
   .hint{font-size:11.5px;color:var(--faint);line-height:1.5;background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:9px 11px;margin-top:4px}
+  .ed-stat{display:flex;gap:14px;margin:2px 0 14px;font-size:12px;color:var(--muted);background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:9px 12px}
+  .ed-stat b{color:var(--ink);font-weight:700}
+  .alloc-total{margin-top:9px;font-size:11.5px;color:var(--muted);background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:7px 10px}
+  .alloc-total.over{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
+  .alloc-total b{font-weight:700}
 
   /* ---------- Modal création squad ---------- */
   #modalOv{position:fixed;inset:0;background:rgba(17,24,39,.4);z-index:70;opacity:0;pointer-events:none;transition:.16s}
@@ -391,6 +425,8 @@
   body.mode-affect .add-mini,body.mode-affect .add-res{opacity:.5}
   .stats{cursor:pointer;border-radius:8px;padding:3px 8px;transition:.12s}
   .stats:hover{background:#f2f4f7}
+  .hbtn{font-size:12.5px;font-weight:600}
+  @media (max-width:1100px){.hbtn{display:none}}
 
   /* ---------- Grande modale (Dashboard / Référentiel) ---------- */
   #sheetOv{position:fixed;inset:0;background:rgba(17,24,39,.42);z-index:90;opacity:0;pointer-events:none;transition:.16s}
@@ -433,7 +469,7 @@
   .dtable tr:last-child td{border-bottom:0}
   .dtable .zero{color:var(--faint)}
   .pill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:20px;padding:1px 8px}
-  .pill.temp{background:#fef3c7;color:#92400e} .pill.open{background:var(--open-bg);color:var(--open)}
+  .pill.temp{background:#fef3c7;color:#92400e} .pill.open{background:var(--open-bg);color:var(--open)} .pill.over{background:#fee2e2;color:#b91c1c}
   .dash-empty{color:var(--faint);font-size:12.5px;padding:6px 2px}
 
   /* Référentiel des rôles */
@@ -477,11 +513,9 @@
     <button data-mode="affect" title="Affecter les ressources par glisser-déposer"><span class="ic">⇄</span>Affectation</button>
   </div>
   <div class="hsep"></div>
-  <div class="legend">
-    <div class="item"><span class="dot" style="background:#3b82f6"></span>Hub FR</div>
-    <div class="item"><span class="dot" style="background:#22c55e"></span>COE Maroc</div>
-    <div class="item"><span class="dot" style="background:#d97706"></span>Poste ouvert</div>
-  </div>
+  <button class="btn ghost hbtn" id="dashBtn2" title="Dashboard analytics">📊 Analytics</button>
+  <button class="btn ghost hbtn" id="glossBtn2" title="Référentiel des rôles">📖 Rôles</button>
+  <div class="hsep"></div>
   <div class="zoom">
     <button id="zOut" title="Dézoomer">−</button>
     <span class="lvl" id="zLvl">100%</span>
@@ -723,19 +757,25 @@ function onLogout() {
 
 /* ---------------- Modèle ---------------- */
 const uid=()=>Math.random().toString(36).slice(2,9);
-function person(role,side,name='',loc='',status='Ouvert',tempUntil=''){return{pid:uid(),role,side,name,loc,status,tempUntil:status==='TEMP'?tempUntil:''};}
+function person(role,side,name='',loc='',status='Ouvert',tempUntil=''){return{pid:uid(),role,side,name,loc,status,tempUntil:status==='TEMP'?tempUntil:'',alloc:100,allocMode:'full'};}
 function newSquad(name,desc,opts){
+  const sq={id:uid(),name:name||'Nouvelle squad',desc:desc||'',leads:[],members:[]};
+  if(opts===false) return sq;
   opts=opts||{};
-  const sq={id:uid(),name:name||'Nouvelle squad',desc:desc||'',pm:null,lead:null,members:[]};
-  if(opts.pm!==false && opts!==false) sq.pm=person('Product Manager','produit');
-  if(opts.lead!==false && opts!==false) sq.lead=person('Tech Lead','tech');
-  if(opts===false){ sq.pm=null; sq.lead=null; }
+  if(opts.pm!==false) sq.leads.push(person('Product Manager','produit'));
+  if(opts.lead!==false) sq.leads.push(person('Tech Lead','tech'));
   return sq;
 }
-function binomeLabel(h){
-  const p=h.product.name||'HoP ouvert', t=h.tech.name||'EM ouvert';
-  return p+' & '+t;
+// Accès unifié aux leads d'un conteneur (direction / tribu / squad)
+function leadsOf(c){ return (c&&c.leads)||[]; }
+function firstLead(c,side){ return leadsOf(c).find(p=>p.side===side)||null; }
+function containerLabel(c,fallback){
+  const names=leadsOf(c).map(p=>p.name).filter(Boolean);
+  if(names.length) return names.join(' & ');
+  const roles=leadsOf(c).map(p=>p.role).filter(Boolean);
+  return roles.join(' / ')||fallback||'—';
 }
+function binomeLabel(h){ return containerLabel(h,'Tribu'); }
 function headLabel(h,i){ return 'Tribu '+(i+1)+' — '+binomeLabel(h); }
 function findHeadOfSquad(sqId){ return state.heads.find(h=>h.squads.some(s=>s.id===sqId))||null; }
 function moveSquad(sqId,target){
@@ -747,9 +787,8 @@ function moveSquad(sqId,target){
   else { const nh=state.heads.find(h=>h.id===target); if(nh){ nh.squads.push(sq); collapsed.delete(nh.id); } else state.squads.push(sq); }
 }
 function newHead(){
-  return {id:uid(),
-    product:person('Head of Product','produit'),
-    tech:person('Engineering Manager','tech'),
+  return {id:uid(), desc:'',
+    leads:[person('Head of Product','produit'), person('Engineering Manager','tech')],
     squads:[],cells:[]};
 }
 const TRANSVERSE_ROLES_DEFAULT=['QA Engineer','Software Architect','UX Designer','UI Designer','UX Researcher','UX Writer','Data Analyst','Data Engineer','DevOps Engineer','SRE','Security Engineer','Product Ops','Agile Coach','Scrum Master','Business Analyst','Tech Writer','Performance Engineer','ML Engineer','Accessibility Expert'];
@@ -817,13 +856,13 @@ function resource(role,name,loc,alloc,side){
   const p=person(role||'Ressource','tech',name||'',loc||'',(name?'Occupé':'Ouvert'));
   if(side)p.side=side; p.alloc=(alloc===''||alloc==null||isNaN(+alloc))?100:+alloc; return p;
 }
+function setP(p,name,loc){ p.name=name; p.loc=loc; p.status=name?'Occupé':'Ouvert'; return p; }
 function seed(){
   const h=newHead();
-  h.product.name='Sophie Petit'; h.product.loc='FR'; h.product.status='Occupé';
-  h.tech.name='Karim El Amrani'; h.tech.loc='Maroc'; h.tech.status='Occupé';
+  h.desc='Acquisition, activation et rétention des utilisateurs.';
+  setP(h.leads[0],'Sophie Petit','FR'); setP(h.leads[1],'Karim El Amrani','Maroc');
   const s=newSquad('Squad Acquisition','Acquisition & croissance des nouveaux utilisateurs.');
-  s.pm.name='Emma Laurent'; s.pm.loc='FR'; s.pm.status='Occupé';
-  s.lead.name='Youssef Benali'; s.lead.loc='Maroc'; s.lead.status='Occupé';
+  setP(s.leads[0],'Emma Laurent','FR'); setP(s.leads[1],'Youssef Benali','Maroc');
   s.members.push(person('Frontend Engineer','tech','Lucas Girard','FR','Occupé'));
   s.members.push(person('Backend Engineer','tech','Fatima Zahra','Maroc','Occupé'));
   s.members.push(person('Product Designer','produit','Nadia Roux','FR','Occupé'));
@@ -835,18 +874,15 @@ function seed(){
   cell.members.push(resource('UX Designer','Léa Dubois','FR',30,'produit'));
   h.cells.push(cell);
   const fly=newSquad('Squad Innovation','Squad volante rattachée à la Direction.',true);
-  fly.pm.name='Manon Girard'; fly.pm.loc='FR'; fly.pm.status='Occupé';
-  fly.lead.name='Reda Tahiri'; fly.lead.loc='Maroc'; fly.lead.status='Occupé';
+  setP(fly.leads[0],'Manon Girard','FR'); setP(fly.leads[1],'Reda Tahiri','Maroc');
   fly.members.push(person('Fullstack Engineer','tech','','FR','Ouvert'));
-  return {
-    direction:{product:person('CPO','produit','Claire Moreau','FR','Occupé'),
-               tech:person('CTO','tech','Julien Bernard','FR','Occupé')},
-    heads:[h], squads:[fly], pool:[], glossary:defaultGlossary()
-  };
+  const direction={desc:"Direction produit & technologie de l'organisation.",
+    leads:[setP(person('CPO','produit'),'Claire Moreau','FR'), setP(person('CTO','tech'),'Julien Bernard','FR')]};
+  return { direction, heads:[h], squads:[fly], pool:[], glossary:defaultGlossary() };
 }
 function blank(){
-  return {direction:{product:person('CPO','produit','','','Ouvert'),
-                     tech:person('CTO','tech','','','Ouvert')},heads:[],squads:[],pool:[],glossary:defaultGlossary()};
+  return {direction:{desc:'',leads:[person('CPO','produit'),person('CTO','tech')]},
+    heads:[],squads:[],pool:[],glossary:defaultGlossary()};
 }
 
 /* ---------------- Persistance (Supabase) ---------------- */
@@ -856,67 +892,96 @@ function migrate(){
   if(!Array.isArray(state.squads))state.squads=[];
   if(!Array.isArray(state.pool))state.pool=[];
   if(!Array.isArray(state.glossary)||!state.glossary.length)state.glossary=defaultGlossary();
-  const fixP=p=>{ if(p&&p.tempUntil===undefined)p.tempUntil=''; };
+  const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
+  // direction {product,tech} -> {leads:[]}
+  const d=state.direction||{};
+  if(!Array.isArray(d.leads)){ d.leads=[]; if(d.product)d.leads.push(d.product); if(d.tech)d.leads.push(d.tech); delete d.product; delete d.tech; }
+  if(d.desc===undefined)d.desc='';
+  if(!d.leads.length)d.leads=[person('CPO','produit'),person('CTO','tech')];
+  state.direction=d;
+  // squad {pm,lead} -> {leads:[]}
+  const fixSquad=s=>{ if(!Array.isArray(s.leads)){ s.leads=[]; if(s.pm)s.leads.push(s.pm); if(s.lead)s.leads.push(s.lead); } delete s.pm; delete s.lead; if(s.desc===undefined)s.desc=''; s.leads.forEach(fixP); s.members.forEach(fixP); };
+  leadsOf(d).forEach(fixP);
   state.pool.forEach(fixP);
-  fixP(state.direction.product); fixP(state.direction.tech);
   (state.heads||[]).forEach(h=>{
     if(!Array.isArray(h.cells))h.cells=[];
-    fixP(h.product); fixP(h.tech);
-    (h.squads||[]).forEach(s=>{ fixP(s.pm); fixP(s.lead); s.members.forEach(fixP); });
+    if(!Array.isArray(h.leads)){ h.leads=[]; if(h.product)h.leads.push(h.product); if(h.tech)h.leads.push(h.tech); delete h.product; delete h.tech; }
+    if(h.desc===undefined)h.desc='';
+    h.leads.forEach(fixP);
+    (h.squads||[]).forEach(fixSquad);
     (h.cells||[]).forEach(c=>c.members.forEach(fixP));
   });
-  (state.squads||[]).forEach(s=>{ fixP(s.pm); fixP(s.lead); s.members.forEach(fixP); });
+  (state.squads||[]).forEach(fixSquad);
 }
 
 /* ---------------- Rendu ---------------- */
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function reg(p){pmap[p.pid]=p;return p;}
+/* --- Personnes : agrégation d'allocation & badges cohérents --- */
+let _allocByName={};
+function allPersons(){
+  const out=[]; const d=state.direction;
+  leadsOf(d).forEach(p=>out.push(p));
+  (state.heads||[]).forEach(h=>{ leadsOf(h).forEach(p=>out.push(p)); (h.squads||[]).forEach(s=>{ leadsOf(s).forEach(p=>out.push(p)); s.members.forEach(p=>out.push(p)); }); (h.cells||[]).forEach(c=>c.members.forEach(p=>out.push(p))); });
+  (state.squads||[]).forEach(s=>{ leadsOf(s).forEach(p=>out.push(p)); s.members.forEach(p=>out.push(p)); });
+  return out;
+}
+function allocOf(p){ return (p.alloc==null||isNaN(+p.alloc))?100:+p.alloc; }
+function computeAllocByName(){ const m={}; allPersons().forEach(p=>{ if(p.name){ const k=p.name.trim().toLowerCase(); m[k]=(m[k]||0)+allocOf(p); } }); _allocByName=m; }
+function totalAllocOf(p){ return p.name?(_allocByName[p.name.trim().toLowerCase()]||allocOf(p)):allocOf(p); }
 function locBadge(p){
   if(p.loc==='FR')return '<span class="badge fr">Hub · FR</span>';
   if(p.loc==='Maroc')return '<span class="badge coe">COE · Maroc</span>';
   return '';
 }
-function tempBadge(p){
-  if(p.status!=='TEMP')return '';
-  const d=p.tempUntil?` → ${p.tempUntil}`:'';
-  return `<span class="badge temp">TEMP${d}</span>`;
+function locChip(p){ // version compacte, mêmes couleurs partout
+  if(p.loc==='FR')return '<span class="chip fr">Hub · FR</span>';
+  if(p.loc==='Maroc')return '<span class="chip coe">COE · Maroc</span>';
+  return '';
 }
+function tempBadge(p){ if(p.status!=='TEMP')return ''; const d=p.tempUntil?` → ${p.tempUntil}`:''; return `<span class="badge temp">TEMP${d}</span>`; }
+function tempChip(p){ return p.status==='TEMP'?'<span class="chip temp">TEMP</span>':''; }
+function allocChip(p){ // % affiché si partiel ou surchargé
+  const a=allocOf(p); const total=totalAllocOf(p);
+  if(p.name && total>100) return `<span class="chip over" title="Staffé à ${total}% au total (suralloué)">⚠ ${a}%${total!==a?` · Σ${total}%`:''}</span>`;
+  if(p.allocMode==='part' || a!==100) return `<span class="chip alloc">${a}%</span>`;
+  return '';
+}
+function pClasses(p){ return `${p.side} ${!p.name?'isopen':''} ${p.status==='TEMP'?'istemp':''} ${p.name&&totalAllocOf(p)>100?'isover':''}`; }
 function cardHTML(p){
   reg(p); const open=!p.name; const name=open?'Poste ouvert':p.name;
-  const stat=p.status==='TEMP'?tempBadge(p):(open&&p.status?`<span class="badge status">${esc(p.status)}</span>`:'');
-  return `<div class="card ${p.side} ${open?'isopen':''}" data-action="edit" data-pid="${p.pid}">
+  const stat=open&&p.status&&p.status!=='Ouvert'?`<span class="badge status">${esc(p.status)}</span>`:'';
+  return `<div class="card ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>
     <div class="role">${esc(p.role)}</div>
     <div class="name ${open?'open':''}">${esc(name)}</div>
-    <div class="foot">${locBadge(p)}${stat}</div>
+    <div class="foot">${locBadge(p)}${tempBadge(p)}${allocChip(p)}${stat}</div>
   </div>`;
 }
 function miniHTML(p){
   reg(p); const open=!p.name; const name=open?'Ouvert':p.name;
-  const loc=p.loc==='FR'?'<span class="mdot fr"></span><span class="m-loc">FR</span>'
-          :p.loc==='Maroc'?'<span class="mdot coe"></span><span class="m-loc">Maroc</span>':'';
-  const tmp=p.status==='TEMP'?`<span class="badge temp" style="font-size:8px;padding:0 5px">TEMP</span>`:'';
-  return `<div class="mini ${p.side} ${open?'isopen':''}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
+  return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>
     <div class="m-name ${open?'open':''}">${esc(name)}</div>
     <div class="m-role">${esc(p.role)}</div>
-    <div class="m-foot">${loc}${tmp}</div>
+    <div class="m-foot">${locChip(p)}${tempChip(p)}${allocChip(p)}</div>
   </div>`;
 }
-function duoHTML(a,b){return `<div class="duo">${cardHTML(a)}${cardHTML(b)}</div>`;}
-function singleLeadHTML(p){return `<div class="duo" style="justify-content:center">${cardHTML(p)}</div>`;}
-
+// Rangée de leads dynamique + bouton d'ajout de rôle (direction / tribu / squad)
+function leadsHTML(container,kind,ctxId){
+  const cards=leadsOf(container).map(cardHTML).join('');
+  const add=`<div class="add-lead" data-action="add-lead" data-ck="${kind}" data-ci="${ctxId}" title="Ajouter un rôle">＋</div>`;
+  return `<div class="leads-row">${cards}${add}</div>`;
+}
 function squadHTML(sq,flying){
   const isColl=collapsed.has(sq.id);
-  const hasPm=!!sq.pm, hasLead=!!sq.lead, hasDuo=hasPm&&hasLead;
-  const leadCount=(hasPm?1:0)+(hasLead?1:0);
+  const leadCount=leadsOf(sq).length;
   const total=leadCount+sq.members.length;
   const members=sq.members.map(miniHTML).join('');
   const add=`<div class="add-mini" data-action="add-member" data-squad="${sq.id}">＋ Membre</div>`;
   const rnd=`<div class="rnd-title">${leadCount?'Équipe R&D':'Membres'} · ${sq.members.length}</div><div class="rnd-grid" data-drop="squad" data-squad="${sq.id}">${members}${add}</div>`;
   const desc=sq.desc?`<div class="bucket-desc">${esc(sq.desc)}</div>`:'';
-  const leads=hasDuo?duoHTML(sq.pm,sq.lead):(hasPm?singleLeadHTML(sq.pm):(hasLead?singleLeadHTML(sq.lead):''));
-  const body=isColl?'':`<div class="bucket-body">${leads}${rnd}</div>`;
+  const body=isColl?'':`<div class="bucket-body">${leadsHTML(sq,'squad',sq.id)}${rnd}</div>`;
   const fold=`<button class="foldbtn sqfold ${isColl?'iscoll':''}" data-action="toggle" data-id="${sq.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${total}</span></button>`;
   const badge=flying?'<span class="fly-badge">Volante</span>':'';
   return `<div class="bucket ${isColl?'iscoll':''} ${flying?'flying':''}">
@@ -938,13 +1003,13 @@ function addToolsHTML(ctxHead,showTribu,always){
 }
 function resourceMiniHTML(p){
   reg(p); const open=!p.name; const name=open?'Ouvert':p.name;
-  const loc=p.loc==='FR'?'<span class="mdot fr"></span>FR':p.loc==='Maroc'?'<span class="mdot coe"></span>Maroc':'';
-  const alloc=`<span class="alloc">${p.alloc!=null?p.alloc:100}%</span>`;
-  return `<div class="cres ${p.side} ${open?'isopen':''}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
+  const a=allocOf(p); const over=p.name&&totalAllocOf(p)>100;
+  const alloc=`<span class="alloc ${over?'over':''}" ${over?`title="Suralloué : ${totalAllocOf(p)}% au total"`:''}>${over?'⚠ ':''}${a}%</span>`;
+  return `<div class="cres ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>
     <div class="cr-top"><span class="cr-name ${open?'open':''}">${esc(name)}</span>${alloc}</div>
     <div class="cr-role">${esc(p.role)}</div>
-    <div class="cr-loc">${loc}</div>
+    <div class="cr-loc">${locChip(p)}${tempChip(p)}</div>
   </div>`;
 }
 function cellHTML(c){
@@ -967,9 +1032,11 @@ function headHTML(h){
   const cells=h.cells||[];
   const childCount=h.squads.length+cells.length;
   const hasKids=childCount>0;
+  const tdesc=h.desc?`<div class="tribe-desc">${esc(h.desc)}</div>`:'';
   const tribe=`<div class="tribe">
-      <div class="tribe-cap" data-action="edit-tribe" data-head="${h.id}"><span class="tc-left"><span class="tc-dot"></span>Tribu · Head of Product / Engineering Manager</span><span class="cap-edit">⚙</span></div>
-      <div class="node-head">${duoHTML(h.product,h.tech)}</div>
+      <div class="tribe-cap" data-action="edit-tribe" data-head="${h.id}"><span class="tc-left"><span class="tc-dot"></span>Tribu${h.name?' · '+esc(h.name):''}</span><span class="cap-edit">⚙</span></div>
+      ${tdesc}
+      <div class="node-head">${leadsHTML(h,'tribe',h.id)}</div>
     </div>`;
   const fold=hasKids?`<button class="foldbtn ${isColl?'iscoll':''}" data-action="toggle" data-id="${h.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${childCount}</span></button>`:'';
   const core=`<div class="node-content">${tribe}${fold}${addToolsHTML(h.id)}</div>`;
@@ -998,6 +1065,7 @@ function headHTML(h){
 function render(){
   pmap={};
   if(state.glossary)rebuildRoleLists();
+  computeAllocByName();
   const d=state.direction;
   const flySquads=state.squads||[];
   const childCount=state.heads.length+flySquads.length;
@@ -1009,10 +1077,12 @@ function render(){
       <button class="ntbtn add" data-action="add-squad" data-head="__dir__" title="Nouvelle squad volante">＋ Squad</button>
       <button class="ntbtn cellbtn" data-action="add-cell" data-head="" title="Nouvelle Support Cell">＋ Cell</button>
     </div>`;
+  const ddesc=d.desc?`<div class="tribe-desc">${esc(d.desc)}</div>`:'';
   const dirNode=`<div class="node-content node-direction">
       <div class="tribe direction-tribe">
-        <div class="tribe-cap"><span class="tc-left"><span class="tc-dot"></span>Direction · CPO / CTO</span></div>
-        <div>${duoHTML(d.product,d.tech)}</div>
+        <div class="tribe-cap" data-action="edit-dir"><span class="tc-left"><span class="tc-dot"></span>Direction</span><span class="cap-edit">⚙</span></div>
+        ${ddesc}
+        ${leadsHTML(d,'direction','__dir__')}
       </div>${dFold}${dTools}</div>`;
   const childrenHTML=hasChildren?`<ul>${state.heads.map(headHTML).join('')}${flySquads.map(sq=>`<li><div class="node-content">${squadHTML(sq,true)}</div></li>`).join('')}</ul>`:'';
   canvas.innerHTML=`<div class="tree"><ul><li class="rootnode ${dirColl?'collapsed':''}">${dirNode}${childrenHTML}</li></ul></div>`;
@@ -1021,10 +1091,9 @@ function render(){
   fitIfNeeded();
 }
 function updateStats(){
-  const all=[state.direction.product,state.direction.tech]; let squads=0, temps=0;
-  const addSquad=s=>{ squads++; if(s.pm)all.push(s.pm); if(s.lead)all.push(s.lead); s.members.forEach(m=>all.push(m)); };
-  state.heads.forEach(h=>{ all.push(h.product,h.tech); (h.squads||[]).forEach(addSquad); (h.cells||[]).forEach(c=>c.members.forEach(m=>all.push(m))); });
-  (state.squads||[]).forEach(addSquad);
+  const all=allPersons(); let squads=0, temps=0;
+  state.heads.forEach(h=>{ squads+=(h.squads||[]).length; });
+  squads+=(state.squads||[]).length;
   let open=0; all.forEach(p=>{ if(!p.name)open++; if(p.status==='TEMP')temps++; });
   const pool=(state.pool||[]).length;
   $('#stats').innerHTML=`<span><b>${state.heads.length}</b> tribus</span><span><b>${squads}</b> squads</span><span><b>${all.length}</b> postes</span><span><b>${open}</b> ouverts</span>${temps?`<span><b>${temps}</b> TEMP</span>`:''}${pool?`<span><b>${pool}</b> à affecter</span>`:''}`;
@@ -1037,6 +1106,8 @@ canvas.addEventListener('click',e=>{
   if(a==='edit'){ openEditor(pmap[t.dataset.pid],'person'); }
   else if(a==='edit-squad'){ const sq=findSquad(t.dataset.squad); openEditor(sq,'squad'); }
   else if(a==='edit-tribe'){ const h=state.heads.find(x=>x.id===t.dataset.head); if(h)openEditor(h,'tribe'); }
+  else if(a==='edit-dir'){ openEditor(state.direction,'dir'); }
+  else if(a==='add-lead'){ addLead(t.dataset.ck,t.dataset.ci); }
   else if(a==='toggle'){ const id=t.dataset.id; collapsed.has(id)?collapsed.delete(id):collapsed.add(id); render(); }
   else if(a==='add-head'){ state.heads.push(newHead()); commit(); toast('Tribu ajoutée'); }
   else if(a==='add-squad'){ openSquadCreator(t.dataset.head); }
@@ -1058,6 +1129,40 @@ function findMemberCtx(pid){
 function findCell(id){ for(const h of state.heads) for(const c of (h.cells||[])) if(c.id===id) return c; return null; }
 function findCellCtx(pid){ for(const h of state.heads) for(const c of (h.cells||[])){ const i=c.members.findIndex(m=>m.pid===pid); if(i>=0) return {cell:c,index:i}; } return null; }
 function findHeadOfCell(id){ return state.heads.find(h=>(h.cells||[]).some(c=>c.id===id))||null; }
+// Localise une personne partout dans le modèle (leads dir/tribu/squad, membres, cellules, vivier)
+function locate(pid){
+  const d=state.direction; let i=leadsOf(d).findIndex(p=>p.pid===pid);
+  if(i>=0)return{kind:'dir-lead',list:d.leads,index:i,cat:'direction',container:d};
+  for(const h of state.heads){
+    i=leadsOf(h).findIndex(p=>p.pid===pid); if(i>=0)return{kind:'tribe-lead',list:h.leads,index:i,cat:'lead',container:h};
+    for(const s of h.squads){
+      i=leadsOf(s).findIndex(p=>p.pid===pid); if(i>=0)return{kind:'squad-lead',list:s.leads,index:i,cat:'lead',container:s};
+      i=s.members.findIndex(p=>p.pid===pid); if(i>=0)return{kind:'member',list:s.members,index:i,cat:'squad',container:s};
+    }
+    for(const c of (h.cells||[])){ i=c.members.findIndex(p=>p.pid===pid); if(i>=0)return{kind:'cell',list:c.members,index:i,cat:'support',container:c}; }
+  }
+  for(const s of (state.squads||[])){
+    i=leadsOf(s).findIndex(p=>p.pid===pid); if(i>=0)return{kind:'squad-lead',list:s.leads,index:i,cat:'lead',container:s};
+    i=s.members.findIndex(p=>p.pid===pid); if(i>=0)return{kind:'member',list:s.members,index:i,cat:'squad',container:s};
+  }
+  i=(state.pool||[]).findIndex(p=>p.pid===pid); if(i>=0)return{kind:'pool',list:state.pool,index:i,cat:'squad',container:null};
+  return null;
+}
+function containerByKind(kind,ctxId){
+  if(kind==='direction')return state.direction;
+  if(kind==='tribe')return state.heads.find(h=>h.id===ctxId);
+  if(kind==='squad')return findSquad(ctxId);
+  return null;
+}
+function catForKind(kind){ return kind==='direction'?'direction':'lead'; }
+function rolesInCat(cat){ return (state.glossary||[]).filter(g=>g.category===cat); }
+function addLead(kind,ctxId){
+  const c=containerByKind(kind,ctxId); if(!c)return;
+  const roles=rolesInCat(catForKind(kind)); const def=roles[0];
+  const p=person(def?def.name:'Nouveau rôle', def?def.side:'produit');
+  c.leads=c.leads||[]; c.leads.push(reg(p));
+  commit(); openEditor(p,'person');
+}
 
 /* ---------------- Éditeur ---------------- */
 let edCtx=null;
@@ -1073,22 +1178,12 @@ function openEditor(obj,kind){
       <div class="field"><label>Rattachement</label>
         <select id="f-sqhead" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
           <option value="__dir__" ${!curHead?'selected':''}>Direction — squad volante (hors tribu)</option>
-          ${hopts}<option value="__new__">＋ Nouveau binôme HoP / EM</option></select></div>
-      <div class="field"><label>Leads de la squad</label>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="f-sqpm" ${obj.pm?'checked':''} style="width:auto"> Product Manager</label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="f-sqlead" ${obj.lead?'checked':''} style="width:auto"> Tech Lead</label>
-        </div>
-      </div>
-      <div class="hint">Choisis les leads de la squad : PM seul, Tech Lead seul, les deux, ou aucun.</div>`;
+          ${hopts}<option value="__new__">＋ Nouvelle tribu</option></select></div>
+      <div class="ed-stat"><span><b>${leadsOf(obj).length}</b> leads</span><span><b>${obj.members.length}</b> membres</span></div>
+      <div class="hint">Ajoute/retire les leads (PM, Tech Lead, autre rôle) avec le bouton <b>＋</b> sur la squad, ou clique une carte pour l'éditer.</div>`;
     $('#edFoot').innerHTML=`<button class="btn" id="edDelSquad" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button><button class="btn primary" id="edSave">Enregistrer</button>`;
     $('#edSave').onclick=()=>{
       obj.name=$('#f-sqname').value.trim()||'Squad'; obj.desc=$('#f-sqdesc').value.trim();
-      const wantPm=$('#f-sqpm').checked, wantLead=$('#f-sqlead').checked;
-      if(wantPm&&!obj.pm) obj.pm=person('Product Manager','produit');
-      if(!wantPm&&obj.pm){ if(!obj.pm.name||confirm('Retirer le Product Manager ?')) obj.pm=null; }
-      if(wantLead&&!obj.lead) obj.lead=person('Tech Lead','tech');
-      if(!wantLead&&obj.lead){ if(!obj.lead.name||confirm('Retirer le Tech Lead ?')) obj.lead=null; }
       let target=$('#f-sqhead').value;
       if(target==='__new__'){ const nh=newHead(); state.heads.push(nh); target=nh.id; }
       const curId=curHead?curHead.id:'__dir__';
@@ -1100,43 +1195,64 @@ function openEditor(obj,kind){
     $('#edKind').textContent='Support Cell';
     $('#edBody').innerHTML=`
       <div class="field"><label>Nom de la Support Cell</label><input id="f-cellname" value="${esc(obj.name)}"></div>
-      <div class="hint">Ressources transverses rattachées au binôme de la tribu, allouées en % aux squads. Ajoute des ressources avec « ＋ Ressource » sur le bloc.</div>`;
+      <div class="ed-stat"><span><b>${obj.members.length}</b> ressources</span></div>
+      <div class="hint">Cellule d'experts transverses rattachée à la tribu. Chaque ressource est allouée en % de son temps. Ajoute des ressources avec « ＋ Ressource ».</div>`;
     $('#edFoot').innerHTML=`<button class="btn" id="edDelCell" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button><button class="btn primary" id="edSave">Enregistrer</button>`;
     $('#edSave').onclick=()=>{ obj.name=$('#f-cellname').value.trim()||'Support Cell'; commit(); closeEditor(); };
     $('#edDelCell').onclick=()=>{ if(confirm('Supprimer cette Support Cell ?')){ const h=findHeadOfCell(obj.id); if(h)h.cells=h.cells.filter(c=>c.id!==obj.id); commit(); closeEditor(); } };
-  } else if(kind==='tribe'){
-    $('#edKind').textContent='Tribu';
+  } else if(kind==='tribe'||kind==='dir'){
+    const isDir=kind==='dir';
+    $('#edKind').textContent=isDir?'Direction':'Tribu';
+    const stats=isDir
+      ? `<div class="ed-stat"><span><b>${leadsOf(obj).length}</b> leads</span></div>`
+      : `<div class="ed-stat"><span><b>${leadsOf(obj).length}</b> leads</span><span><b>${obj.squads.length}</b> squads</span><span><b>${(obj.cells||[]).length}</b> cells</span></div>`;
     $('#edBody').innerHTML=`
-      <div class="hint" style="margin-bottom:14px">Binôme <b>${esc(binomeLabel(obj))}</b>. Clique sur les cartes Head of Product / Engineering Manager pour renseigner les personnes.</div>
-      <div class="field"><label>Squads rattachées</label><input value="${obj.squads.length}" disabled style="background:#f9fafb;color:var(--muted)"></div>
-      <div class="field"><label>Support Cells</label><input value="${(obj.cells||[]).length}" disabled style="background:#f9fafb;color:var(--muted)"></div>`;
-    $('#edFoot').innerHTML=`<button class="btn" id="edDelTribe" style="flex:1;justify-content:center;color:#dc2626;border-color:#fecaca">Supprimer la tribu</button>`;
-    $('#edDelTribe').onclick=()=>{ if(confirm('Supprimer cette tribu, ses squads et Support Cells ?')){ state.heads=state.heads.filter(x=>x.id!==obj.id); collapsed.delete(obj.id); commit(); closeEditor(); } };
+      ${isDir?'':`<div class="field"><label>Nom de la tribu</label><input id="f-tname" value="${esc(obj.name||'')}" placeholder="ex. Growth, Core, Data…"></div>`}
+      <div class="field"><label>Description / mission</label><textarea class="f" id="f-tdesc" placeholder="Mission, périmètre, objectifs…">${esc(obj.desc||'')}</textarea></div>
+      ${stats}
+      <div class="hint">Ajoute des rôles (${isDir?'CPO, CTO, CPTO…':'HoP, EM, autre…'}) avec le bouton <b>＋</b> sur le bloc. Clique une carte pour l'éditer.</div>`;
+    $('#edFoot').innerHTML=isDir
+      ? `<button class="btn primary" id="edSave" style="flex:1;justify-content:center">Enregistrer</button>`
+      : `<button class="btn" id="edDelTribe" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button><button class="btn primary" id="edSave">Enregistrer</button>`;
+    $('#edSave').onclick=()=>{ if(!isDir)obj.name=$('#f-tname').value.trim(); obj.desc=$('#f-tdesc').value.trim(); commit(); closeEditor(); };
+    if(!isDir)$('#edDelTribe').onclick=()=>{ if(confirm('Supprimer cette tribu, ses squads et Support Cells ?')){ state.heads=state.heads.filter(x=>x.id!==obj.id); collapsed.delete(obj.id); commit(); closeEditor(); } };
   } else {
-    const p=obj; const isMember=!!findMemberCtx(p.pid); const isCell=!!findCellCtx(p.pid);
-    const fixedRole=['CPO','CTO','Head of Product','Engineering Manager','Product Manager','Tech Lead'].includes(p.role) && !isMember && !isCell;
-    $('#edKind').textContent=fixedRole?p.role:(isCell?'Ressource transverse':isMember?'Membre R&D':'Poste');
-    const allRoles=[...MEMBER_ROLES,...TRANSVERSE_ROLES].filter((v,i,a)=>a.indexOf(v)===i).sort();
-    const roleField=fixedRole
-      ? `<div class="field"><label>Poste</label><input value="${esc(p.role)}" disabled style="background:#f9fafb;color:var(--muted)"></div>`
-      : `<div class="field"><label>Poste / expertise</label>
-          <select id="f-role" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
-            <option value="">— Choisir un poste —</option>
-            ${allRoles.map(r=>`<option value="${esc(r)}" ${p.role===r?'selected':''}>${esc(r)}</option>`).join('')}
-            ${!allRoles.includes(p.role)&&p.role?`<option value="${esc(p.role)}" selected>${esc(p.role)}</option>`:''}
-          </select>
-          <input id="f-role-custom" placeholder="ou saisir un poste personnalisé" value="" style="margin-top:6px;width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:12px;color:var(--muted)">
-        </div>`;
-    const sideField=(isMember||isCell)?`
+    const p=obj; const loc0=locate(p.pid); const cat=loc0?loc0.cat:'squad';
+    const kindLabel={'dir-lead':'Direction','tribe-lead':'Lead de tribu','squad-lead':'Lead de squad','member':'Membre R&D','cell':'Ressource transverse','pool':'Vivier'}[loc0?loc0.kind:'']||'Poste';
+    $('#edKind').textContent=kindLabel;
+    let roleNames;
+    if(cat==='direction') roleNames=rolesInCat('direction').map(g=>g.name);
+    else if(cat==='lead') roleNames=rolesInCat('lead').map(g=>g.name);
+    else roleNames=[...rolesInCat('squad'),...rolesInCat('support')].map(g=>g.name);
+    roleNames=[...new Set(roleNames)].sort((a,b)=>a.localeCompare(b,'fr'));
+    const gdef=glossFor(p.role);
+    const roleField=`<div class="field"><label>Rôle / poste</label>
+        <select id="f-role" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
+          <option value="">— Choisir un rôle —</option>
+          ${roleNames.map(r=>`<option value="${esc(r)}" ${p.role===r?'selected':''}>${esc(r)}</option>`).join('')}
+          ${!roleNames.includes(p.role)&&p.role?`<option value="${esc(p.role)}" selected>${esc(p.role)} (hors référentiel)</option>`:''}
+        </select>
+        <input id="f-role-custom" placeholder="ou saisir un rôle personnalisé" value="" style="margin-top:6px;width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:12px;color:var(--muted)">
+        <div class="hint" id="role-def" style="margin-top:8px;${gdef&&gdef.definition?'':'display:none'}">${gdef&&gdef.definition?esc(gdef.definition):''}</div>
+      </div>`;
+    const sideField=`
       <div class="field"><label>Filière</label><div class="seg" id="seg-side">
         <button data-v="produit" class="${p.side==='produit'?'on produit':''}">Produit</button>
         <button data-v="tech" class="${p.side==='tech'?'on tech':''}">Tech</button>
-      </div></div>`:'';
-    const allocField=isCell?`
-      <div class="field"><label>Allocation de temps sur la tribu</label>
-        <div style="display:flex;align-items:center;gap:8px"><input id="f-alloc" type="number" min="0" max="100" step="5" value="${p.alloc!=null?p.alloc:100}" style="width:110px"><span style="color:var(--muted);font-size:13px">%</span></div>
-        <div class="seg" id="seg-alloc" style="margin-top:8px">${[25,50,75,100].map(v=>`<button type="button" data-v="${v}">${v}%</button>`).join('')}</div>
-      </div>`:'';
+      </div></div>`;
+    const total=p.name?totalAllocOf(p):0;
+    const allocField=`
+      <div class="field"><label>Temps de travail</label>
+        <div class="seg" id="seg-allocmode">
+          <button data-v="full" class="${p.allocMode!=='part'?'on':''}">Temps plein</button>
+          <button data-v="part" class="${p.allocMode==='part'?'on':''}">Partiel</button>
+        </div>
+        <div id="alloc-wrap" style="display:${p.allocMode==='part'?'block':'none'};margin-top:8px">
+          <div style="display:flex;align-items:center;gap:8px"><input id="f-alloc" type="number" min="0" max="200" step="5" value="${allocOf(p)}" style="width:100px"><span style="color:var(--muted);font-size:13px">% du temps</span></div>
+          <div class="seg" id="seg-alloc" style="margin-top:8px">${[25,50,75,100].map(v=>`<button type="button" data-v="${v}">${v}%</button>`).join('')}</div>
+        </div>
+        ${p.name?`<div class="alloc-total ${total>100?'over':''}" id="alloc-total">${total>100?`⚠ ${esc(p.name)} est staffé à <b>${total}%</b> au total (suralloué)`:`${esc(p.name)} : <b>${total}%</b> alloué au total`}</div>`:''}
+      </div>`;
     const tempField=`<div class="field" id="f-temp-wrap" style="display:${p.status==='TEMP'?'block':'none'}">
         <label>Fin de mission TEMP</label>
         <input id="f-tempuntil" type="date" value="${esc(p.tempUntil||'')}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
@@ -1152,28 +1268,28 @@ function openEditor(obj,kind){
         <button data-v="Maroc" class="${p.loc==='Maroc'?'on coe':''}">COE · Maroc</button>
       </div></div>
       <div class="field"><label>Statut</label><div class="seg" id="seg-stat">
-        ${STATUSES.map(s=>`<button data-v="${s}" class="${p.status===s?'on'+(s==='TEMP'?' open':s!=='Occupé'?' open':''):''}">${s}</button>`).join('')}
+        ${STATUSES.map(s=>`<button data-v="${s}" class="${p.status===s?'on'+(s!=='Occupé'?' open':''):''}">${s}</button>`).join('')}
       </div></div>
       ${tempField}`;
-    wireSeg('seg-side'); wireSeg('seg-loc'); wireSeg('seg-stat');
-    const origWire=document.getElementById('seg-stat');
-    if(origWire) origWire.querySelectorAll('button').forEach(b=>{
-      const orig=b.onclick;
-      b.onclick=(e)=>{ if(orig)orig(e); const tw=$('#f-temp-wrap'); if(tw) tw.style.display=b.dataset.v==='TEMP'?'block':'none'; };
-    });
-    if(isCell){ document.querySelectorAll('#seg-alloc button').forEach(b=>b.onclick=()=>{ $('#f-alloc').value=b.dataset.v; }); }
-    const delBtn=(isMember||isCell)?`<button class="btn" id="edDel" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button>`:'';
+    wireSeg('seg-side'); wireSeg('seg-loc'); wireSeg('seg-stat'); wireSeg('seg-allocmode');
+    $('#seg-stat').querySelectorAll('button').forEach(b=>{ const orig=b.onclick; b.onclick=(e)=>{ if(orig)orig(e); const tw=$('#f-temp-wrap'); if(tw)tw.style.display=b.dataset.v==='TEMP'?'block':'none'; }; });
+    $('#seg-allocmode').querySelectorAll('button').forEach(b=>{ const orig=b.onclick; b.onclick=(e)=>{ if(orig)orig(e); const w=$('#alloc-wrap'); if(w)w.style.display=b.dataset.v==='part'?'block':'none'; }; });
+    document.querySelectorAll('#seg-alloc button').forEach(b=>b.onclick=()=>{ $('#f-alloc').value=b.dataset.v; });
+    const rsel=$('#f-role'); if(rsel)rsel.onchange=()=>{ const g=glossFor(rsel.value); const rd=$('#role-def'); if(rd){ rd.textContent=g&&g.definition?g.definition:''; rd.style.display=g&&g.definition?'block':'none'; } };
+    const canDel=loc0 && loc0.kind!=='pool';
+    const delBtn=canDel?`<button class="btn" id="edDel" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button>`:'';
     $('#edFoot').innerHTML=`${delBtn}<button class="btn primary" id="edSave">Enregistrer</button>`;
     $('#edSave').onclick=()=>{
       p.name=$('#f-name').value.trim();
-      if($('#f-role')){ const custom=$('#f-role-custom')?.value.trim(); p.role=custom||$('#f-role').value.trim()||p.role; }
+      const custom=$('#f-role-custom')?.value.trim(); p.role=custom||$('#f-role').value.trim()||p.role;
       const side=segVal('seg-side'); if(side)p.side=side;
       p.loc=segVal('seg-loc'); p.status=segVal('seg-stat')||p.status;
       p.tempUntil=p.status==='TEMP'?($('#f-tempuntil')?.value||''):'';
-      if(isCell){ const a=parseInt($('#f-alloc').value,10); p.alloc=isNaN(a)?100:Math.max(0,Math.min(100,a)); }
+      p.allocMode=segVal('seg-allocmode')||'full';
+      if(p.allocMode==='part'){ const a=parseInt($('#f-alloc').value,10); p.alloc=isNaN(a)?100:Math.max(0,Math.min(300,a)); } else p.alloc=100;
       commit(); closeEditor();
     };
-    if(isMember||isCell)$('#edDel').onclick=()=>{ if(isCell){ const c=findCellCtx(p.pid); c.cell.members.splice(c.index,1); } else { const c=findMemberCtx(p.pid); c.squad.members.splice(c.index,1); } commit(); closeEditor(); };
+    if(canDel)$('#edDel').onclick=()=>{ const l=locate(p.pid); if(l){ l.list.splice(l.index,1); } commit(); closeEditor(); };
   }
   ov.classList.add('open'); ed.classList.add('open');
 }
@@ -1262,35 +1378,40 @@ function closeSheet(){ sheetView=null; $('#sheetOv').classList.remove('open'); $
 $('#sheetClose').onclick=closeSheet; $('#sheetOv').onclick=closeSheet;
 $('#dashBtn').onclick=()=>openSheet('dash');
 $('#glossBtn').onclick=()=>openSheet('gloss');
+$('#dashBtn2').onclick=()=>openSheet('dash');
+$('#glossBtn2').onclick=()=>openSheet('gloss');
 $('#stats').onclick=()=>openSheet('dash');
 
 /* ---- Analytics ---- */
 function computeAnalytics(){
+  computeAllocByName();
   const A={tribes:0,squads:0,cells:0,people:0,open:0,filled:0,temp:0,fr:0,maroc:0,noloc:0,produit:0,tech:0,
-    byStatus:{}, byRole:{}, tempByRole:{}, tempByTribe:[], perTribe:[], flySquads:0, cellMembers:0, poolTotal:(state.pool||[]).length, poolByRole:{}};
+    byStatus:{}, byRole:{}, tempByRole:{}, tempByTribe:[], perTribe:[], flySquads:0, cellMembers:0, poolTotal:(state.pool||[]).length, poolByRole:{}, over:[]};
   STATUSES.forEach(s=>A.byStatus[s]=0);
-  const acc=p=>{ if(!p)return; A.people++;
-    const open=!p.name; if(open)A.open++; else A.filled++;
+  const seenOver=new Set();
+  const acc=(p,bucket)=>{ if(!p)return; A.people++; if(bucket)bucket.people++;
+    const open=!p.name; if(open){A.open++; if(bucket)bucket.open++;} else A.filled++;
     const st=open?'Ouvert':(p.status||'Occupé'); A.byStatus[st]=(A.byStatus[st]||0)+1;
-    if(p.status==='TEMP'){ A.temp++; A.tempByRole[p.role]=(A.tempByRole[p.role]||0)+1; }
+    if(p.status==='TEMP'){ A.temp++; if(bucket)bucket.temp++; A.tempByRole[p.role]=(A.tempByRole[p.role]||0)+1; }
     if(p.loc==='FR')A.fr++; else if(p.loc==='Maroc')A.maroc++; else A.noloc++;
     if(p.side==='produit')A.produit++; else A.tech++;
     if(p.role)A.byRole[p.role]=(A.byRole[p.role]||0)+1;
+    if(p.name){ const tot=totalAllocOf(p); const k=p.name.trim().toLowerCase(); if(tot>100&&!seenOver.has(k)){ seenOver.add(k); A.over.push({name:p.name,total:tot}); } }
   };
-  acc(state.direction.product); acc(state.direction.tech);
-  const scanSquad=(s,bucket)=>{ A.squads++; if(s.pm){acc(s.pm);bucket.people++; if(!s.pm.name)bucket.open++; if(s.pm.status==='TEMP')bucket.temp++;} if(s.lead){acc(s.lead);bucket.people++; if(!s.lead.name)bucket.open++; if(s.lead.status==='TEMP')bucket.temp++;} s.members.forEach(m=>{acc(m);bucket.people++; if(!m.name)bucket.open++; if(m.status==='TEMP')bucket.temp++;}); };
-  state.heads.forEach((h,i)=>{
+  const scanSquad=(s,bucket)=>{ A.squads++; leadsOf(s).forEach(p=>acc(p,bucket)); s.members.forEach(m=>acc(m,bucket)); };
+  leadsOf(state.direction).forEach(p=>acc(p));
+  state.heads.forEach(h=>{
     A.tribes++;
-    const bucket={name:binomeLabel(h),squads:(h.squads||[]).length,cells:(h.cells||[]).length,people:0,open:0,temp:0};
-    acc(h.product); acc(h.tech); bucket.people+=2; if(!h.product.name)bucket.open++; if(!h.tech.name)bucket.open++;
-    if(h.product.status==='TEMP')bucket.temp++; if(h.tech.status==='TEMP')bucket.temp++;
+    const bucket={name:binomeLabel(h)+(h.name?` (${h.name})`:''),squads:(h.squads||[]).length,cells:(h.cells||[]).length,people:0,open:0,temp:0};
+    leadsOf(h).forEach(p=>acc(p,bucket));
     (h.squads||[]).forEach(s=>scanSquad(s,bucket));
-    (h.cells||[]).forEach(c=>{ A.cells++; c.members.forEach(m=>{acc(m); A.cellMembers++; bucket.people++; if(!m.name)bucket.open++; if(m.status==='TEMP')bucket.temp++;}); });
+    (h.cells||[]).forEach(c=>{ A.cells++; c.members.forEach(m=>{acc(m,bucket); A.cellMembers++;}); });
     A.perTribe.push(bucket);
     if(bucket.temp)A.tempByTribe.push({name:bucket.name,temp:bucket.temp});
   });
   (state.squads||[]).forEach(s=>{ A.flySquads++; const bucket={name:'Squad volante — '+s.name,squads:1,cells:0,people:0,open:0,temp:0}; scanSquad(s,bucket); A.perTribe.push(bucket); if(bucket.temp)A.tempByTribe.push({name:s.name,temp:bucket.temp}); });
   (state.pool||[]).forEach(p=>{ A.poolByRole[p.role||'—']=(A.poolByRole[p.role||'—']||0)+1; });
+  A.over.sort((a,b)=>b.total-a.total);
   return A;
 }
 function barRow(label,val,max,cls){ const pct=max?Math.round(val/max*100):0; return `<div class="bar-row"><span class="bl" title="${esc(label)}">${esc(label)}</span><span class="bar-track"><span class="bar-fill ${cls||''}" style="width:${pct}%"></span></span><span class="bv">${val}</span></div>`; }
@@ -1304,6 +1425,7 @@ function renderDashboard(){
     {n:A.people,l:'Postes',sub:`${A.filled} pourvus · ${rate}%`,c:''},
     {n:A.open,l:'Postes ouverts',c:'accent-o'},
     {n:A.temp,l:'Ressources TEMP',c:''},
+    {n:A.over.length,l:'Surchargés (>100%)',c:A.over.length?'accent-o':''},
     {n:A.poolTotal,l:'À affecter (vivier)',c:''}
   ];
   const kpisHTML=kpis.map(k=>`<div class="kpi ${k.c}"><div class="n">${k.n}</div><div class="l">${k.l}</div>${k.sub?`<div class="sub">${k.sub}</div>`:''}</div>`).join('');
@@ -1344,6 +1466,9 @@ function renderDashboard(){
         <div class="panelbox"><h4>TEMP par rôle</h4>${tempRolesHTML}</div>
         <div class="panelbox"><h4>TEMP par tribu</h4>${tempTribeHTML}</div>
       </div>
+    </div>
+    <div class="dash-sec"><h3>Charge & sur-allocation</h3>
+      <div class="panelbox">${A.over.length?`<table class="dtable"><thead><tr><th>Personne</th><th class="num">Allocation totale</th></tr></thead><tbody>${A.over.map(o=>`<tr><td>${esc(o.name)}</td><td class="num"><span class="pill over">⚠ ${o.total}%</span></td></tr>`).join('')}</tbody></table>`:'<div class="dash-empty">Personne n\'est staffé au-delà de 100%. 👍</div>'}</div>
     </div>
     <div class="dash-sec"><h3>Détail par tribu</h3>
       <div class="panelbox">${perTribeHTML}</div>
@@ -1485,13 +1610,7 @@ $('#poolSearch').oninput=e=>{ poolFilter=e.target.value; renderPool(); };
 
 /* ---- Glisser-déposer des ressources ---- */
 let dragPid=null;
-function detachPerson(pid){
-  let i=(state.pool||[]).findIndex(p=>p.pid===pid); if(i>=0)return state.pool.splice(i,1)[0];
-  for(const h of state.heads) for(const s of h.squads){ const j=s.members.findIndex(m=>m.pid===pid); if(j>=0)return s.members.splice(j,1)[0]; }
-  for(const s of (state.squads||[])){ const j=s.members.findIndex(m=>m.pid===pid); if(j>=0)return s.members.splice(j,1)[0]; }
-  for(const h of state.heads) for(const c of (h.cells||[])){ const j=c.members.findIndex(m=>m.pid===pid); if(j>=0)return c.members.splice(j,1)[0]; }
-  return null;
-}
+function detachPerson(pid){ const l=locate(pid); if(l){ return l.list.splice(l.index,1)[0]; } return null; }
 function dropTargetOf(e){
   const post=e.target.closest('.card,.mini,.cres');
   if(post){ const pid=post.dataset.pid, p=pmap[pid]; if(p&&!p.name&&pid!==dragPid)return {type:'fill',el:post,pid}; }
@@ -1642,12 +1761,14 @@ function createSquad(){
   const wantPm=$('#c-pm').checked, wantLead=$('#c-lead').checked;
   const sq=newSquad(name,$('#c-desc').value.trim(),false);
   if(wantPm){
-    sq.pm=person('Product Manager','produit');
-    sq.pm.name=$('#c-pm-name').value.trim(); sq.pm.loc=$('#c-pm-loc').dataset.v||''; sq.pm.status=sq.pm.name?'Occupé':'Ouvert';
+    const pm=person('Product Manager','produit');
+    pm.name=$('#c-pm-name').value.trim(); pm.loc=$('#c-pm-loc').dataset.v||''; pm.status=pm.name?'Occupé':'Ouvert';
+    sq.leads.push(pm);
   }
   if(wantLead){
-    sq.lead=person('Tech Lead','tech');
-    sq.lead.name=$('#c-lead-name').value.trim(); sq.lead.loc=$('#c-lead-loc').dataset.v||''; sq.lead.status=sq.lead.name?'Occupé':'Ouvert';
+    const tl=person('Tech Lead','tech');
+    tl.name=$('#c-lead-name').value.trim(); tl.loc=$('#c-lead-loc').dataset.v||''; tl.status=tl.name?'Occupé':'Ouvert';
+    sq.leads.push(tl);
   }
   rndDraft.forEach(m=>{ if(m.role.trim()||m.name.trim()){ const st=m.status||( m.name.trim()?'Occupé':'Ouvert'); sq.members.push(person(m.role.trim()||'Membre',m.side||'tech',m.name.trim(),m.loc||'',st,m.tempUntil||'')); }});
   if(target==='__dir__'){ state.squads.push(sq); }
