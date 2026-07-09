@@ -99,19 +99,20 @@
   .direction-tribe .tc-dot{background:var(--dir)}
 
   /* Support Cells sur les côtés de la tribu (jamais en dessous).
-     Positionnées en absolu (hors flux) : la tribu reste directement au-dessus
-     de ses squads, le connecteur parent→enfant n'est jamais poussé/cassé. */
-  .tribe-cells{position:absolute;top:38px;display:flex;flex-direction:column;gap:22px;z-index:5}
-  .tribe-cells.left{right:100%;margin-right:42px;align-items:flex-end}
-  .tribe-cells.right{left:100%;margin-left:42px;align-items:flex-start}
+     Les slots latéraux réservent la LARGEUR en flux (donc les blocs voisins
+     sont décalés, aucun chevauchement), tandis que les cells sont en absolu
+     À L'INTÉRIEUR du slot → elles n'ajoutent aucune hauteur, la tribu reste
+     directement au-dessus de ses squads et le connecteur n'est jamais cassé. */
+  .tribe-row{display:flex;align-items:flex-start;justify-content:center;gap:40px}
+  .tc-side{flex:0 0 236px;width:236px;position:relative;align-self:stretch}
+  .tc-abs{position:absolute;top:0;display:flex;flex-direction:column;gap:20px;width:236px}
+  .tc-side.left .tc-abs{right:0;align-items:flex-end}
+  .tc-side.right .tc-abs{left:0;align-items:flex-start}
   .cell-wrap{position:relative}
-  /* trait de liaison tribu ↔ support cell */
-  .tribe-cells .cell-wrap::before{content:'';position:absolute;top:26px;width:42px;height:3px;background:var(--conn)}
-  .tribe-cells.left  .cell-wrap::before{left:100%}
-  .tribe-cells.right .cell-wrap::before{right:100%}
-  .tribe-cells .cell-wrap::after{content:'';position:absolute;top:23px;width:9px;height:9px;border-radius:50%;background:var(--cellc);border:2px solid var(--panel)}
-  .tribe-cells.left  .cell-wrap::after{left:calc(100% + 38px)}
-  .tribe-cells.right .cell-wrap::after{right:calc(100% + 38px)}
+  /* liaison tribu ↔ support cell : trait gris net dans le style de l'arbre */
+  .tc-abs .cell-wrap::before{content:'';position:absolute;top:21px;height:3px;width:40px;background:var(--conn);border-radius:2px}
+  .tc-side.left  .cell-wrap::before{left:100%}
+  .tc-side.right .cell-wrap::before{right:100%}
   .cell{width:236px;background:#fff;border:1.5px dashed #9ec7c1;border-radius:12px;box-shadow:var(--shadow);position:relative}
   .badge-sc{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--cellc);background:#e6faf5;border:1px solid #bfeae2;border-radius:20px;padding:1px 6px;flex:0 0 auto}
   .cell-head{display:flex;align-items:center;gap:7px;padding:8px 10px;background:#f0fdfa;border-bottom:1px solid #cfeae5;border-radius:11px 11px 0 0;cursor:pointer}
@@ -964,20 +965,21 @@ function headHTML(h){
       <div class="node-head">${duoHTML(h.product,h.tech)}</div>
     </div>`;
   const fold=hasKids?`<button class="foldbtn ${isColl?'iscoll':''}" data-action="toggle" data-id="${h.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${childCount}</span></button>`:'';
-  // Support Cells : à gauche/droite de la tribu (jamais en dessous), en position
-  // absolue (hors flux) pour ne pas décaler les squads → le connecteur parent→enfant
-  // reste toujours intact. Alternance gauche/droite, empilées par côté.
+  const core=`<div class="node-content">${tribe}${fold}${addToolsHTML(h.id)}</div>`;
+  // Support Cells : à gauche/droite de la tribu (jamais en dessous). Les slots
+  // latéraux réservent la largeur EN FLUX (les blocs voisins sont donc décalés,
+  // aucun chevauchement) ; les cells sont en absolu DANS le slot (aucune hauteur
+  // ajoutée), donc la tribu reste directement au-dessus des squads et le
+  // connecteur parent→enfant n'est jamais cassé. Slots symétriques → tribu centrée.
   const wrapCell=c=>`<div class="cell-wrap">${cellHTML(c)}</div>`;
   const leftCells=cells.filter((_,i)=>i%2===0);   // 1re, 3e… à gauche
   const rightCells=cells.filter((_,i)=>i%2===1);  // 2e, 4e… à droite
-  const sideCells=(cells.length && !isColl)
-    ? (leftCells.length?`<div class="tribe-cells left">${leftCells.map(wrapCell).join('')}</div>`:'')
-     +(rightCells.length?`<div class="tribe-cells right">${rightCells.map(wrapCell).join('')}</div>`:'')
-    : '';
-  const content=`<div class="node-content">${sideCells}${tribe}${fold}${addToolsHTML(h.id)}</div>`;
+  const inner=(cells.length && !isColl)
+    ? `<div class="tribe-row"><div class="tc-side left"><div class="tc-abs">${leftCells.map(wrapCell).join('')}</div></div>${core}<div class="tc-side right"><div class="tc-abs">${rightCells.map(wrapCell).join('')}</div></div></div>`
+    : core;
   const squadLis=h.squads.map(sq=>`<li><div class="node-content">${squadHTML(sq)}</div></li>`).join('');
   const kids=h.squads.length?`<ul>${squadLis}</ul>`:'';
-  return `<li class="${isColl?'collapsed':''}">${content}${kids}</li>`;
+  return `<li class="${isColl?'collapsed':''}">${inner}${kids}</li>`;
 }
 
 function render(){
@@ -1191,7 +1193,7 @@ function contentBounds(){
   const base=canvas.getBoundingClientRect();
   let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
   const add=el=>{ const r=el.getBoundingClientRect(); if(!r.width&&!r.height)return; minX=Math.min(minX,r.left); minY=Math.min(minY,r.top); maxX=Math.max(maxX,r.right); maxY=Math.max(maxY,r.bottom); };
-  add(tree); canvas.querySelectorAll('.tribe-cells').forEach(add);
+  add(tree); canvas.querySelectorAll('.tc-abs').forEach(add);
   canvas.style.transform=prev;
   if(minX===Infinity)return null;
   return {x:minX-base.left, y:minY-base.top, w:maxX-minX, h:maxY-minY};
