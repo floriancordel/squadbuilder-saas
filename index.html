@@ -77,6 +77,9 @@
   .tree li.offc::after{left:calc(50% + var(--coreoff));width:calc(50% - var(--coreoff))}
   .tree li.offc:only-child::after{left:calc(50% + var(--coreoff))}
   .tree li.offc > ul{transform:translateX(var(--coreoff))}
+  /* Zone tribu : la tribu "absorbe" visuellement ses squads & cells (un tout) */
+  .tree li.tgroup{background:linear-gradient(180deg,#eef4fe,#f4f8fd 55%,#f6f9fc);border:1px solid #dbe6fb;border-radius:26px;padding-bottom:22px}
+  .tree li.tgroup .bucket,.tree li.tgroup .cell{box-shadow:0 1px 2px rgba(16,24,40,.05)}
 
   .node-content{position:relative;display:flex;flex-direction:column;align-items:center}
 
@@ -159,24 +162,26 @@
   /* ---------- Duo (cartes liées) ---------- */
   .duo{position:relative;display:flex;align-items:stretch;gap:26px}
   .duo::before{content:'';position:absolute;top:38px;left:24px;right:24px;height:2px;background:var(--line);z-index:0}
-  .card{position:relative;z-index:1;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);width:198px;padding:12px 13px 11px;text-align:left;overflow:hidden;cursor:pointer;transition:.14s}
-  .card:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);border-color:var(--line)}
-  .card .accent{position:absolute;left:0;top:0;bottom:0;width:4px}
-  .card.produit .accent{background:var(--produit)}
-  .card.tech .accent{background:var(--tech)}
-  .card .role{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:2px;line-height:1.25}
-  .card .name{font-size:14.5px;font-weight:650;letter-spacing:-.01em;line-height:1.2}
-  .card .name.open{color:var(--open);font-style:italic;font-weight:600}
-  .card .foot{display:flex;align-items:center;gap:6px;margin-top:9px;flex-wrap:wrap}
+  /* ---------- Cartes personnes UNIFIÉES (leads + membres) ---------- */
+  .card,.mini{position:relative;z-index:1;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow);padding:8px 11px 9px 14px;text-align:left;overflow:hidden;cursor:pointer;transition:.13s}
+  .card:hover,.mini:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);border-color:var(--line)}
+  .card .accent,.mini .accent{position:absolute;left:0;top:0;bottom:0;width:3px}
+  .card.produit .accent,.mini.produit .accent{background:var(--produit)}
+  .card.tech .accent,.mini.tech .accent{background:var(--tech)}
+  .card .role,.mini .m-role{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);line-height:1.3;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .name,.mini .m-name{font-size:13px;font-weight:650;letter-spacing:-.01em;line-height:1.25;overflow:hidden;text-overflow:ellipsis}
+  .card .name.open,.mini .m-name.open{color:var(--open);font-style:italic;font-weight:600}
+  .card .foot,.mini .m-foot{display:flex;align-items:center;justify-content:flex-start;gap:5px;margin-top:7px;flex-wrap:wrap}
+  .card.isopen,.mini.isopen{border-style:dashed;border-color:var(--open-bd);background:var(--open-bg)}
   .badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
   .badge.fr{background:var(--fr-bg);color:var(--fr-ink)}
   .badge.coe{background:var(--coe-bg);color:var(--coe-ink)}
   .badge.status{background:var(--open-bg);color:var(--open);border:1px solid var(--open-bd)}
   .badge.temp{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:700}
   .temp-date{font-size:9px;color:#92400e;margin-top:2px}
-  .card.isopen{border-style:dashed;border-color:var(--open-bd);background:var(--open-bg)}
-  .node-direction .card{width:206px}
-  .node-direction .card .name{font-size:16px}
+  .leads-row .card{width:166px}
+  .node-direction .card{width:188px}
+  .node-direction .card .name{font-size:14px}
 
   /* ---------- Chips compacts cohérents (Hub/COE, TEMP, alloc) ---------- */
   .chip{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:20px;white-space:nowrap;line-height:1.5;display:inline-block}
@@ -200,12 +205,11 @@
   .leads-row{display:flex;gap:16px;justify-content:center;flex-wrap:nowrap;align-items:stretch}
   .add-lead{align-self:center;min-width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--line);border-radius:9px;color:var(--muted);font-size:16px;font-weight:700;cursor:pointer;background:#fcfdff;transition:.12s;padding:0 4px}
   .add-lead:hover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
-  .node-direction .leads-row{gap:18px;padding:14px 18px}
-  .tribe .node-head .leads-row .card{width:172px}
-  .bucket .leads-row{gap:12px;margin-bottom:12px}
-  .bucket .leads-row .card{width:138px;padding:9px 10px}
+  .node-direction .leads-row{gap:16px;padding:14px 18px}
+  .tribe .node-head .leads-row .card{width:158px}
+  .bucket .leads-row{gap:11px;margin-bottom:12px}
+  .bucket .leads-row .card{width:135px}
   .bucket .leads-row .card .name{font-size:12.5px}
-  .bucket .leads-row .card .role{font-size:9.5px}
   /* ---------- Header de bloc unifié (Direction / Tribu / Squad / Cell) ---------- */
   .blk-head{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer}
   .blk-head .blk-dot{width:8px;height:8px;border-radius:3px;margin-top:4px;flex:0 0 auto}
@@ -248,20 +252,9 @@
   .bucket .duo .card .role{font-size:9.5px}
   .rnd-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin:2px 0 8px;display:flex;align-items:center;gap:6px}
   .rnd-title::after{content:'';flex:1;height:1px;background:var(--border)}
-  .rnd-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-  .mini{position:relative;background:#fff;border:1px solid var(--border);border-radius:9px;padding:7px 8px 7px 12px;overflow:hidden;cursor:pointer;transition:.12s}
-  .mini:hover{border-color:var(--line);box-shadow:var(--shadow)}
-  .mini .accent{position:absolute;left:0;top:0;bottom:0;width:3px}
-  .mini.produit .accent{background:var(--produit)}
-  .mini.tech .accent{background:var(--tech)}
-  .mini .m-name{font-size:12px;font-weight:600;line-height:1.2}
-  .mini .m-name.open{color:var(--open);font-style:italic}
-  .mini .m-role{font-size:10px;color:var(--muted);line-height:1.25;margin-top:1px}
-  .mini .m-foot{display:flex;align-items:center;justify-content:flex-start;gap:4px;margin-top:5px;flex-wrap:wrap}
-  .mini .mdot{width:7px;height:7px;border-radius:50%}
-  .mini .mdot.fr{background:#3b82f6}.mini .mdot.coe{background:#22c55e}
-  .mini .m-loc{font-size:9.5px;color:var(--faint)}
-  .mini.isopen{border-style:dashed;border-color:var(--open-bd);background:var(--open-bg)}
+  .rnd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .mini .m-name{font-size:12.5px}
+  .cell-body .mini .m-name{font-size:12.5px}
   .add-mini{display:flex;align-items:center;justify-content:center;gap:5px;border:1px dashed var(--line);border-radius:9px;padding:9px;color:var(--muted);font-size:11.5px;font-weight:600;cursor:pointer;background:#fcfdff;transition:.12s}
   .add-mini:hover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
 
@@ -1299,8 +1292,8 @@ function miniHTML(p){
   reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>
-    <div class="m-name ${open?'open':''}">${esc(name)}</div>
     <div class="m-role">${esc(p.role)}</div>
+    <div class="m-name ${open?'open':''}">${esc(name)}</div>
     ${chipsRow(p,'m-foot')}
   </div>`;
 }
@@ -1341,8 +1334,8 @@ function resourceMiniHTML(p){
   reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>
-    <div class="m-name ${open?'open':''}">${esc(name)}</div>
     <div class="m-role">${esc(p.role)}</div>
+    <div class="m-name ${open?'open':''}">${esc(name)}</div>
     ${chipsRow(p,'m-foot')}
   </div>`;
 }
@@ -1393,7 +1386,7 @@ function headHTML(h){
   const coreoff=show?((hasL?138:0)-(hasR?138:0)):0;
   const squadLis=h.squads.map(sq=>`<li><div class="node-content">${squadHTML(sq)}</div></li>`).join('');
   const kids=h.squads.length?`<ul>${squadLis}</ul>`:'';
-  const cls=`${isColl?'collapsed':''}${coreoff?' offc':''}`.trim();
+  const cls=`tgroup ${isColl?'collapsed':''}${coreoff?' offc':''}`.trim();
   const style=coreoff?` style="--coreoff:${coreoff}px"`:'';
   return `<li class="${cls}"${style}>${inner}${kids}</li>`;
 }
