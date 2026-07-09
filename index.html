@@ -1715,7 +1715,15 @@ if (isDemo) {
   });
   (async()=>{
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) { $('#loginScreen').classList.remove('hidden'); }
+    if (session) return; // onAuthStateChange gère la suite
+    // Espace de travail partagé : connexion automatique au compte admin.
+    // Pas de session → on tente l'admin ; en cas d'échec, on affiche le login.
+    const res = await sb.auth.signInWithPassword({ email:'admin@squadbuilder.app', password:'admin123' });
+    if (res.error || !res.data?.session) {
+      $('#loginScreen').classList.remove('hidden');
+    } else {
+      await onLogin(res.data.user);
+    }
   })();
 }
 </script>
