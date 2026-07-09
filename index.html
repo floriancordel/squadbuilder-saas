@@ -77,9 +77,6 @@
   .tree li.offc::after{left:calc(50% + var(--coreoff));width:calc(50% - var(--coreoff))}
   .tree li.offc:only-child::after{left:calc(50% + var(--coreoff))}
   .tree li.offc > ul{transform:translateX(var(--coreoff))}
-  /* Zone tribu : la tribu "absorbe" visuellement ses squads & cells (un tout) */
-  .tree li.tgroup{background:linear-gradient(180deg,#eef4fe,#f4f8fd 55%,#f6f9fc);border:1px solid #dbe6fb;border-radius:26px;padding-bottom:22px}
-  .tree li.tgroup .bucket,.tree li.tgroup .cell{box-shadow:0 1px 2px rgba(16,24,40,.05)}
 
   .node-content{position:relative;display:flex;flex-direction:column;align-items:center}
 
@@ -172,7 +169,16 @@
   .card .name,.mini .m-name{font-size:13px;font-weight:650;letter-spacing:-.01em;line-height:1.25;overflow:hidden;text-overflow:ellipsis}
   .card .name.open,.mini .m-name.open{color:var(--open);font-style:italic;font-weight:600}
   .card .foot,.mini .m-foot{display:flex;align-items:center;justify-content:flex-start;gap:5px;margin-top:7px;flex-wrap:wrap}
+  /* Leads (têtes) : plus marqués que les membres — teinte filière, rôle coloré, accent épais */
+  .card{padding-left:15px}
+  .card .accent{width:4px}
+  .card.produit{background:linear-gradient(180deg,#f7f2ff,#fff 62%)}
+  .card.tech{background:linear-gradient(180deg,#eef5ff,#fff 62%)}
+  .card.produit .role{color:var(--produit)}
+  .card.tech .role{color:var(--tech)}
+  .card .role .lead-mark{font-size:8px;vertical-align:1px;margin-right:3px;opacity:.85}
   .card.isopen,.mini.isopen{border-style:dashed;border-color:var(--open-bd);background:var(--open-bg)}
+  .card.isopen .role{color:var(--open)}
   .badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
   .badge.fr{background:var(--fr-bg);color:var(--fr-ink)}
   .badge.coe{background:var(--coe-bg);color:var(--coe-ink)}
@@ -1283,7 +1289,7 @@ function cardHTML(p){
   reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
   return `<div class="card ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>
-    <div class="role">${esc(p.role)}</div>
+    <div class="role"><span class="lead-mark">◆</span>${esc(p.role)}</div>
     <div class="name ${open?'open':''}">${esc(name)}</div>
     ${chipsRow(p,'foot')}
   </div>`;
@@ -1386,7 +1392,7 @@ function headHTML(h){
   const coreoff=show?((hasL?138:0)-(hasR?138:0)):0;
   const squadLis=h.squads.map(sq=>`<li><div class="node-content">${squadHTML(sq)}</div></li>`).join('');
   const kids=h.squads.length?`<ul>${squadLis}</ul>`:'';
-  const cls=`tgroup ${isColl?'collapsed':''}${coreoff?' offc':''}`.trim();
+  const cls=`${isColl?'collapsed':''}${coreoff?' offc':''}`.trim();
   const style=coreoff?` style="--coreoff:${coreoff}px"`:'';
   return `<li class="${cls}"${style}>${inner}${kids}</li>`;
 }
