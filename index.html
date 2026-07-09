@@ -148,6 +148,8 @@
   .badge.fr{background:var(--fr-bg);color:var(--fr-ink)}
   .badge.coe{background:var(--coe-bg);color:var(--coe-ink)}
   .badge.status{background:var(--open-bg);color:var(--open);border:1px solid var(--open-bd)}
+  .badge.temp{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:700}
+  .temp-date{font-size:9px;color:#92400e;margin-top:2px}
   .card.isopen{border-style:dashed;border-color:var(--open-bd);background:var(--open-bg)}
   .node-direction .card{width:216px}
   .node-direction .card .name{font-size:16px}
@@ -384,7 +386,8 @@ const $=s=>document.querySelector(s);
 const viewport=$('#viewport'), canvas=$('#canvas');
 const LS_KEY='squadbuilder.v1';
 const LOCS=[['','—'],['FR','Hub · FR'],['Maroc','COE · Maroc']];
-const STATUSES=['Occupé','Ouvert','Recrutement'];
+const STATUSES=['Occupé','Ouvert','Recrutement','TEMP'];
+const MEMBER_ROLES=['Frontend Engineer','Backend Engineer','Fullstack Engineer','Mobile Engineer','Product Designer','UX Designer','UI Designer','UX Researcher','Data Analyst','Data Engineer','Data Scientist','DevOps Engineer','SRE','QA Engineer','Software Architect','Security Engineer','ML Engineer','Performance Engineer','Tech Writer','Product Ops','Agile Coach','Scrum Master','Business Analyst','Accessibility Expert'];
 
 let state=null, collapsed=new Set(), pmap={};
 
@@ -521,10 +524,13 @@ sb.auth.onAuthStateChange((event, session) => {
 
 /* ---------------- Modèle ---------------- */
 const uid=()=>Math.random().toString(36).slice(2,9);
-function person(role,side,name='',loc='',status='Ouvert'){return{pid:uid(),role,side,name,loc,status};}
-function newSquad(name,desc,withDuo){
+function person(role,side,name='',loc='',status='Ouvert',tempUntil=''){return{pid:uid(),role,side,name,loc,status,tempUntil:status==='TEMP'?tempUntil:''};}
+function newSquad(name,desc,opts){
+  opts=opts||{};
   const sq={id:uid(),name:name||'Nouvelle squad',desc:desc||'',pm:null,lead:null,members:[]};
-  if(withDuo!==false){ sq.pm=person('Product Manager','produit'); sq.lead=person('Tech Lead','tech'); }
+  if(opts.pm!==false && opts!==false) sq.pm=person('Product Manager','produit');
+  if(opts.lead!==false && opts!==false) sq.lead=person('Tech Lead','tech');
+  if(opts===false){ sq.pm=null; sq.lead=null; }
   return sq;
 }
 function binomeLabel(h){
@@ -588,7 +594,18 @@ function blank(){
 /* ---------------- Persistance (Supabase) ---------------- */
 function save(){ debouncedSave(); }
 function load(){ /* handled by onLogin */ }
-function migrate(){ if(!Array.isArray(state.squads))state.squads=[]; (state.heads||[]).forEach(h=>{ if(!Array.isArray(h.cells))h.cells=[]; }); }
+function migrate(){
+  if(!Array.isArray(state.squads))state.squads=[];
+  const fixP=p=>{ if(p&&p.tempUntil===undefined)p.tempUntil=''; };
+  fixP(state.direction.product); fixP(state.direction.tech);
+  (state.heads||[]).forEach(h=>{
+    if(!Array.isArray(h.cells))h.cells=[];
+    fixP(h.product); fixP(h.tech);
+    (h.squads||[]).forEach(s=>{ fixP(s.pm); fixP(s.lead); s.members.forEach(fixP); });
+    (h.cells||[]).forEach(c=>c.members.forEach(fixP));
+  });
+  (state.squads||[]).forEach(s=>{ fixP(s.pm); fixP(s.lead); s.members.forEach(fixP); });
+}
 
 /* ---------------- Rendu ---------------- */
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -598,9 +615,14 @@ function locBadge(p){
   if(p.loc==='Maroc')return '<span class="badge coe">COE · Maroc</span>';
   return '';
 }
+function tempBadge(p){
+  if(p.status!=='TEMP')return '';
+  const d=p.tempUntil?` → ${p.tempUntil}`:'';
+  return `<span class="badge temp">TEMP${d}</span>`;
+}
 function cardHTML(p){
   reg(p); const open=!p.name; const name=open?'Poste ouvert':p.name;
-  const stat=open&&p.status?`<span class="badge status">${esc(p.status)}</span>`:'';
+  const stat=p.status==='TEMP'?tempBadge(p):(open&&p.status?`<span class="badge status">${esc(p.status)}</span>`:'');
   return `<div class="card ${p.side} ${open?'isopen':''}" data-action="edit" data-pid="${p.pid}">
     <div class="accent"></div>
     <div class="role">${esc(p.role)}</div>
@@ -612,25 +634,28 @@ function miniHTML(p){
   reg(p); const open=!p.name; const name=open?'Ouvert':p.name;
   const loc=p.loc==='FR'?'<span class="mdot fr"></span><span class="m-loc">FR</span>'
           :p.loc==='Maroc'?'<span class="mdot coe"></span><span class="m-loc">Maroc</span>':'';
+  const tmp=p.status==='TEMP'?`<span class="badge temp" style="font-size:8px;padding:0 5px">TEMP</span>`:'';
   return `<div class="mini ${p.side} ${open?'isopen':''}" data-action="edit" data-pid="${p.pid}">
     <div class="accent"></div>
     <div class="m-name ${open?'open':''}">${esc(name)}</div>
     <div class="m-role">${esc(p.role)}</div>
-    <div class="m-foot">${loc}</div>
+    <div class="m-foot">${loc}${tmp}</div>
   </div>`;
 }
 function duoHTML(a,b){return `<div class="duo">${cardHTML(a)}${cardHTML(b)}</div>`;}
+function singleLeadHTML(p){return `<div class="duo" style="justify-content:center">${cardHTML(p)}</div>`;}
 
 function squadHTML(sq,flying){
   const isColl=collapsed.has(sq.id);
-  const hasDuo=!!(sq.pm&&sq.lead);
-  const total=(hasDuo?2:0)+sq.members.length;
+  const hasPm=!!sq.pm, hasLead=!!sq.lead, hasDuo=hasPm&&hasLead;
+  const leadCount=(hasPm?1:0)+(hasLead?1:0);
+  const total=leadCount+sq.members.length;
   const members=sq.members.map(miniHTML).join('');
   const add=`<div class="add-mini" data-action="add-member" data-squad="${sq.id}">＋ Membre</div>`;
-  const rnd=`<div class="rnd-title">${hasDuo?'Équipe R&D':'Membres'} · ${sq.members.length}</div><div class="rnd-grid">${members}${add}</div>`;
+  const rnd=`<div class="rnd-title">${leadCount?'Équipe R&D':'Membres'} · ${sq.members.length}</div><div class="rnd-grid">${members}${add}</div>`;
   const desc=sq.desc?`<div class="bucket-desc">${esc(sq.desc)}</div>`:'';
-  const duo=hasDuo?duoHTML(sq.pm,sq.lead):'';
-  const body=isColl?'':`<div class="bucket-body">${duo}${rnd}</div>`;
+  const leads=hasDuo?duoHTML(sq.pm,sq.lead):(hasPm?singleLeadHTML(sq.pm):(hasLead?singleLeadHTML(sq.lead):''));
+  const body=isColl?'':`<div class="bucket-body">${leads}${rnd}</div>`;
   const fold=`<button class="foldbtn sqfold ${isColl?'iscoll':''}" data-action="toggle" data-id="${sq.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${total}</span></button>`;
   const badge=flying?'<span class="fly-badge">Volante</span>':'';
   return `<div class="bucket ${isColl?'iscoll':''} ${flying?'flying':''}">
@@ -717,12 +742,12 @@ function render(){
   fitIfNeeded();
 }
 function updateStats(){
-  const all=[state.direction.product,state.direction.tech]; let squads=0;
+  const all=[state.direction.product,state.direction.tech]; let squads=0, temps=0;
   const addSquad=s=>{ squads++; if(s.pm)all.push(s.pm); if(s.lead)all.push(s.lead); s.members.forEach(m=>all.push(m)); };
   state.heads.forEach(h=>{ all.push(h.product,h.tech); (h.squads||[]).forEach(addSquad); (h.cells||[]).forEach(c=>c.members.forEach(m=>all.push(m))); });
   (state.squads||[]).forEach(addSquad);
-  let open=0; all.forEach(p=>{ if(!p.name)open++; });
-  $('#stats').innerHTML=`<span><b>${state.heads.length}</b> tribus</span><span><b>${squads}</b> squads</span><span><b>${all.length}</b> postes</span><span><b>${open}</b> ouverts</span>`;
+  let open=0; all.forEach(p=>{ if(!p.name)open++; if(p.status==='TEMP')temps++; });
+  $('#stats').innerHTML=`<span><b>${state.heads.length}</b> tribus</span><span><b>${squads}</b> squads</span><span><b>${all.length}</b> postes</span><span><b>${open}</b> ouverts</span>${temps?`<span><b>${temps}</b> TEMP</span>`:''}`;
 }
 
 /* ---------------- Actions ---------------- */
@@ -761,7 +786,6 @@ function openEditor(obj,kind){
   if(kind==='squad'){
     $('#edKind').textContent='Squad';
     const curHead=findHeadOfSquad(obj.id);
-    const hasDuo=!!(obj.pm&&obj.lead);
     const hopts=state.heads.map((h,i)=>`<option value="${h.id}" ${curHead&&h.id===curHead.id?'selected':''}>${esc(headLabel(h,i))}</option>`).join('');
     $('#edBody').innerHTML=`
       <div class="field"><label>Nom de la squad</label><input id="f-sqname" value="${esc(obj.name)}"></div>
@@ -770,14 +794,21 @@ function openEditor(obj,kind){
         <select id="f-sqhead" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
           <option value="__dir__" ${!curHead?'selected':''}>Direction — squad volante (hors tribu)</option>
           ${hopts}<option value="__new__">＋ Nouveau binôme HoP / EM</option></select></div>
-      <div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="f-sqduo" ${hasDuo?'checked':''} style="width:auto"> Duo Product Manager / Tech Lead</label></div>
-      <div class="hint">Une squad peut être rattachée à une tribu ou directement à la Direction (volante). Le duo PM / Tech Lead est optionnel.</div>`;
+      <div class="field"><label>Leads de la squad</label>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="f-sqpm" ${obj.pm?'checked':''} style="width:auto"> Product Manager</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="f-sqlead" ${obj.lead?'checked':''} style="width:auto"> Tech Lead</label>
+        </div>
+      </div>
+      <div class="hint">Choisis les leads de la squad : PM seul, Tech Lead seul, les deux, ou aucun.</div>`;
     $('#edFoot').innerHTML=`<button class="btn" id="edDelSquad" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button><button class="btn primary" id="edSave">Enregistrer</button>`;
     $('#edSave').onclick=()=>{
       obj.name=$('#f-sqname').value.trim()||'Squad'; obj.desc=$('#f-sqdesc').value.trim();
-      const wantDuo=$('#f-sqduo').checked, hasD=!!(obj.pm&&obj.lead);
-      if(wantDuo&&!hasD){ obj.pm=person('Product Manager','produit'); obj.lead=person('Tech Lead','tech'); }
-      else if(!wantDuo&&hasD){ const named=(obj.pm.name||obj.lead.name); if(!named||confirm('Retirer le duo PM / Tech Lead ?')){ obj.pm=null; obj.lead=null; } }
+      const wantPm=$('#f-sqpm').checked, wantLead=$('#f-sqlead').checked;
+      if(wantPm&&!obj.pm) obj.pm=person('Product Manager','produit');
+      if(!wantPm&&obj.pm){ if(!obj.pm.name||confirm('Retirer le Product Manager ?')) obj.pm=null; }
+      if(wantLead&&!obj.lead) obj.lead=person('Tech Lead','tech');
+      if(!wantLead&&obj.lead){ if(!obj.lead.name||confirm('Retirer le Tech Lead ?')) obj.lead=null; }
       let target=$('#f-sqhead').value;
       if(target==='__new__'){ const nh=newHead(); state.heads.push(nh); target=nh.id; }
       const curId=curHead?curHead.id:'__dir__';
@@ -805,9 +836,17 @@ function openEditor(obj,kind){
     const p=obj; const isMember=!!findMemberCtx(p.pid); const isCell=!!findCellCtx(p.pid);
     const fixedRole=['CPO','CTO','Head of Product','Engineering Manager','Product Manager','Tech Lead'].includes(p.role) && !isMember && !isCell;
     $('#edKind').textContent=fixedRole?p.role:(isCell?'Ressource transverse':isMember?'Membre R&D':'Poste');
+    const allRoles=[...MEMBER_ROLES,...TRANSVERSE_ROLES].filter((v,i,a)=>a.indexOf(v)===i).sort();
     const roleField=fixedRole
       ? `<div class="field"><label>Poste</label><input value="${esc(p.role)}" disabled style="background:#f9fafb;color:var(--muted)"></div>`
-      : `<div class="field"><label>Poste / expertise</label><input id="f-role" list="roleList" value="${esc(p.role)}" placeholder="ex: QA Engineer"></div>`;
+      : `<div class="field"><label>Poste / expertise</label>
+          <select id="f-role" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
+            <option value="">— Choisir un poste —</option>
+            ${allRoles.map(r=>`<option value="${esc(r)}" ${p.role===r?'selected':''}>${esc(r)}</option>`).join('')}
+            ${!allRoles.includes(p.role)&&p.role?`<option value="${esc(p.role)}" selected>${esc(p.role)}</option>`:''}
+          </select>
+          <input id="f-role-custom" placeholder="ou saisir un poste personnalisé" value="" style="margin-top:6px;width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:12px;color:var(--muted)">
+        </div>`;
     const sideField=(isMember||isCell)?`
       <div class="field"><label>Filière</label><div class="seg" id="seg-side">
         <button data-v="produit" class="${p.side==='produit'?'on produit':''}">Produit</button>
@@ -818,6 +857,10 @@ function openEditor(obj,kind){
         <div style="display:flex;align-items:center;gap:8px"><input id="f-alloc" type="number" min="0" max="100" step="5" value="${p.alloc!=null?p.alloc:100}" style="width:110px"><span style="color:var(--muted);font-size:13px">%</span></div>
         <div class="seg" id="seg-alloc" style="margin-top:8px">${[25,50,75,100].map(v=>`<button type="button" data-v="${v}">${v}%</button>`).join('')}</div>
       </div>`:'';
+    const tempField=`<div class="field" id="f-temp-wrap" style="display:${p.status==='TEMP'?'block':'none'}">
+        <label>Fin de mission TEMP</label>
+        <input id="f-tempuntil" type="date" value="${esc(p.tempUntil||'')}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
+      </div>`;
     $('#edBody').innerHTML=`
       <div class="field"><label>Nom</label><input id="f-name" value="${esc(p.name)}" placeholder="Laisser vide = poste ouvert" autofocus></div>
       ${roleField}
@@ -829,17 +872,24 @@ function openEditor(obj,kind){
         <button data-v="Maroc" class="${p.loc==='Maroc'?'on coe':''}">COE · Maroc</button>
       </div></div>
       <div class="field"><label>Statut</label><div class="seg" id="seg-stat">
-        ${STATUSES.map(s=>`<button data-v="${s}" class="${p.status===s?'on'+(s!=='Occupé'?' open':''):''}">${s}</button>`).join('')}
-      </div></div>`;
+        ${STATUSES.map(s=>`<button data-v="${s}" class="${p.status===s?'on'+(s==='TEMP'?' open':s!=='Occupé'?' open':''):''}">${s}</button>`).join('')}
+      </div></div>
+      ${tempField}`;
     wireSeg('seg-side'); wireSeg('seg-loc'); wireSeg('seg-stat');
+    const origWire=document.getElementById('seg-stat');
+    if(origWire) origWire.querySelectorAll('button').forEach(b=>{
+      const orig=b.onclick;
+      b.onclick=(e)=>{ if(orig)orig(e); const tw=$('#f-temp-wrap'); if(tw) tw.style.display=b.dataset.v==='TEMP'?'block':'none'; };
+    });
     if(isCell){ document.querySelectorAll('#seg-alloc button').forEach(b=>b.onclick=()=>{ $('#f-alloc').value=b.dataset.v; }); }
     const delBtn=(isMember||isCell)?`<button class="btn" id="edDel" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button>`:'';
     $('#edFoot').innerHTML=`${delBtn}<button class="btn primary" id="edSave">Enregistrer</button>`;
     $('#edSave').onclick=()=>{
       p.name=$('#f-name').value.trim();
-      if($('#f-role')) p.role=$('#f-role').value.trim()||p.role;
+      if($('#f-role')){ const custom=$('#f-role-custom')?.value.trim(); p.role=custom||$('#f-role').value.trim()||p.role; }
       const side=segVal('seg-side'); if(side)p.side=side;
       p.loc=segVal('seg-loc'); p.status=segVal('seg-stat')||p.status;
+      p.tempUntil=p.status==='TEMP'?($('#f-tempuntil')?.value||''):'';
       if(isCell){ const a=parseInt($('#f-alloc').value,10); p.alloc=isNaN(a)?100:Math.max(0,Math.min(100,a)); }
       commit(); closeEditor();
     };
@@ -912,17 +962,32 @@ function openSquadCreator(preHeadId){
         ${opts}
         <option value="__new__">＋ Créer un nouveau binôme HoP / EM</option>
       </select></div>
-    <div class="fld"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="c-duo" ${isDir?'':'checked'} style="width:auto"> Inclure le duo Product Manager / Tech Lead</label></div>
-    <div id="c-leads" style="${isDir?'display:none':''}">
+    <div class="fld"><label>Leads de la squad</label>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="c-pm" ${isDir?'':'checked'} style="width:auto"> Product Manager</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="c-lead" ${isDir?'':'checked'} style="width:auto"> Tech Lead</label>
+      </div>
+    </div>
+    <div id="c-leads">
       <div class="section">Leads</div>
-      <div class="row2">${leadBox('pm','produit','Product Manager')}${leadBox('lead','tech','Tech Lead')}</div>
+      <div class="row2">
+        <div id="c-pm-wrap">${leadBox('pm','produit','Product Manager')}</div>
+        <div id="c-lead-wrap">${leadBox('lead','tech','Tech Lead')}</div>
+      </div>
     </div>
     <div class="section">Membres <span style="text-transform:none;font-weight:500;color:var(--faint)">— optionnel</span></div>
     <div id="c-rnd"></div>
     <button class="add-row" id="c-addrnd">＋ Ajouter un membre</button>`;
   renderRnd(); wireMiniSeg();
-  $('#c-addrnd').onclick=()=>{ rndDraft.push({role:'',side:'tech',name:'',loc:''}); renderRnd(); };
-  $('#c-duo').onchange=()=>{ $('#c-leads').style.display=$('#c-duo').checked?'':'none'; };
+  $('#c-addrnd').onclick=()=>{ rndDraft.push({role:'',side:'tech',name:'',loc:'',status:'Ouvert',tempUntil:''}); renderRnd(); };
+  function updateLeadsVis(){
+    const pm=$('#c-pm').checked, lead=$('#c-lead').checked;
+    $('#c-leads').style.display=(pm||lead)?'':'none';
+    $('#c-pm-wrap').style.display=pm?'':'none';
+    $('#c-lead-wrap').style.display=lead?'':'none';
+  }
+  $('#c-pm').onchange=updateLeadsVis; $('#c-lead').onchange=updateLeadsVis;
+  updateLeadsVis();
   $('#mIco').textContent='S'; $('#mTitle').textContent='Nouvelle squad';
   $('#mSub').textContent='Rattachable à une tribu ou directement à la Direction (squad volante)';
   $('#mCreate').textContent='Créer la squad'; $('#mCreate').onclick=createSquad;
@@ -949,16 +1014,46 @@ function wireMiniSeg(){
 }
 function renderRnd(){
   const wrap=$('#c-rnd');
+  const roleOpts=MEMBER_ROLES.map(r=>`<option value="${r}">${r}</option>`).join('');
   wrap.innerHTML=rndDraft.map((m,i)=>`
-    <div class="rnd-row" data-i="${i}">
-      <input data-f="role" placeholder="Rôle (ex: Backend Eng.)" value="${esc(m.role)}">
-      <input data-f="name" placeholder="Nom (vide = ouvert)" value="${esc(m.name)}">
-      <select data-f="side"><option value="tech" ${m.side==='tech'?'selected':''}>Tech</option><option value="produit" ${m.side==='produit'?'selected':''}>Produit</option></select>
-      <select data-f="loc"><option value="" ${!m.loc?'selected':''}>—</option><option value="FR" ${m.loc==='FR'?'selected':''}>FR</option><option value="Maroc" ${m.loc==='Maroc'?'selected':''}>Maroc</option></select>
-      <button class="del" data-del="${i}" title="Retirer">×</button>
+    <div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;position:relative" data-i="${i}">
+      <button class="del" data-del="${i}" title="Retirer" style="position:absolute;top:6px;right:6px">×</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+        <div><label style="font-size:10px;font-weight:600;color:var(--muted);display:block;margin-bottom:3px">Poste</label>
+          <select data-f="role" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:7px;font-size:12px">
+            <option value="">— Choisir —</option>${roleOpts}
+            ${m.role&&!MEMBER_ROLES.includes(m.role)?`<option value="${esc(m.role)}" selected>${esc(m.role)}</option>`:''}
+          </select></div>
+        <div><label style="font-size:10px;font-weight:600;color:var(--muted);display:block;margin-bottom:3px">Nom</label>
+          <input data-f="name" placeholder="Vide = poste ouvert" value="${esc(m.name)}" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:7px;font-size:12px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div><label style="font-size:10px;font-weight:600;color:var(--muted);display:block;margin-bottom:3px">Filière</label>
+          <select data-f="side" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:7px;font-size:12px">
+            <option value="tech" ${m.side==='tech'?'selected':''}>Tech</option>
+            <option value="produit" ${m.side==='produit'?'selected':''}>Produit</option>
+          </select></div>
+        <div><label style="font-size:10px;font-weight:600;color:var(--muted);display:block;margin-bottom:3px">Localisation</label>
+          <select data-f="loc" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:7px;font-size:12px">
+            <option value="" ${!m.loc?'selected':''}>—</option>
+            <option value="FR" ${m.loc==='FR'?'selected':''}>Hub FR</option>
+            <option value="Maroc" ${m.loc==='Maroc'?'selected':''}>COE Maroc</option>
+          </select></div>
+        <div><label style="font-size:10px;font-weight:600;color:var(--muted);display:block;margin-bottom:3px">Statut</label>
+          <select data-f="status" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:7px;font-size:12px">
+            ${STATUSES.map(s=>`<option value="${s}" ${(m.status||'Ouvert')===s?'selected':''}>${s}</option>`).join('')}
+          </select></div>
+      </div>
+      <div class="rnd-temp" data-ti="${i}" style="display:${(m.status||'Ouvert')==='TEMP'?'block':'none'};margin-top:6px">
+        <label style="font-size:10px;font-weight:600;color:var(--muted);display:block;margin-bottom:3px">Fin de mission</label>
+        <input data-f="tempUntil" type="date" value="${esc(m.tempUntil||'')}" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:7px;font-size:12px">
+      </div>
     </div>`).join('');
-  wrap.querySelectorAll('.rnd-row').forEach(r=>{ const i=+r.dataset.i;
-    r.querySelectorAll('[data-f]').forEach(el=>{ el.oninput=el.onchange=()=>rndDraft[i][el.dataset.f]=el.value; }); });
+  wrap.querySelectorAll('[data-i]').forEach(r=>{ const i=+r.dataset.i;
+    r.querySelectorAll('[data-f]').forEach(el=>{ el.oninput=el.onchange=()=>{
+      rndDraft[i][el.dataset.f]=el.value;
+      if(el.dataset.f==='status'){ const tw=r.querySelector('.rnd-temp'); if(tw) tw.style.display=el.value==='TEMP'?'block':'none'; }
+    }; }); });
   wrap.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ rndDraft.splice(+b.dataset.del,1); renderRnd(); });
 }
 function closeModal(){ $('#modalOv').classList.remove('open'); $('#modal').classList.remove('open'); }
@@ -968,13 +1063,17 @@ function createSquad(){
   const name=$('#c-name').value.trim();
   if(!name){ $('#c-name').focus(); $('#c-name').style.borderColor='#dc2626'; return; }
   const target=$('#c-head').value;
-  const withDuo=$('#c-duo').checked;
-  const sq=newSquad(name,$('#c-desc').value.trim(),withDuo);
-  if(withDuo){
+  const wantPm=$('#c-pm').checked, wantLead=$('#c-lead').checked;
+  const sq=newSquad(name,$('#c-desc').value.trim(),false);
+  if(wantPm){
+    sq.pm=person('Product Manager','produit');
     sq.pm.name=$('#c-pm-name').value.trim(); sq.pm.loc=$('#c-pm-loc').dataset.v||''; sq.pm.status=sq.pm.name?'Occupé':'Ouvert';
+  }
+  if(wantLead){
+    sq.lead=person('Tech Lead','tech');
     sq.lead.name=$('#c-lead-name').value.trim(); sq.lead.loc=$('#c-lead-loc').dataset.v||''; sq.lead.status=sq.lead.name?'Occupé':'Ouvert';
   }
-  rndDraft.forEach(m=>{ if(m.role.trim()||m.name.trim()) sq.members.push(person(m.role.trim()||'Membre',m.side||'tech',m.name.trim(),m.loc||'',m.name.trim()?'Occupé':'Ouvert')); });
+  rndDraft.forEach(m=>{ if(m.role.trim()||m.name.trim()){ const st=m.status||( m.name.trim()?'Occupé':'Ouvert'); sq.members.push(person(m.role.trim()||'Membre',m.side||'tech',m.name.trim(),m.loc||'',st,m.tempUntil||'')); }});
   if(target==='__dir__'){ state.squads.push(sq); }
   else { let head; if(target==='__new__'||!state.heads.length){ head=newHead(); state.heads.push(head); } else head=state.heads.find(h=>h.id===target)||state.heads[0]; head.squads.push(sq); collapsed.delete(head.id); }
   collapsed.delete('DIR');
