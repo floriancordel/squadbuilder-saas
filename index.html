@@ -667,6 +667,64 @@
   .rc-jp-open{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--tech);background:var(--tech-soft);border-radius:8px;padding:8px 12px;text-decoration:none;white-space:nowrap}
   .rc-jp-open:hover{background:#dbeafe}
 
+  /* ---------- Référentiel master-détail (arbre + fiche) ---------- */
+  .sheet-body.gloss-mode{padding:0;overflow:hidden}
+  .gloss2{display:flex;height:100%}
+  .gtree{width:272px;flex:0 0 272px;border-right:1px solid var(--border);background:#fbfcfe;display:flex;flex-direction:column;height:100%}
+  .gtree-add{margin:12px;border:1px dashed var(--line);background:#fff;border-radius:9px;padding:10px;font-size:13px;font-weight:700;color:var(--tech);cursor:pointer}
+  .gtree-add:hover{background:var(--tech-soft);border-color:var(--tech)}
+  .gtree-body{flex:1;overflow:auto;padding:0 8px 20px}
+  .gt-cat{margin-bottom:2px}
+  .gt-cat-head{display:flex;align-items:center;gap:8px;padding:9px 8px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;color:var(--ink);user-select:none}
+  .gt-cat-head:hover{background:#eef2f8}
+  .gt-chev{font-size:9px;color:var(--faint);transition:.15s;width:9px;flex:0 0 auto}
+  .gt-cat.open .gt-chev{transform:rotate(90deg)}
+  .gt-cat-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gt-count{font-size:10.5px;font-weight:700;color:var(--muted);background:#eef1f5;border-radius:20px;padding:1px 8px}
+  .gt-roles{display:none;padding:2px 0 6px 9px;margin-left:5px;border-left:1px solid var(--border)}
+  .gt-cat.open .gt-roles{display:block}
+  .gt-role{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;cursor:pointer;font-size:12.5px;color:var(--ink)}
+  .gt-role:hover{background:#eef2f8}
+  .gt-role.sel{background:var(--tech-soft);color:var(--tech);font-weight:600}
+  .gt-role.produit.sel{background:var(--produit-soft);color:var(--produit)}
+  .gt-role-dot{width:7px;height:7px;border-radius:50%;background:var(--tech);flex:0 0 auto}
+  .gt-role.produit .gt-role-dot{background:var(--produit)}
+  .gt-role-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gt-role.justadded{animation:rolepop 1s ease-out 1}
+  .gt-empty{font-size:11.5px;color:var(--faint);padding:5px 9px}
+  .gfiche{flex:1;overflow:auto;padding:24px 28px 44px}
+  .fiche-empty{text-align:center;color:var(--muted);padding:70px 20px}
+  .fiche-empty .fe-ic{font-size:40px;opacity:.5}
+  .fiche-empty h3{margin:12px 0 4px;font-size:16px;color:var(--ink)}
+  .fiche{max-width:660px}
+  .fiche.justadded{animation:rolepop 1s ease-out 1;border-radius:14px}
+  .fiche-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .fiche-badge{font-size:11px;font-weight:700;border-radius:7px;padding:3px 10px}
+  .fiche-badge.tech{background:var(--tech-soft);color:var(--tech)}
+  .fiche-badge.produit{background:var(--produit-soft);color:var(--produit)}
+  .fiche-cat{font-size:11.5px;color:var(--muted)}
+  .fiche-del{margin-left:auto;border:1px solid var(--border);background:#fff;color:#dc2626;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer}
+  .fiche-del:hover{background:#fef2f2;border-color:#fecaca}
+  .fiche-name{width:100%;border:1px solid transparent;border-radius:9px;font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);padding:6px 8px;margin:0 -8px 14px;background:transparent}
+  .fiche-name:hover{background:#f9fafb}
+  .fiche-name:focus{outline:none;border-color:var(--tech);background:#fff}
+  .fiche-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media (max-width:640px){.fiche-controls{grid-template-columns:1fr}}
+  .fiche-controls .fc label{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin-bottom:5px}
+  .fiche-controls select{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 9px;font-size:12.5px;font-family:inherit;color:var(--ink);background:#fff}
+  .fiche-controls select:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
+  .fiche-sec{margin-top:20px}
+  .fiche-sec h4{margin:0 0 9px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint)}
+  .fiche-def{width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--ink);min-height:72px;resize:vertical;line-height:1.5}
+  .fiche-def:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
+  .resp-list{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:6px}
+  .resp-item{display:flex;align-items:center;gap:8px;background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--ink)}
+  .resp-item span{flex:1}
+  .resp-item button{border:0;background:transparent;color:var(--faint);cursor:pointer;font-size:15px;line-height:1}
+  .resp-item button:hover{color:#dc2626}
+  .resp-input{border:1px dashed var(--line);border-radius:8px;padding:8px 11px;font-size:12.5px;font-family:inherit;width:100%;color:var(--ink);background:#fcfdff}
+  .resp-input:focus{outline:none;border-color:var(--tech);border-style:solid}
+
   @media print{
     header,#overlay,#editor,#poolPanel,.actions,.toggle,.add-mini,.zoom{display:none!important}
     #viewport{overflow:visible}#canvas{position:static;transform:none!important;padding:0}
@@ -1098,7 +1156,7 @@ const SKILL_DEFAULTS={
   'Software Architect':['Architecture','Patterns','Cloud','Sécurité']
 };
 const SUPPORT_ROLES_SET=new Set(['Software Architect','SRE','DevOps Engineer','Security Engineer','Data Engineer','ML Engineer','Performance Engineer','Tech Writer','Product Ops','Agile Coach','Scrum Master','Business Analyst','Accessibility Expert','UX Writer','QA Engineer','UX Researcher']);
-function newRole(name,category,side){ return {id:uid(),name,category,side,definition:ROLE_DEFS[name]||'',skills:(SKILL_DEFAULTS[name]||[]).slice(),jobProfile:''}; }
+function newRole(name,category,side){ return {id:uid(),name,category,side,definition:ROLE_DEFS[name]||'',skills:(SKILL_DEFAULTS[name]||[]).slice(),responsibilities:[],seniority:'',jobProfile:''}; }
 function defaultGlossary(){
   const out=[];
   out.push(newRole('CPO','direction','produit'));
@@ -1156,7 +1214,7 @@ function migrate(){
   if(!Array.isArray(state.squads))state.squads=[];
   if(!Array.isArray(state.pool))state.pool=[];
   if(!Array.isArray(state.glossary)||!state.glossary.length)state.glossary=defaultGlossary();
-  state.glossary.forEach(g=>{ if(!Array.isArray(g.skills))g.skills=(SKILL_DEFAULTS[g.name]||[]).slice(); if(g.jobProfile===undefined)g.jobProfile=''; });
+  state.glossary.forEach(g=>{ if(!Array.isArray(g.skills))g.skills=(SKILL_DEFAULTS[g.name]||[]).slice(); if(!Array.isArray(g.responsibilities))g.responsibilities=[]; if(g.seniority===undefined)g.seniority=''; if(g.jobProfile===undefined)g.jobProfile=''; });
   const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.temp===undefined)p.temp=(p.status==='TEMP'); if(p.status==='TEMP')p.status=p.name?'Occupé':'Ouvert'; if(!p.status)p.status=p.name?'Occupé':'Ouvert'; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
   // direction {product,tech} -> {leads:[]}
   const d=state.direction||{};
@@ -1659,6 +1717,7 @@ let sheetView=null; // 'dash' | 'gloss'
 function openSheet(view){
   sheetView=view;
   $('#sheetOv').classList.add('open'); $('#sheet').classList.add('open');
+  $('#sheetBody').classList.toggle('gloss-mode', view==='gloss');
   if(view==='dash'){ $('#sheetIco').textContent='📊'; $('#sheetTitle').textContent='Dashboard analytics'; $('#sheetSub').textContent="Vue d'ensemble de l'organisation"; renderDashboard(); }
   else if(view==='admin'){ $('#sheetIco').textContent='🛡️'; $('#sheetTitle').textContent='Administration'; $('#sheetSub').textContent='Gérez les accès à SquadBuilder'; renderAdmin(); }
   else { $('#sheetIco').textContent='📖'; $('#sheetTitle').textContent='Référentiel des rôles'; $('#sheetSub').textContent='Gérez les métiers et leurs définitions'; renderGlossary(); }
@@ -1697,7 +1756,8 @@ let rdSide='tech';
 function openRoleDlg(){
   rdSide='tech';
   $('#rd-name').value=''; $('#rd-desc').value='';
-  $('#rd-cat').innerHTML=GLOSS_CATS.map(c=>`<option value="${c.key}" ${c.key===glossTab?'selected':''}>${esc(c.label)}</option>`).join('');
+  const defCat=(glossSel&&glossRoleById(glossSel))?glossRoleById(glossSel).category:'squad';
+  $('#rd-cat').innerHTML=GLOSS_CATS.map(c=>`<option value="${c.key}" ${c.key===defCat?'selected':''}>${esc(c.label)}</option>`).join('');
   $('#rd-side').querySelectorAll('button').forEach(b=>b.className=(b.dataset.v==='tech'?'on tech':''));
   $('#roleDlgOv').classList.add('open'); $('#roleDlg').classList.add('open');
   setTimeout(()=>$('#rd-name').focus(),40);
@@ -1709,12 +1769,13 @@ $('#rd-save').onclick=()=>{
   const name=$('#rd-name').value.trim();
   if(!name){ $('#rd-name').focus(); $('#rd-name').style.borderColor='#dc2626'; return; }
   const cat=$('#rd-cat').value;
-  const role={id:uid(),name,category:cat,side:rdSide,definition:$('#rd-desc').value.trim(),skills:[],jobProfile:''};
+  const role={id:uid(),name,category:cat,side:rdSide,definition:$('#rd-desc').value.trim(),skills:[],responsibilities:[],seniority:'',jobProfile:''};
   state.glossary.push(role); save(); rebuildRoleLists();
-  glossTab=cat; closeRoleDlg(); renderGlossary();
+  glossSel=role.id; if(glossExpanded)glossExpanded.add(cat);
+  closeRoleDlg(); renderGlossary();
   toast('Rôle « '+name+' » ajouté');
-  const card=[...document.querySelectorAll('.role-card')].find(c=>c.dataset.id===role.id);
-  if(card){ card.classList.add('justadded'); card.scrollIntoView({behavior:'smooth',block:'center'}); }
+  const rn=document.querySelector('.gt-role[data-role="'+role.id+'"]'); if(rn){ rn.classList.add('justadded'); rn.scrollIntoView({block:'nearest'}); }
+  const fiche=document.querySelector('.fiche'); if(fiche)fiche.classList.add('justadded');
 };
 
 /* ---- Analytics ---- */
@@ -1814,56 +1875,87 @@ function renderDashboard(){
 }
 
 /* ---- Référentiel des rôles ---- */
-let glossTab='squad';
-function renderGlossary(){
-  const cats=GLOSS_CATS;
-  const tabs=cats.map(c=>{ const n=(state.glossary||[]).filter(g=>g.category===c.key).length; return `<button data-gt="${c.key}" class="${glossTab===c.key?'on':''}">${esc(c.label)} · ${n}</button>`; }).join('');
-  const cat=cats.find(c=>c.key===glossTab)||cats[0];
-  const roles=(state.glossary||[]).filter(g=>g.category===glossTab).sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
-  const cardsHTML=roles.map(g=>{
-    const skills=(g.skills||[]).map((s,i)=>`<span class="skill-chip">${esc(s)}<button data-skill-del="${i}" title="Retirer">×</button></span>`).join('');
-    const jp=g.jobProfile?`<a class="rc-jp-open" href="${esc(g.jobProfile)}" target="_blank" rel="noopener">Ouvrir ↗</a>`:'';
-    return `<div class="role-card ${g.side==='produit'?'produit':''}" data-id="${g.id}">
-      <div class="rc-top">
-        <input class="rc-name" data-gf="name" value="${esc(g.name)}" placeholder="Nom du rôle">
-        <span class="rc-side">
-          <button data-gs="produit" class="${g.side==='produit'?'on p':''}">Produit</button>
-          <button data-gs="tech" class="${g.side==='tech'?'on t':''}">Tech</button>
-        </span>
-        <button class="rc-del" data-gdel title="Supprimer">×</button>
-      </div>
-      <label class="rc-label">Description</label>
-      <textarea class="rc-def" data-gf="definition" placeholder="Missions, responsabilités, périmètre…">${esc(g.definition||'')}</textarea>
-      <label class="rc-label">Compétences clés</label>
-      <div class="rc-skills">${skills}<input class="skill-input" placeholder="+ compétence, Entrée pour ajouter"></div>
-      <label class="rc-label">Job profile (lien)</label>
-      <div class="rc-jp"><input class="rc-jp-input" data-gf="jobProfile" value="${esc(g.jobProfile||'')}" placeholder="https://notion.so/… ou lien Drive"><span class="rc-jp-actions">${jp}</span></div>
+let glossSel=null, glossExpanded=null;
+function glossRoleById(id){ return (state.glossary||[]).find(g=>g.id===id)||null; }
+function ensureGlossSel(){
+  const gl=state.glossary||[];
+  if(!glossExpanded) glossExpanded=new Set(GLOSS_CATS.map(c=>c.key));
+  if(!glossSel || !glossRoleById(glossSel)) glossSel = gl.length?gl.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'))[0].id:null;
+  const g=glossSel?glossRoleById(glossSel):null; if(g)glossExpanded.add(g.category);
+}
+function glossTreeHTML(){
+  const gl=state.glossary||[];
+  return GLOSS_CATS.map(c=>{
+    const roles=gl.filter(g=>g.category===c.key).sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
+    const open=glossExpanded.has(c.key);
+    const rolesHTML=roles.length?roles.map(g=>`<div class="gt-role ${g.side} ${glossSel===g.id?'sel':''}" data-role="${g.id}"><span class="gt-role-dot"></span><span class="gt-role-name">${esc(g.name)}</span></div>`).join(''):`<div class="gt-empty">Aucun rôle</div>`;
+    return `<div class="gt-cat ${open?'open':''}">
+      <div class="gt-cat-head" data-cat-toggle="${c.key}"><span class="gt-chev">▸</span><span class="gt-cat-label">${esc(c.label)}</span><span class="gt-count">${roles.length}</span></div>
+      <div class="gt-roles">${rolesHTML}</div>
     </div>`;
   }).join('');
-  $('#sheetBody').innerHTML=`
-    <div class="gloss-tabs">${tabs}</div>
-    <div class="gloss-cat-desc">${esc(cat.desc)}</div>
-    <div class="role-list">${cardsHTML}<button class="role-add" id="glossAdd">＋ Ajouter un rôle à « ${esc(cat.label)} »</button></div>`;
 }
-function glossRoleOf(el){ const c=el.closest('.role-card'); return c?state.glossary.find(x=>x.id===c.dataset.id):null; }
+function ficheHTML(g){
+  if(!g) return `<div class="fiche-empty"><div class="fe-ic">📖</div><h3>Aucun rôle sélectionné</h3><p>Sélectionne un rôle dans l'arbre à gauche, ou crée-en un nouveau.</p></div>`;
+  const cat=GLOSS_CATS.find(c=>c.key===g.category);
+  const skills=(g.skills||[]).map((s,i)=>`<span class="skill-chip">${esc(s)}<button data-skill-del="${i}" title="Retirer">×</button></span>`).join('');
+  const resp=(g.responsibilities||[]).map((r,i)=>`<li class="resp-item"><span>${esc(r)}</span><button data-resp-del="${i}" title="Retirer">×</button></li>`).join('');
+  const jp=g.jobProfile?`<a class="rc-jp-open" href="${esc(g.jobProfile)}" target="_blank" rel="noopener">Ouvrir ↗</a>`:'';
+  return `<div class="fiche ${g.side==='produit'?'produit':''}" data-id="${g.id}">
+    <div class="fiche-head">
+      <span class="fiche-badge ${g.side}">${g.side==='produit'?'Produit':'Tech'}</span>
+      <span class="fiche-cat">${esc(cat?cat.label:'')}</span>
+      <button class="fiche-del" data-gdel>🗑 Supprimer</button>
+    </div>
+    <input class="fiche-name" data-gf="name" value="${esc(g.name)}" placeholder="Nom du rôle">
+    <div class="fiche-controls">
+      <div class="fc"><label>Filière</label><div class="seg" id="fiche-side"><button data-gs="produit" class="${g.side==='produit'?'on produit':''}">Produit</button><button data-gs="tech" class="${g.side==='tech'?'on tech':''}">Tech</button></div></div>
+      <div class="fc"><label>Catégorie</label><select data-gf="category">${GLOSS_CATS.map(c=>`<option value="${c.key}" ${c.key===g.category?'selected':''}>${esc(c.label)}</option>`).join('')}</select></div>
+      <div class="fc"><label>Séniorité</label><select data-gf="seniority"><option value="">— indifférent —</option>${['Junior','Confirmé','Senior','Lead','Principal'].map(s=>`<option ${g.seniority===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    </div>
+    <section class="fiche-sec"><h4>Description / mission</h4><textarea class="fiche-def" data-gf="definition" placeholder="Rôle, mission, périmètre…">${esc(g.definition||'')}</textarea></section>
+    <section class="fiche-sec"><h4>Responsabilités clés</h4><ul class="resp-list">${resp}</ul><input class="resp-input" placeholder="+ responsabilité, Entrée pour ajouter"></section>
+    <section class="fiche-sec"><h4>Compétences</h4><div class="rc-skills">${skills}<input class="skill-input" placeholder="+ compétence, Entrée pour ajouter"></div></section>
+    <section class="fiche-sec"><h4>Job profile (lien)</h4><div class="rc-jp"><input class="rc-jp-input" data-gf="jobProfile" value="${esc(g.jobProfile||'')}" placeholder="https://notion.so/… ou lien Drive"><span class="rc-jp-actions">${jp}</span></div></section>
+  </div>`;
+}
+function renderGlossary(){
+  ensureGlossSel();
+  $('#sheetBody').innerHTML=`
+    <div class="gloss2">
+      <div class="gtree">
+        <button class="gtree-add" id="glossAdd">＋ Nouveau rôle</button>
+        <div class="gtree-body">${glossTreeHTML()}</div>
+      </div>
+      <div class="gfiche" id="gfiche">${ficheHTML(glossRoleById(glossSel))}</div>
+    </div>`;
+}
+function renderFiche(){ const el=$('#gfiche'); if(el)el.innerHTML=ficheHTML(glossRoleById(glossSel)); }
+function ficheRole(el){ const f=el.closest('.fiche'); return f?glossRoleById(f.dataset.id):null; }
 $('#sheetBody').addEventListener('click',e=>{
   if(sheetView!=='gloss')return;
-  const tab=e.target.closest('[data-gt]'); if(tab){ glossTab=tab.dataset.gt; renderGlossary(); return; }
+  const ct=e.target.closest('[data-cat-toggle]'); if(ct){ const k=ct.dataset.catToggle; glossExpanded.has(k)?glossExpanded.delete(k):glossExpanded.add(k); ct.closest('.gt-cat').classList.toggle('open'); return; }
+  const rn=e.target.closest('[data-role]'); if(rn){ glossSel=rn.dataset.role; document.querySelectorAll('.gt-role.sel').forEach(x=>x.classList.remove('sel')); rn.classList.add('sel'); renderFiche(); return; }
   const add=e.target.closest('#glossAdd'); if(add){ openRoleDlg(); return; }
-  const del=e.target.closest('[data-gdel]'); if(del){ const g=glossRoleOf(del); if(g){ askConfirm({title:'Supprimer le rôle',message:`Le rôle « <b>${esc(g.name)}</b> » sera retiré du référentiel.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.glossary=state.glossary.filter(x=>x.id!==g.id); save(); rebuildRoleLists(); renderGlossary(); toast('Rôle supprimé'); } }); } return; }
-  const sideBtn=e.target.closest('[data-gs]'); if(sideBtn){ const g=glossRoleOf(sideBtn); if(g){ g.side=sideBtn.dataset.gs; save(); renderGlossary(); } return; }
-  const sd=e.target.closest('[data-skill-del]'); if(sd){ const g=glossRoleOf(sd); if(g){ g.skills.splice(+sd.dataset.skillDel,1); save(); renderGlossary(); } return; }
+  const del=e.target.closest('[data-gdel]'); if(del){ const g=ficheRole(del); if(g){ askConfirm({title:'Supprimer le rôle',message:`Le rôle « <b>${esc(g.name)}</b> » sera retiré du référentiel.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.glossary=state.glossary.filter(x=>x.id!==g.id); if(glossSel===g.id)glossSel=null; save(); rebuildRoleLists(); renderGlossary(); toast('Rôle supprimé'); } }); } return; }
+  const sideBtn=e.target.closest('[data-gs]'); if(sideBtn){ const g=ficheRole(sideBtn); if(g){ g.side=sideBtn.dataset.gs; save(); renderGlossary(); } return; }
+  const sd=e.target.closest('[data-skill-del]'); if(sd){ const g=ficheRole(sd); if(g){ g.skills.splice(+sd.dataset.skillDel,1); save(); renderFiche(); } return; }
+  const rd=e.target.closest('[data-resp-del]'); if(rd){ const g=ficheRole(rd); if(g){ g.responsibilities.splice(+rd.dataset.respDel,1); save(); renderFiche(); } return; }
 });
 $('#sheetBody').addEventListener('keydown',e=>{
   if(sheetView!=='gloss')return;
-  if(e.key==='Enter'&&e.target.classList.contains('skill-input')){ e.preventDefault(); const v=e.target.value.trim(); if(!v)return; const g=glossRoleOf(e.target); if(g){ g.skills=g.skills||[]; g.skills.push(v); save(); renderGlossary(); const card=[...document.querySelectorAll('.role-card')].find(c=>c.dataset.id===g.id); if(card){ const inp=card.querySelector('.skill-input'); if(inp)inp.focus(); } } }
+  const addTo=(arrName,cls)=>{ e.preventDefault(); const v=e.target.value.trim(); if(!v)return; const g=ficheRole(e.target); if(!g)return; g[arrName]=g[arrName]||[]; g[arrName].push(v); save(); renderFiche(); const inp=document.querySelector('.'+cls); if(inp)inp.focus(); };
+  if(e.key==='Enter'&&e.target.classList.contains('skill-input')) addTo('skills','skill-input');
+  else if(e.key==='Enter'&&e.target.classList.contains('resp-input')) addTo('responsibilities','resp-input');
 });
 $('#sheetBody').addEventListener('input',e=>{
   if(sheetView!=='gloss')return;
   const f=e.target.closest('[data-gf]'); if(!f)return;
-  const g=glossRoleOf(f); if(!g)return;
-  g[f.dataset.gf]=f.value; save();
-  if(f.dataset.gf==='name')rebuildRoleLists();
+  const g=ficheRole(f); if(!g)return;
+  const field=f.dataset.gf;
+  if(field==='category'){ g.category=f.value; save(); glossExpanded.add(f.value); renderGlossary(); return; }
+  g[field]=f.value; save();
+  if(field==='name'){ rebuildRoleLists(); const lbl=document.querySelector('.gt-role[data-role="'+g.id+'"] .gt-role-name'); if(lbl)lbl.textContent=f.value||'Sans nom'; }
 });
 
 /* ================= Administration (utilisateurs & accès) ================= */
