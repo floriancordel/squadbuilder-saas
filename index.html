@@ -98,7 +98,12 @@
   .direction-tribe{border:2px solid #c4b5fd;background:linear-gradient(180deg,#faf9ff,#f1ecfd)}
   .direction-tribe .tc-dot{background:var(--dir)}
 
-  /* Support Cells sur les côtés de la tribu */
+  /* Support Cells sur les côtés de la tribu (jamais en dessous) */
+  .tribe-row{display:flex;align-items:flex-start;justify-content:center;gap:34px}
+  .tc-side{width:236px;flex:0 0 236px;display:flex;flex-direction:column;gap:46px}
+  .tc-side.left{align-items:flex-end}
+  .tc-side.right{align-items:flex-start}
+  .cell-wrap{position:relative}
   .cell{width:236px;background:#fff;border:1.5px dashed #9ec7c1;border-radius:12px;box-shadow:var(--shadow);position:relative}
   .badge-sc{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--cellc);background:#e6faf5;border:1px solid #bfeae2;border-radius:20px;padding:1px 6px;flex:0 0 auto}
   .cell-head{display:flex;align-items:center;gap:7px;padding:8px 10px;background:#f0fdfa;border-bottom:1px solid #cfeae5;border-radius:11px 11px 0 0;cursor:pointer}
@@ -806,11 +811,19 @@ function headHTML(h){
       <div class="node-head">${duoHTML(h.product,h.tech)}</div>
     </div>`;
   const fold=hasKids?`<button class="foldbtn ${isColl?'iscoll':''}" data-action="toggle" data-id="${h.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${childCount}</span></button>`:'';
-  const content=`<div class="node-content">${tribe}${fold}${addToolsHTML(h.id)}</div>`;
+  const core=`<div class="node-content">${tribe}${fold}${addToolsHTML(h.id)}</div>`;
+  // Support Cells : à gauche/droite de la tribu (jamais en dessous). On répartit
+  // en alternance et on réserve une colonne symétrique du côté vide, ce qui garde
+  // la tribu centrée et les connecteurs des squads alignés.
+  const wrapCell=c=>`<div class="cell-wrap">${cellHTML(c)}</div>`;
+  const leftCells=cells.filter((_,i)=>i%2===0);   // 1re, 3e… à gauche
+  const rightCells=cells.filter((_,i)=>i%2===1);  // 2e, 4e… à droite
+  const inner=(cells.length && !isColl)
+    ? `<div class="tribe-row"><div class="tc-side left">${leftCells.map(wrapCell).join('')}</div>${core}<div class="tc-side right">${rightCells.map(wrapCell).join('')}</div></div>`
+    : core;
   const squadLis=h.squads.map(sq=>`<li><div class="node-content">${squadHTML(sq)}</div></li>`).join('');
-  const cellLis=cells.map(c=>`<li><div class="node-content">${cellHTML(c)}</div></li>`).join('');
-  const kids=hasKids?`<ul>${squadLis}${cellLis}</ul>`:'';
-  return `<li class="${isColl?'collapsed':''}">${content}${kids}</li>`;
+  const kids=h.squads.length?`<ul>${squadLis}</ul>`:'';
+  return `<li class="${isColl?'collapsed':''}">${inner}${kids}</li>`;
 }
 
 function render(){
