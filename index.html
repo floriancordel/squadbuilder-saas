@@ -81,7 +81,10 @@
   .node-content{position:relative;display:flex;flex-direction:column;align-items:center}
 
   /* Conteneur Tribu (binôme HoP/EM) */
-  .tribe{border:1.5px solid #e2e5ea;background:linear-gradient(180deg,#fbfcfe,#f6f8fb);border-radius:16px;padding:8px 14px 14px;position:relative}
+  .tribe{border:1px solid var(--border);background:#fff;border-radius:16px;overflow:hidden;position:relative;box-shadow:var(--shadow)}
+  .tribe .node-head{padding:14px 16px 6px}
+  .blk-tribe{border-top:3px solid #2563eb}
+  .blk-dir{border-top:3px solid var(--dir)}
   .tribe-cap{display:flex;align-items:center;gap:8px;padding:2px 2px 9px;min-height:24px;cursor:pointer}
   .tribe-cap .tc-left{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:flex;align-items:center;gap:6px}
   .tribe-cap .cap-edit{margin-left:auto;color:var(--faint);font-size:12px;opacity:0;transition:.14s}
@@ -102,8 +105,7 @@
   .ntbtn.add:hover{background:var(--squad);border-color:var(--squad);color:#fff}
   .ntbtn.cellbtn:hover{background:var(--cellc);border-color:var(--cellc);color:#fff}
   .ntbtn.danger:hover{background:#dc2626;border-color:#dc2626;color:#fff}
-  .direction-tribe{border:2px solid #c4b5fd;background:linear-gradient(180deg,#faf9ff,#f1ecfd)}
-  .direction-tribe .tc-dot{background:var(--dir)}
+  .direction-tribe{border:1px solid var(--border);background:#fff}
 
   /* Support Cells sur les côtés de la tribu (jamais en dessous).
      Les slots latéraux réservent la LARGEUR en flux (donc les blocs voisins
@@ -120,7 +122,7 @@
   .tc-abs .cell-wrap::before{content:'';position:absolute;top:21px;height:3px;width:40px;background:var(--conn);border-radius:2px}
   .tc-side.left  .cell-wrap::before{left:100%}
   .tc-side.right .cell-wrap::before{right:100%}
-  .cell{width:236px;background:#fff;border:1.5px dashed #9ec7c1;border-radius:12px;box-shadow:var(--shadow);position:relative}
+  .cell{width:236px;background:#fff;border:1px solid var(--border);border-top:3px solid var(--cellc);border-radius:12px;box-shadow:var(--shadow);position:relative;overflow:hidden}
   .badge-sc{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--cellc);background:#e6faf5;border:1px solid #bfeae2;border-radius:20px;padding:1px 6px;flex:0 0 auto}
   .cell-head{display:flex;align-items:center;gap:7px;padding:8px 10px;background:#f0fdfa;border-bottom:1px solid #cfeae5;border-radius:11px 11px 0 0;cursor:pointer}
   .cell-head .cdot{width:8px;height:8px;border-radius:50%;background:var(--cellc);flex:0 0 auto}
@@ -183,6 +185,8 @@
   .chip.temp{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
   .chip.alloc{background:#eef2ff;color:#4338ca}
   .chip.over{background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5}
+  .chip.open{background:var(--open-bg);color:var(--open);border:1px solid var(--open-bd)}
+  .foot,.m-foot{justify-content:flex-start}
 
   /* ---------- TEMP : détourage + teinte ; surcharge : liseré rouge ---------- */
   .card.istemp,.mini.istemp,.cres.istemp{border-color:#f59e0b;background:linear-gradient(0deg,#fffbeb,#fff)}
@@ -196,14 +200,30 @@
   .leads-row{display:flex;gap:16px;justify-content:center;flex-wrap:nowrap;align-items:stretch}
   .add-lead{align-self:center;min-width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--line);border-radius:9px;color:var(--muted);font-size:16px;font-weight:700;cursor:pointer;background:#fcfdff;transition:.12s;padding:0 4px}
   .add-lead:hover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
-  .node-direction .leads-row{gap:18px}
+  .node-direction .leads-row{gap:18px;padding:14px 18px}
   .tribe .node-head .leads-row .card{width:172px}
   .bucket .leads-row{gap:12px;margin-bottom:12px}
   .bucket .leads-row .card{width:138px;padding:9px 10px}
   .bucket .leads-row .card .name{font-size:12.5px}
   .bucket .leads-row .card .role{font-size:9.5px}
-  .tribe-desc{font-size:11px;color:var(--muted);line-height:1.4;margin:0 0 9px;text-align:center;max-width:440px;margin-left:auto;margin-right:auto}
-  .direction-tribe .tribe-desc,.node-direction .tribe-desc{max-width:480px}
+  /* ---------- Header de bloc unifié (Direction / Tribu / Squad / Cell) ---------- */
+  .blk-head{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer}
+  .blk-head .blk-dot{width:8px;height:8px;border-radius:3px;margin-top:4px;flex:0 0 auto}
+  .blk-head .bh-txt{min-width:0;flex:1}
+  .blk-head .blk-title{font-size:12.5px;font-weight:700;letter-spacing:-.01em;display:block;color:var(--ink)}
+  .blk-head .blk-desc{font-size:11px;color:var(--muted);line-height:1.35;margin-top:3px;text-transform:none;font-weight:400;letter-spacing:0}
+  .blk-head .count{font-size:11px;color:var(--muted);background:#fff;border:1px solid var(--border);border-radius:20px;padding:1px 8px;flex:0 0 auto;margin-top:0}
+  .blk-head .cap-edit{color:var(--faint);font-size:12px;margin-top:1px;opacity:0;transition:.14s;flex:0 0 auto}
+  .tribe:hover .cap-edit,.cell:hover .cap-edit,.bucket:hover .cap-edit{opacity:.6}
+  .blk-head:hover .cap-edit{opacity:1;color:var(--ink)}
+  /* couleurs par type de bloc */
+  .bucket .blk-head{background:#eef2ff;border-bottom-color:#e0e4f5} .bucket .blk-dot{background:var(--squad)}
+  .bucket.flying .blk-head{background:#f6f3fe;border-bottom-color:#e6ddfb} .bucket.flying .blk-dot{background:var(--dir)}
+  .blk-tribe .blk-head{background:#eff6ff;border-bottom-color:#dbeafe;border-radius:14px 14px 0 0} .blk-tribe .blk-dot{background:#2563eb}
+  .blk-dir .blk-head{background:#f5f3ff;border-bottom-color:#e9e2fd;border-radius:14px 14px 0 0} .blk-dir .blk-dot{background:var(--dir)}
+  .cell .blk-head{background:#f0fdfa;border-bottom-color:#cfeae5;border-radius:11px 11px 0 0} .cell .blk-dot{background:var(--cellc)}
+  .cell.iscoll .blk-head{border-bottom:0;border-radius:11px}
+  .bucket.iscoll .blk-head{border-bottom:0;border-radius:0}
 
   /* ---------- Bucket Squad ---------- */
   .bucket{background:#fff;border:1px solid var(--border);border-top:3px solid var(--squad);border-radius:14px;box-shadow:var(--shadow);width:328px;overflow:hidden}
@@ -237,7 +257,7 @@
   .mini .m-name{font-size:12px;font-weight:600;line-height:1.2}
   .mini .m-name.open{color:var(--open);font-style:italic}
   .mini .m-role{font-size:10px;color:var(--muted);line-height:1.25;margin-top:1px}
-  .mini .m-foot{display:flex;align-items:center;gap:4px;margin-top:5px}
+  .mini .m-foot{display:flex;align-items:center;justify-content:flex-start;gap:4px;margin-top:5px;flex-wrap:wrap}
   .mini .mdot{width:7px;height:7px;border-radius:50%}
   .mini .mdot.fr{background:#3b82f6}.mini .mdot.coe{background:#22c55e}
   .mini .m-loc{font-size:9.5px;color:var(--faint)}
@@ -286,6 +306,8 @@
   .ed-foot{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:8px}
   .ed-foot .btn{flex:1;justify-content:center}
   .hint{font-size:11.5px;color:var(--faint);line-height:1.5;background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:9px 11px;margin-top:4px}
+  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;background:#fff}
+  .switch-row input{width:auto;transform:scale(1.15);accent-color:#f59e0b}
   .ed-stat{display:flex;gap:14px;margin:2px 0 14px;font-size:12px;color:var(--muted);background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:9px 12px}
   .ed-stat b{color:var(--ink);font-weight:700}
   .alloc-total{margin-top:9px;font-size:11.5px;color:var(--muted);background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:7px 10px}
@@ -757,7 +779,11 @@ function onLogout() {
 
 /* ---------------- Modèle ---------------- */
 const uid=()=>Math.random().toString(36).slice(2,9);
-function person(role,side,name='',loc='',status='Ouvert',tempUntil=''){return{pid:uid(),role,side,name,loc,status,tempUntil:status==='TEMP'?tempUntil:'',alloc:100,allocMode:'full'};}
+// Statut = automatique (nom rempli → pourvu, vide → à pourvoir). TEMP = flag indépendant cumulable.
+function person(role,side,name='',loc='',status='',tempUntil=''){const temp=status==='TEMP';return{pid:uid(),role,side,name,loc,status:name?'Occupé':'Ouvert',temp,tempUntil:temp?tempUntil:'',alloc:100,allocMode:'full'};}
+function isOpen(p){ return !p.name; }
+function isTemp(p){ return p.temp===true||p.status==='TEMP'; }
+const OPEN_LABEL='À pourvoir';
 function newSquad(name,desc,opts){
   const sq={id:uid(),name:name||'Nouvelle squad',desc:desc||'',leads:[],members:[]};
   if(opts===false) return sq;
@@ -892,7 +918,7 @@ function migrate(){
   if(!Array.isArray(state.squads))state.squads=[];
   if(!Array.isArray(state.pool))state.pool=[];
   if(!Array.isArray(state.glossary)||!state.glossary.length)state.glossary=defaultGlossary();
-  const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
+  const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.temp===undefined)p.temp=(p.status==='TEMP'); if(p.status==='TEMP')p.status=p.name?'Occupé':'Ouvert'; if(!p.status)p.status=p.name?'Occupé':'Ouvert'; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
   // direction {product,tech} -> {leads:[]}
   const d=state.direction||{};
   if(!Array.isArray(d.leads)){ d.leads=[]; if(d.product)d.leads.push(d.product); if(d.tech)d.leads.push(d.tech); delete d.product; delete d.tech; }
@@ -939,32 +965,33 @@ function locChip(p){ // version compacte, mêmes couleurs partout
   if(p.loc==='Maroc')return '<span class="chip coe">COE · Maroc</span>';
   return '';
 }
-function tempBadge(p){ if(p.status!=='TEMP')return ''; const d=p.tempUntil?` → ${p.tempUntil}`:''; return `<span class="badge temp">TEMP${d}</span>`; }
-function tempChip(p){ return p.status==='TEMP'?'<span class="chip temp">TEMP</span>':''; }
+function tempChip(p){ if(!isTemp(p))return ''; const d=p.tempUntil?` · ${p.tempUntil}`:''; return `<span class="chip temp">TEMP${d}</span>`; }
+function openChip(p){ return isOpen(p)?`<span class="chip open">${OPEN_LABEL}</span>`:''; }
 function allocChip(p){ // % affiché si partiel ou surchargé
   const a=allocOf(p); const total=totalAllocOf(p);
   if(p.name && total>100) return `<span class="chip over" title="Staffé à ${total}% au total (suralloué)">⚠ ${a}%${total!==a?` · Σ${total}%`:''}</span>`;
   if(p.allocMode==='part' || a!==100) return `<span class="chip alloc">${a}%</span>`;
   return '';
 }
-function pClasses(p){ return `${p.side} ${!p.name?'isopen':''} ${p.status==='TEMP'?'istemp':''} ${p.name&&totalAllocOf(p)>100?'isover':''}`; }
+// Rangée de chips : on filtre les vides pour un alignement à gauche cohérent
+function chipsRow(p,cls){ const parts=[locChip(p),openChip(p),tempChip(p),allocChip(p)].filter(Boolean); return `<div class="${cls}">${parts.join('')}</div>`; }
+function pClasses(p){ return `${p.side} ${isOpen(p)?'isopen':''} ${isTemp(p)?'istemp':''} ${p.name&&totalAllocOf(p)>100?'isover':''}`; }
 function cardHTML(p){
-  reg(p); const open=!p.name; const name=open?'Poste ouvert':p.name;
-  const stat=open&&p.status&&p.status!=='Ouvert'?`<span class="badge status">${esc(p.status)}</span>`:'';
+  reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
   return `<div class="card ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>
     <div class="role">${esc(p.role)}</div>
     <div class="name ${open?'open':''}">${esc(name)}</div>
-    <div class="foot">${locBadge(p)}${tempBadge(p)}${allocChip(p)}${stat}</div>
+    ${chipsRow(p,'foot')}
   </div>`;
 }
 function miniHTML(p){
-  reg(p); const open=!p.name; const name=open?'Ouvert':p.name;
+  reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>
     <div class="m-name ${open?'open':''}">${esc(name)}</div>
     <div class="m-role">${esc(p.role)}</div>
-    <div class="m-foot">${locChip(p)}${tempChip(p)}${allocChip(p)}</div>
+    ${chipsRow(p,'m-foot')}
   </div>`;
 }
 // Rangée de leads dynamique + bouton d'ajout de rôle (direction / tribu / squad)
@@ -978,17 +1005,16 @@ function squadHTML(sq,flying){
   const leadCount=leadsOf(sq).length;
   const total=leadCount+sq.members.length;
   const members=sq.members.map(miniHTML).join('');
-  const add=`<div class="add-mini" data-action="add-member" data-squad="${sq.id}">＋ Membre</div>`;
-  const rnd=`<div class="rnd-title">${leadCount?'Équipe R&D':'Membres'} · ${sq.members.length}</div><div class="rnd-grid" data-drop="squad" data-squad="${sq.id}">${members}${add}</div>`;
-  const desc=sq.desc?`<div class="bucket-desc">${esc(sq.desc)}</div>`:'';
+  const add=`<div class="add-mini add-slot" data-action="add-member" data-squad="${sq.id}">＋ Ajouter</div>`;
+  const rnd=`<div class="rnd-title">Équipe R&D · ${sq.members.length}</div><div class="rnd-grid" data-drop="squad" data-squad="${sq.id}">${members}${add}</div>`;
+  const desc=sq.desc?`<div class="blk-desc">${esc(sq.desc)}</div>`:'';
   const body=isColl?'':`<div class="bucket-body">${leadsHTML(sq,'squad',sq.id)}${rnd}</div>`;
   const fold=`<button class="foldbtn sqfold ${isColl?'iscoll':''}" data-action="toggle" data-id="${sq.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${total}</span></button>`;
-  const badge=flying?'<span class="fly-badge">Volante</span>':'';
   return `<div class="bucket ${isColl?'iscoll':''} ${flying?'flying':''}">
-    <div class="bucket-head" data-action="edit-squad" data-squad="${sq.id}">
-      <span class="sq"></span>
-      <div class="bh-txt"><span class="title">${esc(sq.name)}</span>${desc}</div>
-      ${badge}<span class="count">${total}</span>
+    <div class="blk-head" data-action="edit-squad" data-squad="${sq.id}">
+      <span class="blk-dot"></span>
+      <div class="bh-txt"><span class="blk-title">${esc(sq.name)}</span>${desc}</div>
+      <span class="count">${total}</span>
     </div>
     ${body}
   </div>${fold}`;
@@ -1002,27 +1028,25 @@ function addToolsHTML(ctxHead,showTribu,always){
   </div>`;
 }
 function resourceMiniHTML(p){
-  reg(p); const open=!p.name; const name=open?'Ouvert':p.name;
-  const a=allocOf(p); const over=p.name&&totalAllocOf(p)>100;
-  const alloc=`<span class="alloc ${over?'over':''}" ${over?`title="Suralloué : ${totalAllocOf(p)}% au total"`:''}>${over?'⚠ ':''}${a}%</span>`;
-  return `<div class="cres ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
+  reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
+  return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>
-    <div class="cr-top"><span class="cr-name ${open?'open':''}">${esc(name)}</span>${alloc}</div>
-    <div class="cr-role">${esc(p.role)}</div>
-    <div class="cr-loc">${locChip(p)}${tempChip(p)}</div>
+    <div class="m-name ${open?'open':''}">${esc(name)}</div>
+    <div class="m-role">${esc(p.role)}</div>
+    ${chipsRow(p,'m-foot')}
   </div>`;
 }
 function cellHTML(c){
   const isColl=collapsed.has(c.id);
   const members=c.members.map(resourceMiniHTML).join('');
-  const add=`<div class="add-res" data-action="add-res" data-cell="${c.id}">＋ Ressource</div>`;
+  const add=`<div class="add-mini add-slot" data-action="add-res" data-cell="${c.id}">＋ Ajouter</div>`;
   const body=isColl?'':`<div class="cell-body" data-drop="cell" data-cell="${c.id}">${members}${add}</div>`;
   const fold=`<button class="foldbtn cellfold ${isColl?'iscoll':''}" data-action="toggle" data-id="${c.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${c.members.length}</span></button>`;
   return `<div class="cell ${isColl?'iscoll':''}">
-    <div class="cell-head" data-action="edit-cell" data-cell="${c.id}">
-      <span class="cdot"></span><span class="cname">${esc(c.name)}</span>
-      <span class="badge-sc">Support Cell</span>
-      <span class="ccount">${c.members.length}</span>
+    <div class="blk-head" data-action="edit-cell" data-cell="${c.id}">
+      <span class="blk-dot"></span>
+      <div class="bh-txt"><span class="blk-title">${esc(c.name)}</span></div>
+      <span class="count">${c.members.length}</span>
     </div>
     ${body}
   </div>${fold}`;
@@ -1032,10 +1056,12 @@ function headHTML(h){
   const cells=h.cells||[];
   const childCount=h.squads.length+cells.length;
   const hasKids=childCount>0;
-  const tdesc=h.desc?`<div class="tribe-desc">${esc(h.desc)}</div>`:'';
-  const tribe=`<div class="tribe">
-      <div class="tribe-cap" data-action="edit-tribe" data-head="${h.id}"><span class="tc-left"><span class="tc-dot"></span>Tribu${h.name?' · '+esc(h.name):''}</span><span class="cap-edit">⚙</span></div>
-      ${tdesc}
+  const tribe=`<div class="tribe blk-tribe">
+      <div class="blk-head" data-action="edit-tribe" data-head="${h.id}">
+        <span class="blk-dot"></span>
+        <div class="bh-txt"><span class="blk-title">Tribu${h.name?' · '+esc(h.name):''}</span>${h.desc?`<div class="blk-desc">${esc(h.desc)}</div>`:''}</div>
+        <span class="cap-edit">⚙</span>
+      </div>
       <div class="node-head">${leadsHTML(h,'tribe',h.id)}</div>
     </div>`;
   const fold=hasKids?`<button class="foldbtn ${isColl?'iscoll':''}" data-action="toggle" data-id="${h.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${childCount}</span></button>`:'';
@@ -1077,11 +1103,13 @@ function render(){
       <button class="ntbtn add" data-action="add-squad" data-head="__dir__" title="Nouvelle squad volante">＋ Squad</button>
       <button class="ntbtn cellbtn" data-action="add-cell" data-head="" title="Nouvelle Support Cell">＋ Cell</button>
     </div>`;
-  const ddesc=d.desc?`<div class="tribe-desc">${esc(d.desc)}</div>`:'';
   const dirNode=`<div class="node-content node-direction">
-      <div class="tribe direction-tribe">
-        <div class="tribe-cap" data-action="edit-dir"><span class="tc-left"><span class="tc-dot"></span>Direction</span><span class="cap-edit">⚙</span></div>
-        ${ddesc}
+      <div class="tribe direction-tribe blk-dir">
+        <div class="blk-head" data-action="edit-dir">
+          <span class="blk-dot"></span>
+          <div class="bh-txt"><span class="blk-title">Direction</span>${d.desc?`<div class="blk-desc">${esc(d.desc)}</div>`:''}</div>
+          <span class="cap-edit">⚙</span>
+        </div>
         ${leadsHTML(d,'direction','__dir__')}
       </div>${dFold}${dTools}</div>`;
   const childrenHTML=hasChildren?`<ul>${state.heads.map(headHTML).join('')}${flySquads.map(sq=>`<li><div class="node-content">${squadHTML(sq,true)}</div></li>`).join('')}</ul>`:'';
@@ -1094,7 +1122,7 @@ function updateStats(){
   const all=allPersons(); let squads=0, temps=0;
   state.heads.forEach(h=>{ squads+=(h.squads||[]).length; });
   squads+=(state.squads||[]).length;
-  let open=0; all.forEach(p=>{ if(!p.name)open++; if(p.status==='TEMP')temps++; });
+  let open=0; all.forEach(p=>{ if(!p.name)open++; if(isTemp(p))temps++; });
   const pool=(state.pool||[]).length;
   $('#stats').innerHTML=`<span><b>${state.heads.length}</b> tribus</span><span><b>${squads}</b> squads</span><span><b>${all.length}</b> postes</span><span><b>${open}</b> ouverts</span>${temps?`<span><b>${temps}</b> TEMP</span>`:''}${pool?`<span><b>${pool}</b> à affecter</span>`:''}`;
 }
@@ -1253,12 +1281,17 @@ function openEditor(obj,kind){
         </div>
         ${p.name?`<div class="alloc-total ${total>100?'over':''}" id="alloc-total">${total>100?`⚠ ${esc(p.name)} est staffé à <b>${total}%</b> au total (suralloué)`:`${esc(p.name)} : <b>${total}%</b> alloué au total`}</div>`:''}
       </div>`;
-    const tempField=`<div class="field" id="f-temp-wrap" style="display:${p.status==='TEMP'?'block':'none'}">
-        <label>Fin de mission TEMP</label>
-        <input id="f-tempuntil" type="date" value="${esc(p.tempUntil||'')}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
+    const tempField=`
+      <div class="field"><label>Type de poste</label>
+        <label class="switch-row"><span>Mission temporaire (TEMP)</span><input type="checkbox" id="f-temp" ${isTemp(p)?'checked':''}></label>
+        <div id="f-temp-wrap" style="display:${isTemp(p)?'block':'none'};margin-top:8px">
+          <label style="font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">Fin de mission (optionnel)</label>
+          <input id="f-tempuntil" type="date" value="${esc(p.tempUntil||'')}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
+        </div>
+        <div class="hint" style="margin-top:8px">Le statut est automatique : un poste <b>sans nom</b> est « ${OPEN_LABEL} », un poste <b>avec un nom</b> est pourvu. TEMP est indépendant et se cumule.</div>
       </div>`;
     $('#edBody').innerHTML=`
-      <div class="field"><label>Nom</label><input id="f-name" value="${esc(p.name)}" placeholder="Laisser vide = poste ouvert" autofocus></div>
+      <div class="field"><label>Nom</label><input id="f-name" value="${esc(p.name)}" placeholder="Laisser vide = poste « ${OPEN_LABEL} »" autofocus></div>
       ${roleField}
       ${sideField}
       ${allocField}
@@ -1267,12 +1300,9 @@ function openEditor(obj,kind){
         <button data-v="FR" class="${p.loc==='FR'?'on fr':''}">Hub · FR</button>
         <button data-v="Maroc" class="${p.loc==='Maroc'?'on coe':''}">COE · Maroc</button>
       </div></div>
-      <div class="field"><label>Statut</label><div class="seg" id="seg-stat">
-        ${STATUSES.map(s=>`<button data-v="${s}" class="${p.status===s?'on'+(s!=='Occupé'?' open':''):''}">${s}</button>`).join('')}
-      </div></div>
       ${tempField}`;
-    wireSeg('seg-side'); wireSeg('seg-loc'); wireSeg('seg-stat'); wireSeg('seg-allocmode');
-    $('#seg-stat').querySelectorAll('button').forEach(b=>{ const orig=b.onclick; b.onclick=(e)=>{ if(orig)orig(e); const tw=$('#f-temp-wrap'); if(tw)tw.style.display=b.dataset.v==='TEMP'?'block':'none'; }; });
+    wireSeg('seg-side'); wireSeg('seg-loc'); wireSeg('seg-allocmode');
+    $('#f-temp').onchange=e=>{ $('#f-temp-wrap').style.display=e.target.checked?'block':'none'; };
     $('#seg-allocmode').querySelectorAll('button').forEach(b=>{ const orig=b.onclick; b.onclick=(e)=>{ if(orig)orig(e); const w=$('#alloc-wrap'); if(w)w.style.display=b.dataset.v==='part'?'block':'none'; }; });
     document.querySelectorAll('#seg-alloc button').forEach(b=>b.onclick=()=>{ $('#f-alloc').value=b.dataset.v; });
     const rsel=$('#f-role'); if(rsel)rsel.onchange=()=>{ const g=glossFor(rsel.value); const rd=$('#role-def'); if(rd){ rd.textContent=g&&g.definition?g.definition:''; rd.style.display=g&&g.definition?'block':'none'; } };
@@ -1283,8 +1313,10 @@ function openEditor(obj,kind){
       p.name=$('#f-name').value.trim();
       const custom=$('#f-role-custom')?.value.trim(); p.role=custom||$('#f-role').value.trim()||p.role;
       const side=segVal('seg-side'); if(side)p.side=side;
-      p.loc=segVal('seg-loc'); p.status=segVal('seg-stat')||p.status;
-      p.tempUntil=p.status==='TEMP'?($('#f-tempuntil')?.value||''):'';
+      p.loc=segVal('seg-loc');
+      p.temp=$('#f-temp').checked;
+      p.tempUntil=p.temp?($('#f-tempuntil')?.value||''):'';
+      p.status=p.name?'Occupé':'Ouvert';
       p.allocMode=segVal('seg-allocmode')||'full';
       if(p.allocMode==='part'){ const a=parseInt($('#f-alloc').value,10); p.alloc=isNaN(a)?100:Math.max(0,Math.min(300,a)); } else p.alloc=100;
       commit(); closeEditor();
@@ -1392,7 +1424,7 @@ function computeAnalytics(){
   const acc=(p,bucket)=>{ if(!p)return; A.people++; if(bucket)bucket.people++;
     const open=!p.name; if(open){A.open++; if(bucket)bucket.open++;} else A.filled++;
     const st=open?'Ouvert':(p.status||'Occupé'); A.byStatus[st]=(A.byStatus[st]||0)+1;
-    if(p.status==='TEMP'){ A.temp++; if(bucket)bucket.temp++; A.tempByRole[p.role]=(A.tempByRole[p.role]||0)+1; }
+    if(isTemp(p)){ A.temp++; if(bucket)bucket.temp++; A.tempByRole[p.role]=(A.tempByRole[p.role]||0)+1; }
     if(p.loc==='FR')A.fr++; else if(p.loc==='Maroc')A.maroc++; else A.noloc++;
     if(p.side==='produit')A.produit++; else A.tech++;
     if(p.role)A.byRole[p.role]=(A.byRole[p.role]||0)+1;
@@ -1434,8 +1466,9 @@ function renderDashboard(){
   const locHTML=barRow('Hub · FR',A.fr,locMax,'')+barRow('COE · Maroc',A.maroc,locMax,'c')+barRow('Non défini',A.noloc,locMax,'g');
   const sideMax=Math.max(A.produit,A.tech,1);
   const sideHTML=barRow('Produit',A.produit,sideMax,'p')+barRow('Tech',A.tech,sideMax,'');
-  const stMax=Math.max(...STATUSES.map(s=>A.byStatus[s]||0),1);
-  const stHTML=STATUSES.map(s=>barRow(s,A.byStatus[s]||0,stMax,s==='Ouvert'?'o':(s==='TEMP'?'c':''))).join('');
+  const stItems=[['Pourvu',A.filled,''],['À pourvoir',A.open,'o'],['TEMP',A.temp,'c']];
+  const stMax=Math.max(...stItems.map(x=>x[1]),1);
+  const stHTML=stItems.map(([l,v,c])=>barRow(l,v,stMax,c)).join('');
   // top rôles
   const topRoles=Object.entries(A.byRole).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const rMax=topRoles.length?topRoles[0][1]:1;
@@ -1530,12 +1563,11 @@ $('#modeSwitch').addEventListener('click',e=>{ const b=e.target.closest('button'
 /* ---- Rendu du vivier ---- */
 function poolPersonHTML(p){
   reg(p);
-  const loc=p.loc==='FR'?'<span class="badge fr">Hub · FR</span>':p.loc==='Maroc'?'<span class="badge coe">COE · Maroc</span>':'';
-  const tmp=p.status==='TEMP'?'<span class="badge temp" style="font-size:8px;padding:0 5px">TEMP</span>':'';
-  return `<div class="pcard ${p.side}" draggable="true" data-drag="${p.pid}">
+  const parts=[locChip(p),tempChip(p)].filter(Boolean);
+  return `<div class="pcard ${p.side} ${isTemp(p)?'istemp':''}" draggable="true" data-drag="${p.pid}">
     <div class="pc-name">${esc(p.name||'Sans nom')}</div>
     <div class="pc-role">${esc(p.role||'—')}</div>
-    <div class="pc-foot">${loc}${tmp}</div>
+    <div class="pc-foot">${parts.join('')}</div>
   </div>`;
 }
 function renderPool(){
@@ -1631,11 +1663,11 @@ document.addEventListener('drop',e=>{
   if(!p)return;
   if(t.type==='fill'){
     const post=pmap[t.pid];
-    if(post){ post.name=p.name; if(p.loc)post.loc=p.loc; post.status=p.status==='TEMP'?'TEMP':(p.name?'Occupé':post.status); post.tempUntil=p.status==='TEMP'?(p.tempUntil||''):''; }
+    if(post){ post.name=p.name; if(p.loc)post.loc=p.loc; post.temp=isTemp(p); post.tempUntil=post.temp?(p.tempUntil||''):''; post.status=p.name?'Occupé':'Ouvert'; }
   } else if(t.type==='squad'){
-    const sq=findSquad(t.squad); if(sq){ p.side=(p.side==='produit'||p.side==='tech')?p.side:guessSide(p.role); if(p.name&&p.status!=='TEMP')p.status='Occupé'; sq.members.push(p); }
+    const sq=findSquad(t.squad); if(sq){ p.side=(p.side==='produit'||p.side==='tech')?p.side:guessSide(p.role); p.status=p.name?'Occupé':'Ouvert'; sq.members.push(p); }
   } else if(t.type==='cell'){
-    const c=findCell(t.cell); if(c){ if(p.alloc==null)p.alloc=100; if(p.name&&p.status!=='TEMP')p.status='Occupé'; c.members.push(p); }
+    const c=findCell(t.cell); if(c){ if(p.alloc==null)p.alloc=100; p.status=p.name?'Occupé':'Ouvert'; c.members.push(p); }
   } else if(t.type==='pool'){
     state.pool=state.pool||[]; state.pool.push(p);
   }
