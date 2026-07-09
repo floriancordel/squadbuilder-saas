@@ -571,6 +571,29 @@
   .pill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:20px;padding:1px 8px}
   .pill.temp{background:#fef3c7;color:#92400e} .pill.open{background:var(--open-bg);color:var(--open)} .pill.over{background:#fee2e2;color:#b91c1c}
   .dash-empty{color:var(--faint);font-size:12.5px;padding:6px 2px}
+  /* Administration */
+  .admin-form{display:flex;flex-direction:column;gap:8px}
+  .admin-form input,.admin-form select{border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;color:var(--ink)}
+  .admin-form input:focus,.admin-form select:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
+  .admin-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:10px;background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:9px 11px}
+  .admin-note.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+  .cred-box{margin-top:12px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:10px;padding:12px}
+  .cred-title{font-size:12.5px;font-weight:700;color:#15803d;margin-bottom:8px}
+  .cred-row{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:5px}
+  .cred-row span{color:var(--muted);width:88px;flex:0 0 auto}
+  .cred-row code{background:#fff;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:12.5px;color:var(--ink);flex:1;overflow:auto}
+  .lnk,.lnk-del{border:0;background:transparent;color:var(--tech);font-weight:700;font-size:12px;cursor:pointer;padding:2px 4px}
+  .lnk-del{color:#dc2626}
+  .lnk:hover,.lnk-del:hover{text-decoration:underline}
+  .admin-setup{font-size:12.5px;color:var(--muted);line-height:1.7}
+  .admin-setup ol{margin:8px 0;padding-left:20px} .admin-setup li{margin:3px 0}
+  .admin-setup code{background:#f3f4f6;border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:11.5px;color:var(--ink)}
+  /* Lecture seule (viewer) : on masque les affordances d'édition */
+  body.is-viewer .add-lead,body.is-viewer .add-mini,body.is-viewer .add-slot,body.is-viewer .node-tools,body.is-viewer .cap-edit,body.is-viewer #modeSwitch [data-mode="affect"]{display:none!important}
+  body.is-viewer .ro-badge{display:inline-flex}
+  .ro-badge{display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:20px;padding:3px 10px}
+  #editor.ro .ed-foot{display:none}
+  #editor.ro input,#editor.ro textarea,#editor.ro select,#editor.ro .seg,#editor.ro .switch-row{pointer-events:none;opacity:.72}
 
   /* Référentiel des rôles */
   .gloss-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
@@ -1488,6 +1511,7 @@ function openEditor(obj,kind){
     };
     if(canDel)$('#edDel').onclick=()=>{ const l=locate(p.pid); if(l){ l.list.splice(l.index,1); } commit(); closeEditor(); };
   }
+  ed.classList.toggle('ro', currentRole==='viewer');
   ov.classList.add('open'); ed.classList.add('open');
 }
 let segState={};
@@ -1733,6 +1757,82 @@ $('#sheetBody').addEventListener('input',e=>{
   g[f.dataset.gf]=f.value; save();
   if(f.dataset.gf==='name')rebuildRoleLists();
 });
+
+/* ================= Administration (utilisateurs & accès) ================= */
+async function adminInvoke(action, payload){
+  const { data, error } = await sb.functions.invoke('create-user', { body:{ action, org_id: currentOrg?currentOrg.id:null, ...(payload||{}) } });
+  if(error) throw new Error(error.message||String(error));
+  if(data && data.error) throw new Error(data.error);
+  return data;
+}
+function renderAdmin(){
+  const body=$('#sheetBody');
+  const isAdmin = currentRole==='owner'||currentRole==='admin'||currentRole==='demo';
+  if(!isAdmin){ body.innerHTML=`<div class="dash-empty" style="padding:40px">🔒 Réservé aux administrateurs.</div>`; return; }
+  const demoNote = (!currentOrg) ? `<div class="admin-note warn">Mode démo : la création de comptes nécessite d'être connecté avec un vrai compte (sur le site déployé, pas en preview).</div>` : '';
+  body.innerHTML=`
+    ${demoNote}
+    <div class="dash-cols">
+      <div class="panelbox">
+        <h4>Inviter un utilisateur</h4>
+        <div class="admin-form">
+          <input id="au-email" type="email" placeholder="email@entreprise.com">
+          <select id="au-role"><option value="editor">Éditeur — lecture + écriture</option><option value="viewer">Lecteur — lecture seule</option></select>
+          <button class="btn primary" id="au-create" style="justify-content:center">Créer le compte</button>
+        </div>
+        <div id="au-result"></div>
+        <div class="admin-note">Un mot de passe est généré automatiquement — transmets-le à la personne, elle pourra le changer.</div>
+      </div>
+      <div class="panelbox">
+        <h4>Utilisateurs & accès</h4>
+        <div id="au-list"><div class="dash-empty">Chargement…</div></div>
+      </div>
+    </div>
+    <div class="dash-sec"><h3>Activation (une seule fois)</h3>
+      <div class="panelbox"><div class="admin-setup">${setupInstructions()}</div></div>
+    </div>`;
+  $('#au-create').onclick=adminCreateUser;
+  loadMembers();
+}
+async function loadMembers(){
+  const box=$('#au-list'); if(!box)return;
+  if(!currentOrg){ box.innerHTML=`<div class="dash-empty">Indisponible en démo.</div>`; return; }
+  try{
+    const data=await adminInvoke('list');
+    const members=(data&&data.members)||[];
+    box.innerHTML = members.length
+      ? `<table class="dtable"><thead><tr><th>Email</th><th>Rôle</th><th class="num"></th></tr></thead><tbody>${members.map(m=>`<tr><td>${esc(m.email)}</td><td><span class="pill ${m.role==='viewer'?'':'open'}">${ROLE_LABELS[m.role]||m.role}</span></td><td class="num">${m.role==='owner'?'':`<button class="lnk-del" data-rm="${esc(m.email)}">Retirer</button>`}</td></tr>`).join('')}</tbody></table>`
+      : `<div class="dash-empty">Aucun membre.</div>`;
+    box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{ if(confirm('Retirer l\'accès de '+b.dataset.rm+' ?')){ try{ await adminInvoke('remove',{email:b.dataset.rm}); loadMembers(); }catch(e){ toast('Erreur : '+e.message); } } });
+  }catch(e){
+    box.innerHTML=`<div class="admin-note warn">Impossible de lister les membres — l'Edge Function n'est probablement pas encore déployée (voir « Activation » ci-dessous).<br><span style="opacity:.75;font-size:11px">${esc(e.message||String(e))}</span></div>`;
+  }
+}
+async function adminCreateUser(){
+  const email=$('#au-email').value.trim(), role=$('#au-role').value;
+  if(!email){ toast('Email requis'); return; }
+  const btn=$('#au-create'); btn.disabled=true; btn.textContent='Création…';
+  try{
+    const data=await adminInvoke('create',{email,role});
+    $('#au-result').innerHTML=`<div class="cred-box"><div class="cred-title">✅ Compte créé — communique ces identifiants</div><div class="cred-row"><span>Email</span><code>${esc(data.email)}</code></div><div class="cred-row"><span>Mot de passe</span><code id="cred-pw">${esc(data.password)}</code><button class="lnk" id="cred-copy">Copier</button></div></div>`;
+    $('#au-email').value='';
+    $('#cred-copy').onclick=()=>{ navigator.clipboard.writeText(data.password); toast('Mot de passe copié'); };
+    loadMembers();
+  }catch(e){
+    $('#au-result').innerHTML=`<div class="admin-note warn">Échec : ${esc(e.message||String(e))}<br>Vérifie que l'Edge Function « create-user » est déployée.</div>`;
+  }
+  btn.disabled=false; btn.textContent='Créer le compte';
+}
+function setupInstructions(){
+  return `Pour activer la création de comptes, déploie l'Edge Function <b>une seule fois</b> :
+  <ol>
+    <li>Installe la CLI Supabase : <code>npm i -g supabase</code></li>
+    <li>Connexion : <code>supabase login</code></li>
+    <li>Lien au projet : <code>supabase link --project-ref tinaakgjubesqwecnbuf</code></li>
+    <li>Déploiement : <code>supabase functions deploy create-user</code></li>
+  </ol>
+  Le code est dans <code>supabase/functions/create-user/index.ts</code> (déjà dans le repo). La clé <code>service_role</code> est fournie automatiquement à la fonction par Supabase.`;
+}
 
 /* ================= Mode Affectation ================= */
 function guessSide(role){ return /product|produit|\bpm\b|design|ux|ui|research|\bops\b|scrum|agile|business analyst|marketing|growth/i.test(role||'')?'produit':'tech'; }
