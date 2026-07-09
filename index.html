@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SquadBuilder — Org Produit / R&D</title>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#f6f8fb; --panel:#fff; --ink:#1f2937; --muted:#6b7280; --faint:#9ca3af;
@@ -277,6 +279,28 @@
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:60;opacity:0;transition:.2s;box-shadow:var(--shadow-lg)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* ---------- Écran de login ---------- */
+  #loginScreen{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center}
+  #loginScreen.hidden{display:none}
+  .login-card{background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);padding:36px 32px;width:380px;max-width:92vw}
+  .login-card .logo-big{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--produit),var(--tech));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:24px;margin:0 auto 12px}
+  .login-card h2{text-align:center;font-size:20px;font-weight:700;margin:0 0 4px}
+  .login-card .sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:24px}
+  .login-card .field{margin-bottom:14px}
+  .login-card .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .login-card .field input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--ink)}
+  .login-card .field input:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
+  .login-card .login-btn{width:100%;padding:11px;border:none;border-radius:9px;background:var(--ink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px}
+  .login-card .login-btn:hover{background:#111827}
+  .login-card .toggle-link{text-align:center;margin-top:14px;font-size:12.5px;color:var(--muted)}
+  .login-card .toggle-link a{color:var(--tech);cursor:pointer;font-weight:600;text-decoration:none}
+  .login-card .toggle-link a:hover{text-decoration:underline}
+  .login-card .login-error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:12px;display:none}
+  .user-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .user-bar .user-email{font-weight:600;color:var(--ink)}
+  .user-bar .logout-btn{border:1px solid var(--border);background:#fff;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;color:var(--muted);font-weight:600}
+  .user-bar .logout-btn:hover{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+
   @media print{
     header,#overlay,#editor,.actions,.toggle,.add-mini,.zoom{display:none!important}
     #viewport{overflow:visible}#canvas{position:static;transform:none!important;padding:0}
@@ -305,7 +329,24 @@
   <button class="btn ghost" id="exportBtn" title="Exporter en JSON">Exporter</button>
   <button class="btn ghost" id="printBtn" title="Imprimer / PDF">Imprimer</button>
   <button class="btn ghost" id="resetBtn" title="Repartir de zéro">Réinitialiser</button>
+  <div class="user-bar" id="userBar" style="display:none">
+    <span class="user-email" id="userEmail"></span>
+    <button class="logout-btn" id="logoutBtn">Déconnexion</button>
+  </div>
 </header>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="logo-big">S</div>
+    <h2>SquadBuilder</h2>
+    <div class="sub">Connectez-vous pour accéder à votre organigramme</div>
+    <div class="login-error" id="loginError"></div>
+    <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="vous@exemple.com"></div>
+    <div class="field"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+    <button class="login-btn" id="loginBtn">Se connecter</button>
+    <div class="toggle-link" id="loginToggle">Pas encore de compte ? <a id="switchAuth">Créer un compte</a></div>
+  </div>
+</div>
 
 <div id="viewport"><div id="canvas"></div></div>
 
@@ -346,6 +387,137 @@ const LOCS=[['','—'],['FR','Hub · FR'],['Maroc','COE · Maroc']];
 const STATUSES=['Occupé','Ouvert','Recrutement'];
 
 let state=null, collapsed=new Set(), pmap={};
+
+/* ---------------- Supabase ---------------- */
+const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+let currentOrg = null; // { id, name, data, owner_email }
+let saveTimer = null;
+
+async function getMyOrg() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return null;
+  const email = user.email.toLowerCase();
+  const { data: orgs } = await sb.from('organizations').select('*').limit(1);
+  if (orgs && orgs.length > 0) return orgs[0];
+  const { error } = await sb.from('organizations')
+    .insert({ name: 'Mon organisation', data: seed(), owner_email: email });
+  if (error) { console.error('Erreur création org:', error); return null; }
+  const { data: created } = await sb.from('organizations').select('*').limit(1);
+  return (created && created[0]) || null;
+}
+
+async function saveOrg() {
+  if (!currentOrg) return;
+  const { error } = await sb.from('organizations')
+    .update({ data: state })
+    .eq('id', currentOrg.id);
+  if (error) console.error('Erreur sauvegarde:', error);
+}
+
+function debouncedSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveOrg, 800);
+}
+
+/* ---------------- Auth UI ---------------- */
+let isSignUp = false;
+
+function showLoginError(msg) {
+  const el = $('#loginError');
+  el.textContent = msg; el.style.display = msg ? 'block' : 'none';
+}
+
+document.addEventListener('click', e => {
+  if (e.target.id === 'switchAuth') {
+    e.preventDefault();
+    isSignUp = !isSignUp;
+    $('#loginBtn').textContent = isSignUp ? 'Créer un compte' : 'Se connecter';
+    $('#loginToggle').innerHTML = isSignUp
+      ? 'Déjà un compte ? <a id="switchAuth">Se connecter</a>'
+      : 'Pas encore de compte ? <a id="switchAuth">Créer un compte</a>';
+    showLoginError('');
+  }
+});
+
+$('#loginBtn').onclick = async () => {
+  const email = $('#loginEmail').value.trim();
+  const password = $('#loginPassword').value;
+  if (!email || !password) { showLoginError('Email et mot de passe requis.'); return; }
+  showLoginError('');
+  $('#loginBtn').disabled = true;
+  $('#loginBtn').textContent = 'Chargement…';
+  let result;
+  if (isSignUp) {
+    result = await sb.auth.signUp({ email, password });
+    if (result.error) {
+      showLoginError(result.error.message);
+      $('#loginBtn').disabled = false;
+      $('#loginBtn').textContent = 'Créer un compte';
+      return;
+    }
+    if (result.data?.user && !result.data.session) {
+      showLoginError('');
+      $('#loginBtn').disabled = false;
+      $('#loginBtn').textContent = 'Créer un compte';
+      alert('Un email de confirmation a été envoyé à ' + email + '. Vérifiez votre boîte mail puis connectez-vous.');
+      isSignUp = false;
+      $('#loginBtn').textContent = 'Se connecter';
+      $('#loginToggle').innerHTML = 'Pas encore de compte ? <a id="switchAuth">Créer un compte</a>';
+      return;
+    }
+  } else {
+    result = await sb.auth.signInWithPassword({ email, password });
+    if (result.error) {
+      showLoginError(result.error.message);
+      $('#loginBtn').disabled = false;
+      $('#loginBtn').textContent = 'Se connecter';
+      return;
+    }
+  }
+  // Auth succeeded — onAuthStateChange will handle the rest
+};
+
+$('#logoutBtn').onclick = async () => {
+  await sb.auth.signOut();
+};
+
+async function onLogin(user) {
+  $('#loginScreen').classList.add('hidden');
+  $('#userEmail').textContent = user.email;
+  $('#userBar').style.display = 'flex';
+  currentOrg = await getMyOrg();
+  if (currentOrg && currentOrg.data && currentOrg.data.direction) {
+    state = currentOrg.data;
+    migrate();
+  } else {
+    state = seed();
+    if (currentOrg) await saveOrg();
+  }
+  firstFit = true;
+  render();
+}
+
+function onLogout() {
+  currentOrg = null;
+  state = null;
+  clearTimeout(saveTimer);
+  canvas.innerHTML = '';
+  $('#loginScreen').classList.remove('hidden');
+  $('#userBar').style.display = 'none';
+  $('#loginBtn').disabled = false;
+  $('#loginBtn').textContent = isSignUp ? 'Créer un compte' : 'Se connecter';
+  $('#loginEmail').value = '';
+  $('#loginPassword').value = '';
+  showLoginError('');
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session?.user) {
+    onLogin(session.user);
+  } else if (event === 'SIGNED_OUT') {
+    onLogout();
+  }
+});
 
 /* ---------------- Modèle ---------------- */
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -413,12 +585,9 @@ function blank(){
                      tech:person('CTO','tech','','','Ouvert')},heads:[],squads:[]};
 }
 
-/* ---------------- Persistance ---------------- */
-function save(){ try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){} }
-function load(){
-  try{const raw=localStorage.getItem(LS_KEY); if(raw){state=JSON.parse(raw); migrate(); return;}}catch(e){}
-  state=seed();
-}
+/* ---------------- Persistance (Supabase) ---------------- */
+function save(){ debouncedSave(); }
+function load(){ /* handled by onLogin */ }
 function migrate(){ if(!Array.isArray(state.squads))state.squads=[]; (state.heads||[]).forEach(h=>{ if(!Array.isArray(h.cells))h.cells=[]; }); }
 
 /* ---------------- Rendu ---------------- */
@@ -865,7 +1034,12 @@ function createCell(){
 
 /* ---------------- Init ---------------- */
 $('#roleList').innerHTML=TRANSVERSE_ROLES.map(r=>`<option value="${r}">`).join('');
-load(); render();
+// Auth state change handles login/load/render automatically.
+// Check if already logged in (page refresh):
+(async()=>{
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $('#loginScreen').classList.remove('hidden'); }
+})();
 </script>
 </body>
 </html>
