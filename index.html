@@ -404,6 +404,62 @@
   .menu-pop .mdiv{height:1px;background:var(--border);margin:4px 2px}
   .menu-pop .mi{width:16px;text-align:center;opacity:.7}
 
+  /* ---------- Burger + drawer ---------- */
+  .iconbtn{border:1px solid var(--border);background:#fff;border-radius:9px;width:36px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0;flex-direction:column;transition:.12s;flex:0 0 auto}
+  .iconbtn:hover{background:#f2f4f7;border-color:var(--line)}
+  .iconbtn.burger span{display:block;width:16px;height:2px;background:var(--ink);border-radius:2px;margin:1.6px 0;transition:.15s}
+  #burgerOv{position:fixed;inset:0;background:rgba(17,24,39,.32);z-index:44;opacity:0;pointer-events:none;transition:.18s}
+  #burgerOv.open{opacity:1;pointer-events:auto}
+  #burgerMenu{position:fixed;top:0;left:0;height:100%;width:300px;background:var(--panel);box-shadow:var(--shadow-lg);z-index:45;transform:translateX(-100%);transition:.24s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+  #burgerMenu.open{transform:none}
+  .bm-head{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--border)}
+  .bm-head .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--produit),var(--tech));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
+  .bm-head .bm-title{font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .bm-head .close{margin-left:auto;border:0;background:#f2f4f7;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--muted)}
+  .bm-head .close:hover{background:#e5e7eb;color:var(--ink)}
+  .bm-body{flex:1;overflow:auto;padding:12px 12px 30px}
+  .bm-sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:14px 10px 6px}
+  .bm-item{width:100%;border:0;background:transparent;text-align:left;padding:10px 11px;border-radius:9px;font-size:13.5px;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:11px;font-weight:500}
+  .bm-item:hover{background:#f2f4f7}
+  .bm-item .mi{width:18px;text-align:center;font-size:15px;opacity:.9}
+  .bm-item.danger{color:#dc2626} .bm-item.danger:hover{background:#fef2f2}
+  .admin-only{display:none}
+  body.is-admin .admin-only{display:flex}
+
+  /* ---------- Quick stats (pro) ---------- */
+  .stats{display:flex;gap:6px;cursor:pointer;padding:0}
+  .stats .st{display:flex;align-items:baseline;gap:5px;background:#f5f7fa;border:1px solid var(--border);border-radius:8px;padding:4px 9px;transition:.12s;white-space:nowrap}
+  .stats .st b{font-size:14px;font-weight:800;color:var(--ink);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .stats .st span{font-size:11px;color:var(--muted);font-weight:500}
+  .stats .st.warn{background:#fffbeb;border-color:#fde68a} .stats .st.warn b{color:#b45309}
+  .stats .st.alert{background:#fef2f2;border-color:#fecaca} .stats .st.alert b{color:#dc2626}
+  .stats:hover .st{border-color:var(--line)}
+  @media (max-width:1200px){.stats .st.opt{display:none}}
+  @media (max-width:900px){.stats{display:none}}
+
+  /* ---------- Zone profil ---------- */
+  .profile-wrap{position:relative;flex:0 0 auto}
+  .profile-btn{display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:#fff;border-radius:10px;padding:4px 8px 4px 5px;cursor:pointer;transition:.12s}
+  .profile-btn:hover{background:#f2f4f7;border-color:var(--line)}
+  .avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--produit),var(--tech));color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;text-transform:uppercase}
+  .avatar.big{width:38px;height:38px;border-radius:10px;font-size:15px}
+  .pf-meta{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+  .pf-name{font-size:12.5px;font-weight:700;color:var(--ink);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pf-role{font-size:10.5px;color:var(--muted)}
+  .pf-chev{font-size:10px;color:var(--faint);margin-left:2px}
+  @media (max-width:700px){.profile-btn .pf-meta,.profile-btn .pf-chev{display:none}}
+  .profile-pop{position:absolute;top:calc(100% + 6px);right:0;width:250px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);padding:8px;z-index:46;display:none;flex-direction:column;gap:1px}
+  .profile-pop.open{display:flex}
+  .pf-head{display:flex;align-items:center;gap:10px;padding:8px 8px 10px}
+  .pf-name2{font-size:13.5px;font-weight:700;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pf-email{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pf-role-badge{font-size:11px;font-weight:700;color:var(--tech);background:var(--tech-soft);border-radius:7px;padding:5px 10px;margin:0 6px 4px;display:inline-block;width:fit-content}
+  .profile-pop .mdiv{height:1px;background:var(--border);margin:5px 2px}
+  .profile-pop button{border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:500}
+  .profile-pop button:hover{background:#f2f4f7}
+  .profile-pop button.danger{color:#dc2626} .profile-pop button.danger:hover{background:#fef2f2}
+  .profile-pop button .mi{width:16px;text-align:center;opacity:.85}
+
   /* ---------- Volet Affectation (Ressources disponibles) ---------- */
   #poolPanel{position:fixed;top:0;right:0;height:100%;width:320px;background:var(--panel);border-left:1px solid var(--border);box-shadow:-8px 0 24px rgba(16,24,40,.06);z-index:38;transform:translateX(100%);transition:.24s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
   body.mode-affect #poolPanel{transform:none}
@@ -526,17 +582,17 @@
 </head>
 <body>
 <header>
+  <button class="iconbtn burger" id="burgerBtn" title="Menu" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
   <div class="brand"><div class="logo">S</div><h1>SquadBuilder<span class="beta">BETA</span></h1></div>
   <div class="hsep"></div>
-  <div class="stats" id="stats"></div>
+  <div class="stats" id="stats" title="Ouvrir le dashboard analytics"></div>
   <div class="spacer"></div>
   <div class="modesw" id="modeSwitch">
     <button data-mode="edit" class="on" title="Construire et éditer l'organigramme"><span class="ic">✎</span>Édition</button>
     <button data-mode="affect" title="Affecter les ressources par glisser-déposer"><span class="ic">⇄</span>Affectation</button>
   </div>
-  <div class="hsep"></div>
-  <button class="btn ghost hbtn" id="dashBtn2" title="Dashboard analytics">📊 Analytics</button>
-  <button class="btn ghost hbtn" id="glossBtn2" title="Référentiel des rôles">📖 Rôles</button>
   <div class="hsep"></div>
   <div class="zoom">
     <button id="zOut" title="Dézoomer">−</button>
@@ -544,27 +600,41 @@
     <button id="zIn" title="Zoomer">+</button>
     <button id="zFit" title="Ajuster" style="width:auto;padding:0 9px;font-size:12px">Ajuster</button>
   </div>
-  <div class="menu-wrap">
-    <button class="btn ghost" id="menuBtn" title="Plus d'options" style="font-size:17px;padding:7px 11px">⋯</button>
-    <div class="menu-pop" id="menuPop">
-      <button id="dashBtn"><span class="mi">📊</span>Dashboard analytics</button>
-      <button id="glossBtn"><span class="mi">📖</span>Référentiel des rôles</button>
+  <div class="hsep"></div>
+  <div class="profile-wrap" id="userBar" style="display:none">
+    <button class="profile-btn" id="profileBtn">
+      <span class="avatar" id="pfAvatar">A</span>
+      <span class="pf-meta"><span class="pf-name" id="pfName">—</span><span class="pf-role" id="pfRole">—</span></span>
+      <span class="pf-chev">▾</span>
+    </button>
+    <div class="profile-pop" id="profilePop">
+      <div class="pf-head"><span class="avatar big" id="pfAvatar2">A</span><div style="min-width:0"><div class="pf-name2" id="pfName2">—</div><div class="pf-email" id="userEmail"></div></div></div>
+      <div class="pf-role-badge" id="pfRoleBadge">—</div>
       <div class="mdiv"></div>
-      <button id="importPeopleBtn"><span class="mi">📥</span>Importer des personnes (Excel/CSV)</button>
-      <div class="mdiv"></div>
-      <button id="importBtn"><span class="mi">⤵</span>Importer un JSON</button>
-      <button id="exportBtn"><span class="mi">⤴</span>Exporter en JSON</button>
-      <button id="printBtn"><span class="mi">🖨</span>Imprimer / PDF</button>
-      <div class="mdiv"></div>
-      <button id="resetBtn" class="danger"><span class="mi">↺</span>Réinitialiser</button>
+      <button id="adminBtnPf" class="admin-only"><span class="mi">🛡️</span>Administration</button>
+      <button id="logoutBtn" class="danger"><span class="mi">↩</span>Se déconnecter</button>
     </div>
   </div>
-  <div class="hsep"></div>
-  <div class="user-bar" id="userBar" style="display:none">
-    <span class="user-email" id="userEmail"></span>
-    <button class="logout-btn" id="logoutBtn">Déconnexion</button>
-  </div>
 </header>
+
+<div id="burgerOv"></div>
+<aside id="burgerMenu">
+  <div class="bm-head"><div class="logo">S</div><span class="bm-title">SquadBuilder</span><button class="close" id="bmClose">×</button></div>
+  <div class="bm-body">
+    <div class="bm-sec">Navigation</div>
+    <button class="bm-item" id="dashBtn"><span class="mi">📊</span>Dashboard analytics</button>
+    <button class="bm-item" id="glossBtn"><span class="mi">📖</span>Référentiel des rôles</button>
+    <button class="bm-item admin-only" id="adminBtn"><span class="mi">🛡️</span>Administration</button>
+    <div class="bm-sec">Données</div>
+    <button class="bm-item" id="importPeopleBtn"><span class="mi">📥</span>Importer des personnes</button>
+    <button class="bm-item" id="templateBtn"><span class="mi">⬇️</span>Télécharger le modèle Excel</button>
+    <button class="bm-item" id="importBtn"><span class="mi">⤵</span>Importer un JSON</button>
+    <button class="bm-item" id="exportBtn"><span class="mi">⤴</span>Exporter en JSON</button>
+    <button class="bm-item" id="printBtn"><span class="mi">🖨</span>Imprimer / PDF</button>
+    <div class="bm-sec">Zone de danger</div>
+    <button class="bm-item danger" id="resetBtn"><span class="mi">↺</span>Réinitialiser l'organisation</button>
+  </div>
+</aside>
 
 <div id="loginScreen">
   <div class="login-card">
@@ -747,9 +817,26 @@ $('#logoutBtn').onclick = async () => {
   await sb.auth.signOut();
 };
 
+let currentRole = 'owner';
+const ROLE_LABELS = {owner:'Propriétaire', admin:'Administrateur', editor:'Éditeur', viewer:'Lecteur', demo:'Démo'};
+function fillProfile(email, role){
+  const name=(email||'').split('@')[0]||'—';
+  const initials=(name.replace(/[^a-zA-Z0-9]/g,'')||'?').slice(0,2).toUpperCase();
+  $('#pfAvatar').textContent=initials; $('#pfAvatar2').textContent=initials;
+  $('#pfName').textContent=name; $('#pfName2').textContent=name;
+  $('#userEmail').textContent=email||'';
+  const rl=ROLE_LABELS[role]||role||'—';
+  $('#pfRole').textContent=rl; $('#pfRoleBadge').textContent=rl;
+  const admin = role==='owner'||role==='admin'||role==='demo';
+  document.body.classList.toggle('is-admin', admin);
+  document.body.classList.toggle('is-viewer', role==='viewer');
+}
+async function fetchRole(orgId, email){
+  try{ const {data}=await sb.from('memberships').select('role').eq('org_id',orgId).eq('email',(email||'').toLowerCase()).limit(1);
+    return (data&&data[0]&&data[0].role)||'owner'; }catch(_){ return 'owner'; }
+}
 async function onLogin(user) {
   $('#loginScreen').classList.add('hidden');
-  $('#userEmail').textContent = user.email;
   $('#userBar').style.display = 'flex';
   currentOrg = await getMyOrg();
   if (currentOrg && currentOrg.data && currentOrg.data.direction) {
@@ -759,6 +846,8 @@ async function onLogin(user) {
     state = seed();
     if (currentOrg) await saveOrg();
   }
+  currentRole = currentOrg ? await fetchRole(currentOrg.id, user.email) : 'owner';
+  fillProfile(user.email, currentRole);
   firstFit = true;
   render();
 }
@@ -1124,7 +1213,14 @@ function updateStats(){
   squads+=(state.squads||[]).length;
   let open=0; all.forEach(p=>{ if(!p.name)open++; if(isTemp(p))temps++; });
   const pool=(state.pool||[]).length;
-  $('#stats').innerHTML=`<span><b>${state.heads.length}</b> tribus</span><span><b>${squads}</b> squads</span><span><b>${all.length}</b> postes</span><span><b>${open}</b> ouverts</span>${temps?`<span><b>${temps}</b> TEMP</span>`:''}${pool?`<span><b>${pool}</b> à affecter</span>`:''}`;
+  const st=(n,l,cls,opt)=>`<span class="st ${cls||''} ${opt?'opt':''}"><b>${n}</b><span>${l}</span></span>`;
+  $('#stats').innerHTML=
+    st(state.heads.length,'tribus')+
+    st(squads,'squads')+
+    st(all.length,'postes','','opt')+
+    st(open,open>1?'à pourvoir':'à pourvoir',open?'warn':'')+
+    (temps?st(temps,'TEMP','warn','opt'):'')+
+    (pool?st(pool,'à affecter','alert'):'');
 }
 
 /* ---------------- Actions ---------------- */
@@ -1392,11 +1488,16 @@ $('#fileInput').onchange=e=>{ const f=e.target.files[0]; if(!f)return; const r=n
 $('#printBtn').onclick=()=>window.print();
 $('#resetBtn').onclick=()=>{ if(confirm('Repartir d\'une organisation vide ?')){ state=blank(); collapsed.clear(); firstFit=true; commit(); } };
 
-/* ---------------- Menu « ... » ---------------- */
-function closeMenu(){ $('#menuPop').classList.remove('open'); }
-$('#menuBtn').onclick=e=>{ e.stopPropagation(); $('#menuPop').classList.toggle('open'); };
-$('#menuPop').addEventListener('click',e=>{ if(e.target.closest('button')) closeMenu(); });
-document.addEventListener('click',e=>{ if(!e.target.closest('.menu-wrap')) closeMenu(); });
+/* ---------------- Burger + Profil ---------------- */
+function openBurger(){ $('#burgerMenu').classList.add('open'); $('#burgerOv').classList.add('open'); }
+function closeBurger(){ $('#burgerMenu').classList.remove('open'); $('#burgerOv').classList.remove('open'); }
+$('#burgerBtn').onclick=openBurger;
+$('#bmClose').onclick=closeBurger; $('#burgerOv').onclick=closeBurger;
+$('#burgerMenu').addEventListener('click',e=>{ if(e.target.closest('.bm-item')) closeBurger(); });
+function closeProfile(){ $('#profilePop').classList.remove('open'); }
+$('#profileBtn').onclick=e=>{ e.stopPropagation(); $('#profilePop').classList.toggle('open'); };
+$('#profilePop').addEventListener('click',e=>{ if(e.target.closest('button')) closeProfile(); });
+document.addEventListener('click',e=>{ if(!e.target.closest('.profile-wrap')) closeProfile(); });
 
 /* ================= Grande modale (Dashboard / Référentiel) ================= */
 let sheetView=null; // 'dash' | 'gloss'
@@ -1404,14 +1505,15 @@ function openSheet(view){
   sheetView=view;
   $('#sheetOv').classList.add('open'); $('#sheet').classList.add('open');
   if(view==='dash'){ $('#sheetIco').textContent='📊'; $('#sheetTitle').textContent='Dashboard analytics'; $('#sheetSub').textContent="Vue d'ensemble de l'organisation"; renderDashboard(); }
+  else if(view==='admin'){ $('#sheetIco').textContent='🛡️'; $('#sheetTitle').textContent='Administration'; $('#sheetSub').textContent='Gérez les accès à SquadBuilder'; renderAdmin(); }
   else { $('#sheetIco').textContent='📖'; $('#sheetTitle').textContent='Référentiel des rôles'; $('#sheetSub').textContent='Gérez les métiers et leurs définitions'; renderGlossary(); }
 }
 function closeSheet(){ sheetView=null; $('#sheetOv').classList.remove('open'); $('#sheet').classList.remove('open'); }
 $('#sheetClose').onclick=closeSheet; $('#sheetOv').onclick=closeSheet;
 $('#dashBtn').onclick=()=>openSheet('dash');
 $('#glossBtn').onclick=()=>openSheet('gloss');
-$('#dashBtn2').onclick=()=>openSheet('dash');
-$('#glossBtn2').onclick=()=>openSheet('gloss');
+$('#adminBtn').onclick=()=>openSheet('admin');
+$('#adminBtnPf').onclick=()=>openSheet('admin');
 $('#stats').onclick=()=>openSheet('dash');
 
 /* ---- Analytics ---- */
@@ -1868,12 +1970,13 @@ const isDemo = window.self !== window.top
   || /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(location.hostname);
 if (isDemo) {
   $('#loginScreen').classList.add('hidden');
-  $('#userEmail').textContent = 'demo';
   $('#userBar').style.display = 'flex';
+  currentRole='demo'; fillProfile('demo@squadbuilder.app','demo');
   state = seed();
   firstFit = true;
   render();
 } else {
+  // Vrai login par utilisateur (chacun son compte).
   sb.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session?.user) {
       onLogin(session.user);
@@ -1883,15 +1986,8 @@ if (isDemo) {
   });
   (async()=>{
     const { data: { session } } = await sb.auth.getSession();
-    if (session) return; // onAuthStateChange gère la suite
-    // Espace de travail partagé : connexion automatique au compte admin.
-    // Pas de session → on tente l'admin ; en cas d'échec, on affiche le login.
-    const res = await sb.auth.signInWithPassword({ email:'admin@squadbuilder.app', password:'admin123' });
-    if (res.error || !res.data?.session) {
-      $('#loginScreen').classList.remove('hidden');
-    } else {
-      await onLogin(res.data.user);
-    }
+    if (session) { onLogin(session.user); }
+    else { $('#loginScreen').classList.remove('hidden'); }
   })();
 }
 </script>
