@@ -570,8 +570,24 @@
   .rc-del:hover{color:#dc2626}
   .rc-def{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:52px;color:var(--ink);background:#fcfdff;line-height:1.45}
   .rc-def:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
-  .role-add{border:1.5px dashed var(--line);background:transparent;border-radius:12px;padding:13px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:60px}
+  .role-add{border:1.5px dashed var(--line);background:transparent;border-radius:12px;padding:15px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
   .role-add:hover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
+  /* Référentiel enrichi : liste pleine largeur, compétences en chips, job profile */
+  .role-list{display:flex;flex-direction:column;gap:14px}
+  .role-list .role-card{padding:15px 17px}
+  .rc-label{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin:13px 0 6px}
+  .rc-skills{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .skill-chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--tech);background:var(--tech-soft);border:1px solid #dbeafe;border-radius:20px;padding:3px 6px 3px 10px}
+  .role-card.produit .skill-chip{color:var(--produit);background:var(--produit-soft);border-color:#e9defc}
+  .skill-chip button{border:0;background:transparent;color:inherit;opacity:.55;cursor:pointer;font-size:13px;line-height:1;padding:0}
+  .skill-chip button:hover{opacity:1}
+  .skill-input{border:1px dashed var(--line);border-radius:20px;padding:4px 12px;font-size:11.5px;font-family:inherit;min-width:180px;flex:1;color:var(--ink);background:#fcfdff}
+  .skill-input:focus{outline:none;border-color:var(--tech);border-style:solid}
+  .rc-jp{display:flex;gap:8px;align-items:center}
+  .rc-jp-input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:inherit;color:var(--ink);background:#fcfdff}
+  .rc-jp-input:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
+  .rc-jp-open{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--tech);background:var(--tech-soft);border-radius:8px;padding:8px 12px;text-decoration:none;white-space:nowrap}
+  .rc-jp-open:hover{background:#dbeafe}
 
   @media print{
     header,#overlay,#editor,#poolPanel,.actions,.toggle,.add-mini,.zoom{display:none!important}
@@ -949,15 +965,36 @@ const ROLE_DEFS={
   'Accessibility Expert':"Garantit l'accessibilité (RGAA / WCAG) des produits.",
   'UX Writer':"Conçoit les contenus et micro-copies de l'interface."
 };
+const SKILL_DEFAULTS={
+  'CPO':['Vision produit','Stratégie','Roadmap','Leadership'],
+  'CTO':['Architecture','Vision technique','Scalabilité','Leadership'],
+  'Head of Product':['Discovery','Priorisation','Analytics','Stakeholders'],
+  'Engineering Manager':['Delivery','Management','Qualité','Coaching'],
+  'Product Manager':['User research','Backlog','Roadmap','Data'],
+  'Tech Lead':['Architecture','Code review','Mentorat','CI/CD'],
+  'Frontend Engineer':['React','TypeScript','HTML/CSS','Accessibilité'],
+  'Backend Engineer':['API','SQL','Node/Java','Sécurité'],
+  'Fullstack Engineer':['Frontend','Backend','API','DevOps'],
+  'Mobile Engineer':['iOS','Android','React Native','UX mobile'],
+  'Product Designer':['Figma','UX','UI','Prototypage'],
+  'UX Designer':['Wireframes','Parcours','Tests','Recherche'],
+  'UI Designer':['Design system','Figma','Typographie','Motion'],
+  'Data Analyst':['SQL','Dataviz','KPIs','Statistiques'],
+  'Data Engineer':['ETL','Spark','SQL','Cloud'],
+  'QA Engineer':['Automatisation','Cypress','Tests','CI'],
+  'DevOps Engineer':['CI/CD','Docker','Kubernetes','Cloud'],
+  'Software Architect':['Architecture','Patterns','Cloud','Sécurité']
+};
 const SUPPORT_ROLES_SET=new Set(['Software Architect','SRE','DevOps Engineer','Security Engineer','Data Engineer','ML Engineer','Performance Engineer','Tech Writer','Product Ops','Agile Coach','Scrum Master','Business Analyst','Accessibility Expert','UX Writer','QA Engineer','UX Researcher']);
+function newRole(name,category,side){ return {id:uid(),name,category,side,definition:ROLE_DEFS[name]||'',skills:(SKILL_DEFAULTS[name]||[]).slice(),jobProfile:''}; }
 function defaultGlossary(){
   const out=[];
-  out.push({id:uid(),name:'CPO',category:'direction',side:'produit',definition:ROLE_DEFS['CPO']});
-  out.push({id:uid(),name:'CTO',category:'direction',side:'tech',definition:ROLE_DEFS['CTO']});
+  out.push(newRole('CPO','direction','produit'));
+  out.push(newRole('CTO','direction','tech'));
   [['Head of Product','produit'],['Engineering Manager','tech'],['Product Manager','produit'],['Tech Lead','tech']]
-    .forEach(([n,s])=>out.push({id:uid(),name:n,category:'lead',side:s,definition:ROLE_DEFS[n]||''}));
+    .forEach(([n,s])=>out.push(newRole(n,'lead',s)));
   const ics=[...new Set([...MEMBER_ROLES_DEFAULT,...TRANSVERSE_ROLES_DEFAULT])];
-  ics.forEach(n=>out.push({id:uid(),name:n,category:SUPPORT_ROLES_SET.has(n)?'support':'squad',side:guessSide(n),definition:ROLE_DEFS[n]||''}));
+  ics.forEach(n=>out.push(newRole(n,SUPPORT_ROLES_SET.has(n)?'support':'squad',guessSide(n))));
   return out;
 }
 function rebuildRoleLists(){
@@ -1007,6 +1044,7 @@ function migrate(){
   if(!Array.isArray(state.squads))state.squads=[];
   if(!Array.isArray(state.pool))state.pool=[];
   if(!Array.isArray(state.glossary)||!state.glossary.length)state.glossary=defaultGlossary();
+  state.glossary.forEach(g=>{ if(!Array.isArray(g.skills))g.skills=(SKILL_DEFAULTS[g.name]||[]).slice(); if(g.jobProfile===undefined)g.jobProfile=''; });
   const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.temp===undefined)p.temp=(p.status==='TEMP'); if(p.status==='TEMP')p.status=p.name?'Occupé':'Ouvert'; if(!p.status)p.status=p.name?'Occupé':'Ouvert'; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
   // direction {product,tech} -> {leads:[]}
   const d=state.direction||{};
@@ -1619,8 +1657,10 @@ function renderGlossary(){
   const tabs=cats.map(c=>{ const n=(state.glossary||[]).filter(g=>g.category===c.key).length; return `<button data-gt="${c.key}" class="${glossTab===c.key?'on':''}">${esc(c.label)} · ${n}</button>`; }).join('');
   const cat=cats.find(c=>c.key===glossTab)||cats[0];
   const roles=(state.glossary||[]).filter(g=>g.category===glossTab).sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
-  const cardsHTML=roles.map(g=>`
-    <div class="role-card ${g.side==='produit'?'produit':''}" data-id="${g.id}">
+  const cardsHTML=roles.map(g=>{
+    const skills=(g.skills||[]).map((s,i)=>`<span class="skill-chip">${esc(s)}<button data-skill-del="${i}" title="Retirer">×</button></span>`).join('');
+    const jp=g.jobProfile?`<a class="rc-jp-open" href="${esc(g.jobProfile)}" target="_blank" rel="noopener">Ouvrir ↗</a>`:'';
+    return `<div class="role-card ${g.side==='produit'?'produit':''}" data-id="${g.id}">
       <div class="rc-top">
         <input class="rc-name" data-gf="name" value="${esc(g.name)}" placeholder="Nom du rôle">
         <span class="rc-side">
@@ -1629,25 +1669,36 @@ function renderGlossary(){
         </span>
         <button class="rc-del" data-gdel title="Supprimer">×</button>
       </div>
-      <textarea class="rc-def" data-gf="definition" placeholder="Définition du rôle…">${esc(g.definition||'')}</textarea>
-    </div>`).join('');
+      <label class="rc-label">Description</label>
+      <textarea class="rc-def" data-gf="definition" placeholder="Missions, responsabilités, périmètre…">${esc(g.definition||'')}</textarea>
+      <label class="rc-label">Compétences clés</label>
+      <div class="rc-skills">${skills}<input class="skill-input" placeholder="+ compétence, Entrée pour ajouter"></div>
+      <label class="rc-label">Job profile (lien)</label>
+      <div class="rc-jp"><input class="rc-jp-input" data-gf="jobProfile" value="${esc(g.jobProfile||'')}" placeholder="https://notion.so/… ou lien Drive"><span class="rc-jp-actions">${jp}</span></div>
+    </div>`;
+  }).join('');
   $('#sheetBody').innerHTML=`
     <div class="gloss-tabs">${tabs}</div>
     <div class="gloss-cat-desc">${esc(cat.desc)}</div>
-    <div class="role-grid">${cardsHTML}<button class="role-add" id="glossAdd">＋ Ajouter un rôle</button></div>`;
+    <div class="role-list">${cardsHTML}<button class="role-add" id="glossAdd">＋ Ajouter un rôle à « ${esc(cat.label)} »</button></div>`;
 }
+function glossRoleOf(el){ const c=el.closest('.role-card'); return c?state.glossary.find(x=>x.id===c.dataset.id):null; }
 $('#sheetBody').addEventListener('click',e=>{
-  if(sheetView==='gloss'){
-    const tab=e.target.closest('[data-gt]'); if(tab){ glossTab=tab.dataset.gt; renderGlossary(); return; }
-    const add=e.target.closest('#glossAdd'); if(add){ state.glossary.push({id:uid(),name:'Nouveau rôle',category:glossTab,side:'tech',definition:''}); save(); renderGlossary(); return; }
-    const del=e.target.closest('[data-gdel]'); if(del){ const id=del.closest('.role-card').dataset.id; state.glossary=state.glossary.filter(g=>g.id!==id); save(); rebuildRoleLists(); renderGlossary(); return; }
-    const sideBtn=e.target.closest('[data-gs]'); if(sideBtn){ const id=sideBtn.closest('.role-card').dataset.id; const g=state.glossary.find(x=>x.id===id); if(g){ g.side=sideBtn.dataset.gs; save(); renderGlossary(); } return; }
-  }
+  if(sheetView!=='gloss')return;
+  const tab=e.target.closest('[data-gt]'); if(tab){ glossTab=tab.dataset.gt; renderGlossary(); return; }
+  const add=e.target.closest('#glossAdd'); if(add){ state.glossary.push({id:uid(),name:'Nouveau rôle',category:glossTab,side:'tech',definition:'',skills:[],jobProfile:''}); save(); renderGlossary(); return; }
+  const del=e.target.closest('[data-gdel]'); if(del){ const g=glossRoleOf(del); if(g&&confirm(`Supprimer le rôle « ${g.name} » ?`)){ state.glossary=state.glossary.filter(x=>x.id!==g.id); save(); rebuildRoleLists(); renderGlossary(); } return; }
+  const sideBtn=e.target.closest('[data-gs]'); if(sideBtn){ const g=glossRoleOf(sideBtn); if(g){ g.side=sideBtn.dataset.gs; save(); renderGlossary(); } return; }
+  const sd=e.target.closest('[data-skill-del]'); if(sd){ const g=glossRoleOf(sd); if(g){ g.skills.splice(+sd.dataset.skillDel,1); save(); renderGlossary(); } return; }
+});
+$('#sheetBody').addEventListener('keydown',e=>{
+  if(sheetView!=='gloss')return;
+  if(e.key==='Enter'&&e.target.classList.contains('skill-input')){ e.preventDefault(); const v=e.target.value.trim(); if(!v)return; const g=glossRoleOf(e.target); if(g){ g.skills=g.skills||[]; g.skills.push(v); save(); renderGlossary(); const card=[...document.querySelectorAll('.role-card')].find(c=>c.dataset.id===g.id); if(card){ const inp=card.querySelector('.skill-input'); if(inp)inp.focus(); } } }
 });
 $('#sheetBody').addEventListener('input',e=>{
   if(sheetView!=='gloss')return;
   const f=e.target.closest('[data-gf]'); if(!f)return;
-  const id=f.closest('.role-card').dataset.id; const g=state.glossary.find(x=>x.id===id); if(!g)return;
+  const g=glossRoleOf(f); if(!g)return;
   g[f.dataset.gf]=f.value; save();
   if(f.dataset.gf==='name')rebuildRoleLists();
 });
@@ -1707,13 +1758,29 @@ function rowToPerson(row){
   const role=pickField(row,['role','poste','fonction','job','jobtitle','title','metier','intitule','profil']);
   let loc=mapLoc(pickField(row,['hub','coe','site','lieu','localisation','location','ville','pays','country','bureau','entite']));
   const statusRaw=pickField(row,['statut','status','etat']);
-  let status=name?'Occupé':'Ouvert';
-  if(/temp/i.test(statusRaw))status='TEMP';
-  else if(/ouvert|open|vacant/i.test(statusRaw))status='Ouvert';
-  else if(/recrut/i.test(statusRaw))status='Recrutement';
+  const tempRaw=pickField(row,['temp','temporaire','mission','tempsplein']);
   const tempUntil=pickField(row,['jusqua','tempuntil','findetemp','datefin','until']);
-  return person(role||'Ressource',guessSide(role),name,loc,status,tempUntil);
+  const allocRaw=pickField(row,['allocation','alloc','tauxdalloc','pourcentage','pct','tempsdetravail','taux']);
+  const p=person(role||'Ressource',guessSide(role),name,loc,'',tempUntil);
+  if(/temp/i.test(statusRaw)||/oui|yes|true|temp|1/i.test(tempRaw)){ p.temp=true; p.tempUntil=tempUntil||''; }
+  const a=parseInt(String(allocRaw).replace('%','').trim(),10);
+  if(!isNaN(a)&&a>0){ p.alloc=Math.max(0,Math.min(300,a)); p.allocMode=a===100?'full':'part'; }
+  return p;
 }
+function downloadTemplate(){
+  if(typeof XLSX==='undefined'){ toast('Lecteur Excel non chargé (réseau ?)'); return; }
+  const rows=[
+    {'Prénom':'Alice','Nom':'Martin','Rôle':'Frontend Engineer','Localisation':'Hub FR','Allocation':100,'TEMP':'non'},
+    {'Prénom':'Yassine','Nom':'El Amrani','Rôle':'Backend Engineer','Localisation':'COE Maroc','Allocation':80,'TEMP':'oui'},
+    {'Prénom':'','Nom':'','Rôle':'Data Analyst','Localisation':'','Allocation':100,'TEMP':'non'}
+  ];
+  const ws=XLSX.utils.json_to_sheet(rows,{header:['Prénom','Nom','Rôle','Localisation','Allocation','TEMP']});
+  ws['!cols']=[{wch:14},{wch:16},{wch:22},{wch:14},{wch:12},{wch:8}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Ressources');
+  XLSX.writeFile(wb,'modele-squadbuilder.xlsx');
+  toast('Modèle Excel téléchargé');
+}
+$('#templateBtn').onclick=downloadTemplate;
 function importPeopleFromRows(rows){
   const people=rows.map(rowToPerson).filter(p=>p.name||(p.role&&p.role!=='Ressource'));
   if(!people.length){ toast('Aucune ligne exploitable trouvée'); return; }
