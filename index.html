@@ -461,9 +461,18 @@
   .profile-pop button .mi{width:16px;text-align:center;opacity:.85}
 
   /* ---------- Volet Affectation (Ressources disponibles) ---------- */
-  #poolPanel{position:fixed;top:0;right:0;height:100%;width:320px;background:var(--panel);border-left:1px solid var(--border);box-shadow:-8px 0 24px rgba(16,24,40,.06);z-index:38;transform:translateX(100%);transition:.24s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+  #poolPanel{position:fixed;top:0;right:0;height:100%;width:340px;background:var(--panel);border-left:1px solid var(--border);box-shadow:-8px 0 24px rgba(16,24,40,.06);z-index:38;transform:translateX(100%);transition:.24s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
   body.mode-affect #poolPanel{transform:none}
-  body.mode-affect #viewport{width:calc(100% - 320px)}
+  body.mode-affect #viewport{width:calc(100% - 340px)}
+  /* Immersion mode affectation : fond teinté à points + zones de drop visibles */
+  body.mode-affect #viewport{background:radial-gradient(circle at 1px 1px, rgba(37,99,235,.10) 1.4px, transparent 0) 0 0/24px 24px, linear-gradient(180deg,#eaf1fe,#eef4fb)}
+  #affectHint{position:fixed;left:20px;bottom:20px;z-index:39;display:none;align-items:center;gap:9px;background:var(--tech);color:#fff;font-size:12.5px;font-weight:600;padding:9px 14px;border-radius:22px;box-shadow:var(--shadow-lg)}
+  body.mode-affect #affectHint{display:flex}
+  #affectHint .dotpulse{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 0 rgba(255,255,255,.7);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}70%{box-shadow:0 0 0 7px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+  body.mode-affect .rnd-grid,body.mode-affect .cell-body{outline:1.5px dashed #b7cdf5;outline-offset:2px;border-radius:10px;transition:.12s}
+  body.mode-affect .card.isopen,body.mode-affect .mini.isopen{box-shadow:0 0 0 1.5px var(--open-bd)}
+  body.mode-affect .bucket,body.mode-affect .cell,body.mode-affect .tribe{transition:box-shadow .15s}
   .pool-head{padding:15px 16px 12px;border-bottom:1px solid var(--border)}
   .pool-head .pt{display:flex;align-items:center;gap:8px}
   .pool-head h3{margin:0;font-size:14px;font-weight:700;letter-spacing:-.01em}
@@ -481,18 +490,31 @@
   .pool-drop:hover,.pool-drop.dragover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
   .pool-drop .pd-ic{font-size:26px;display:block;margin-bottom:8px;opacity:.6}
   .pool-drop b{color:var(--ink);font-weight:600}
-  .pool-group{margin-bottom:16px}
-  .pool-group .pg-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin:0 2px 7px;display:flex;align-items:center;gap:7px}
-  .pool-group .pg-title .pg-n{color:var(--muted)}
-  .pool-group .pg-title::after{content:'';flex:1;height:1px;background:var(--border)}
-  .pcard{border:1px solid var(--border);border-left:3px solid var(--tech);border-radius:9px;padding:8px 10px;margin-bottom:7px;background:#fff;cursor:grab;box-shadow:var(--shadow);transition:.12s;user-select:none}
+  .pool-filters{display:flex;gap:5px;margin-top:9px}
+  .pool-filters button{flex:1;border:1px solid var(--border);background:#fff;border-radius:7px;padding:5px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer}
+  .pool-filters button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .pool-filters button.on[data-pf="produit"]{background:var(--produit);border-color:var(--produit)}
+  .pool-filters button.on[data-pf="tech"]{background:var(--tech);border-color:var(--tech)}
+  .pool-group{margin-bottom:12px;border:1px solid var(--border);border-radius:11px;overflow:hidden;background:#fbfcfe}
+  .pool-group .pg-title{font-size:11px;font-weight:700;color:var(--ink);padding:8px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;background:#f3f6fb;user-select:none}
+  .pool-group .pg-title:hover{background:#eef2f8}
+  .pool-group .pg-title .pg-chev{font-size:9px;color:var(--faint);transition:.15s;width:9px}
+  .pool-group.coll .pg-title .pg-chev{transform:rotate(-90deg)}
+  .pool-group .pg-title .pg-n{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--tech);background:var(--tech-soft);border-radius:20px;padding:1px 8px}
+  .pool-group .pg-body{padding:8px}
+  .pool-group.coll .pg-body{display:none}
+  .pcard{border:1px solid var(--border);border-left:3px solid var(--tech);border-radius:9px;padding:7px 9px 7px 8px;margin-bottom:6px;background:#fff;cursor:grab;box-shadow:var(--shadow);transition:.12s;user-select:none;display:flex;align-items:center;gap:8px}
+  .pcard:last-child{margin-bottom:0}
   .pcard.produit{border-left-color:var(--produit)}
-  .pcard:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+  .pcard.istemp{border-color:#f59e0b}
+  .pcard:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);border-color:var(--line)}
   .pcard:active{cursor:grabbing}
   .pcard.dragging{opacity:.4}
-  .pcard .pc-name{font-size:13px;font-weight:600;color:var(--ink);line-height:1.2}
-  .pcard .pc-role{font-size:11px;color:var(--muted);margin-top:2px}
-  .pcard .pc-foot{margin-top:6px;display:flex;gap:6px;align-items:center}
+  .pcard .pc-grip{color:var(--faint);font-size:12px;line-height:1;flex:0 0 auto;letter-spacing:-1px}
+  .pcard .pc-main{min-width:0;flex:1}
+  .pcard .pc-name{font-size:12.5px;font-weight:650;color:var(--ink);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pcard .pc-role{font-size:10.5px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pcard .pc-foot{margin-top:4px;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
   .pool-empty{text-align:center;color:var(--faint);font-size:12px;padding:20px 10px;line-height:1.5}
 
   /* zones de drop dans l'orga (mode affectation) */
@@ -666,20 +688,27 @@
 </div>
 
 <div id="viewport"><div id="canvas"></div></div>
+<div id="affectHint"><span class="dotpulse"></span>Mode Affectation — glissez les ressources vers l'organigramme</div>
 
 <aside id="poolPanel">
   <div class="pool-head">
     <div class="pt">
-      <h3>Ressources disponibles</h3>
+      <h3>À affecter</h3>
       <span class="pcount" id="poolCount">0</span>
     </div>
-    <div class="psub">Glissez une carte vers une squad, une cellule ou un poste ouvert pour l'affecter.</div>
+    <div class="psub">Glissez une carte vers une squad, une cellule ou un poste « à pourvoir ».</div>
     <div class="pool-tools">
       <button id="poolImportBtn" title="Importer un fichier Excel / CSV">📥 Importer</button>
-      <button id="poolAddBtn" title="Ajouter une personne manuellement">＋ Ajouter</button>
+      <button id="templateBtn2" title="Télécharger le modèle Excel">⬇️ Modèle</button>
+      <button id="poolAddBtn" title="Ajouter une personne manuellement">＋</button>
       <button id="poolClearBtn" class="danger" title="Vider le vivier">Vider</button>
     </div>
     <div class="pool-search"><input type="text" id="poolSearch" placeholder="Rechercher un nom, un rôle…"></div>
+    <div class="pool-filters" id="poolFilters">
+      <button data-pf="all" class="on">Tous</button>
+      <button data-pf="produit">Produit</button>
+      <button data-pf="tech">Tech</button>
+    </div>
   </div>
   <div class="pool-body" id="poolBody"></div>
 </aside>
@@ -738,6 +767,8 @@ let MEMBER_ROLES=MEMBER_ROLES_DEFAULT.slice();
 let state=null, collapsed=new Set(), pmap={};
 let mode='edit'; // 'edit' | 'affect'
 let poolFilter='';
+let poolSide='all';
+let poolCollapsed=new Set();
 const dragAttr=pid=>mode==='affect'?`draggable="true" data-drag="${pid}"`:'';
 
 /* ---------------- Supabase ---------------- */
@@ -1716,28 +1747,36 @@ $('#modeSwitch').addEventListener('click',e=>{ const b=e.target.closest('button'
 /* ---- Rendu du vivier ---- */
 function poolPersonHTML(p){
   reg(p);
-  const parts=[locChip(p),tempChip(p)].filter(Boolean);
+  const parts=[locChip(p),tempChip(p),(p.allocMode==='part'?`<span class="chip alloc">${allocOf(p)}%</span>`:'')].filter(Boolean);
   return `<div class="pcard ${p.side} ${isTemp(p)?'istemp':''}" draggable="true" data-drag="${p.pid}">
-    <div class="pc-name">${esc(p.name||'Sans nom')}</div>
-    <div class="pc-role">${esc(p.role||'—')}</div>
-    <div class="pc-foot">${parts.join('')}</div>
+    <span class="pc-grip">⠿</span>
+    <div class="pc-main">
+      <div class="pc-name">${esc(p.name||'Sans nom')}</div>
+      <div class="pc-role">${esc(p.role||'—')}</div>
+      ${parts.length?`<div class="pc-foot">${parts.join('')}</div>`:''}
+    </div>
   </div>`;
 }
 function renderPool(){
   const body=$('#poolBody'); if(!body) return;
   const pool=state.pool||[];
   $('#poolCount').textContent=pool.length;
-  const dz=`<div class="pool-drop" id="poolDrop"><span class="pd-ic">📥</span><b>Déposez un fichier Excel ou CSV</b><br>ou cliquez pour parcourir<br><span style="font-size:11px;opacity:.75">Colonnes : prénom, nom, rôle, hub/COE…</span></div>`;
+  const dz=`<div class="pool-drop" id="poolDrop"><span class="pd-ic">📥</span><b>Déposez un fichier Excel ou CSV</b><br>ou cliquez pour parcourir<br><span style="font-size:11px;opacity:.75">Modèle dispo via « ⬇️ Modèle »</span></div>`;
   if(!pool.length){ body.innerHTML=dz+`<div class="pool-empty">Le vivier est vide.<br>Importez un fichier ou ajoutez des personnes.</div>`; wirePoolDrop(); return; }
   const f=poolFilter.trim().toLowerCase();
-  const filtered=f?pool.filter(p=>((p.name||'')+' '+(p.role||'')).toLowerCase().includes(f)):pool;
+  let filtered=pool;
+  if(poolSide!=='all') filtered=filtered.filter(p=>p.side===poolSide);
+  if(f) filtered=filtered.filter(p=>((p.name||'')+' '+(p.role||'')).toLowerCase().includes(f));
   const groups={};
   filtered.forEach(p=>{ const k=p.role||'Sans rôle'; (groups[k]=groups[k]||[]).push(p); });
   const keys=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'fr'));
-  const inner=keys.length?keys.map(k=>`<div class="pool-group"><div class="pg-title">${esc(k)} <span class="pg-n">${groups[k].length}</span></div>${groups[k].map(poolPersonHTML).join('')}</div>`).join(''):`<div class="pool-empty">Aucun résultat pour « ${esc(poolFilter)} ».</div>`;
+  const inner=keys.length?keys.map(k=>{ const coll=poolCollapsed.has(k); return `<div class="pool-group ${coll?'coll':''}"><div class="pg-title" data-pg="${esc(k)}"><span class="pg-chev">▼</span>${esc(k)}<span class="pg-n">${groups[k].length}</span></div><div class="pg-body">${groups[k].map(poolPersonHTML).join('')}</div></div>`; }).join(''):`<div class="pool-empty">Aucun résultat.</div>`;
   body.innerHTML=dz+inner;
   wirePoolDrop();
 }
+$('#poolBody').addEventListener('click',e=>{ const t=e.target.closest('[data-pg]'); if(t){ const k=t.dataset.pg; poolCollapsed.has(k)?poolCollapsed.delete(k):poolCollapsed.add(k); renderPool(); } });
+$('#poolFilters').addEventListener('click',e=>{ const b=e.target.closest('[data-pf]'); if(!b)return; poolSide=b.dataset.pf; $('#poolFilters').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.pf===poolSide)); renderPool(); });
+$('#templateBtn2').onclick=()=>downloadTemplate();
 function wirePoolDrop(){
   const dz=$('#poolDrop'); if(!dz) return;
   dz.onclick=()=>$('#peopleInput').click();
