@@ -514,14 +514,6 @@ function onLogout() {
   showLoginError('');
 }
 
-sb.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN' && session?.user) {
-    onLogin(session.user);
-  } else if (event === 'SIGNED_OUT') {
-    onLogout();
-  }
-});
-
 /* ---------------- Modèle ---------------- */
 const uid=()=>Math.random().toString(36).slice(2,9);
 function person(role,side,name='',loc='',status='Ouvert',tempUntil=''){return{pid:uid(),role,side,name,loc,status,tempUntil:status==='TEMP'?tempUntil:''};}
@@ -1133,12 +1125,28 @@ function createCell(){
 
 /* ---------------- Init ---------------- */
 $('#roleList').innerHTML=TRANSVERSE_ROLES.map(r=>`<option value="${r}">`).join('');
-// Auth state change handles login/load/render automatically.
-// Check if already logged in (page refresh):
-(async()=>{
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { $('#loginScreen').classList.remove('hidden'); }
-})();
+
+const isDemo = window.self !== window.top || new URLSearchParams(location.search).has('demo');
+if (isDemo) {
+  $('#loginScreen').classList.add('hidden');
+  $('#userEmail').textContent = 'demo';
+  $('#userBar').style.display = 'flex';
+  state = seed();
+  firstFit = true;
+  render();
+} else {
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      onLogin(session.user);
+    } else if (event === 'SIGNED_OUT') {
+      onLogout();
+    }
+  });
+  (async()=>{
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { $('#loginScreen').classList.remove('hidden'); }
+  })();
+}
 </script>
 </body>
 </html>
