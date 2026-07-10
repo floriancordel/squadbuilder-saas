@@ -172,6 +172,9 @@
   .card .role,.mini .m-role{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);line-height:1.3;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .card .name,.mini .m-name{font-size:13px;font-weight:650;letter-spacing:-.01em;line-height:1.25;overflow:hidden;text-overflow:ellipsis}
   .card .name.open,.mini .m-name.open{color:var(--open);font-style:italic;font-weight:600}
+  /* Poste à pourvoir : la ligne « nom » porte la réf. de recrutement (pas la répétition « À pourvoir ») */
+  .card .name.reqline,.mini .m-name.reqline{color:var(--muted);font-weight:600;font-style:normal;font-size:12px;font-variant-numeric:tabular-nums}
+  .card .name.reqline:empty::before,.mini .m-name.reqline:empty::before{content:'—';color:var(--faint);opacity:.5}
   .card .foot,.mini .foot{display:flex;align-items:center;justify-content:flex-start;gap:5px;margin-top:7px;flex-wrap:nowrap;overflow:hidden;min-height:17px}
   /* Leads (têtes) : plus marqués que les membres — teinte filière, rôle coloré, accent épais */
   .card{padding-left:15px}
@@ -290,6 +293,7 @@
   .ed-body{padding:16px 18px;overflow:auto;flex:1}
   .field{margin-bottom:15px}
   .field label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
+  .field label .fopt{font-weight:500;color:var(--faint);font-size:10.5px}
   .field input,.field select{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px;color:var(--ink);background:#fff}
   .field input:focus,.field select:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
   .seg{display:flex;gap:6px}
@@ -348,6 +352,22 @@
   .add-row{border:1px dashed var(--line);background:#fcfdff;border-radius:9px;padding:8px;width:100%;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
   .add-row:hover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
   textarea.f{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px;font-family:inherit;resize:vertical;min-height:58px;color:var(--ink)}
+  textarea.f.big{min-height:104px;line-height:1.5}
+  /* Grille de statistiques du bloc (éditeur) */
+  .ed-stats{margin:2px 0 14px}
+  .esg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .esg{background:#f9fafb;border:1px solid var(--border);border-radius:9px;padding:8px 6px;text-align:center;display:flex;flex-direction:column;gap:1px}
+  .esg b{font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--ink);line-height:1.1}
+  .esg span{font-size:9.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}
+  .esg.ok b{color:#15803d} .esg.warn b{color:var(--open)} .esg.tmp b{color:#6d28d9} .esg.bad b{color:#dc2626}
+  .esg.warn{background:var(--open-bg);border-color:var(--open-bd)} .esg.tmp{background:#f5f3ff;border-color:#ddd6fe} .esg.bad{background:#fef2f2;border-color:#fecaca}
+  .esg-bar{display:flex;height:8px;border-radius:20px;overflow:hidden;margin-top:9px;background:#eef1f6}
+  .esg-bar .esgb.prod{background:var(--produit)} .esg-bar .esgb.tech{background:var(--tech)}
+  .esg-barleg{display:flex;justify-content:center;gap:14px;margin-top:6px;font-size:10.5px;color:var(--muted);font-weight:600}
+  .esg-barleg i.d{display:inline-block;width:8px;height:8px;border-radius:3px;margin-right:4px;vertical-align:0}
+  .esg-barleg i.d.prod{background:var(--produit)} .esg-barleg i.d.tech{background:var(--tech)}
+  .ed-substat{display:flex;gap:14px;justify-content:center;margin:9px 0 0;font-size:12px;color:var(--muted)}
+  .ed-substat b{color:var(--ink);font-weight:700}
   textarea.f:focus,.m-body input:focus,.m-body select:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
   .m-body input,.m-body select{border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px;width:100%;font-family:inherit;color:var(--ink)}
   .fld{margin-bottom:12px}
@@ -412,6 +432,29 @@
   #zoomDock button:hover{background:#f2f4f7}
   #zoomDock .lvl{font-size:11.5px;color:var(--muted);min-width:42px;text-align:center;font-variant-numeric:tabular-nums}
   body.mode-affect #zoomDock{left:16px}
+  /* Widget « Focus » : mettre des catégories en évidence */
+  #hlDock{position:fixed;left:16px;bottom:58px;z-index:36}
+  #hlToggle{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:6px 12px;box-shadow:var(--shadow-lg);cursor:pointer;font-size:12.5px;font-weight:650;color:var(--ink)}
+  #hlToggle:hover{background:#f9fafb}
+  #hlToggle .hl-ic{font-size:14px;line-height:1}
+  body.hl-active #hlToggle{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
+  .hl-panel{position:absolute;left:0;bottom:calc(100% + 8px);width:230px;background:#fff;border:1px solid var(--border);border-radius:13px;box-shadow:var(--shadow-lg);padding:10px;display:none}
+  #hlDock.open .hl-panel{display:block}
+  .hlp-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;color:var(--ink);margin-bottom:4px;padding:0 2px}
+  .hlp-clear{border:0;background:transparent;color:var(--tech);font-size:11px;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:6px}
+  .hlp-clear:hover{background:var(--tech-soft)}
+  .hlp-scroll{max-height:min(52vh,420px);overflow:auto;margin:0 -4px;padding:0 4px}
+  .hlp-sec{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);padding:9px 4px 3px}
+  .hl-opt{display:flex;align-items:center;gap:8px;width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:7px 8px;font-size:12.5px;font-weight:550;color:var(--ink);cursor:pointer;text-align:left}
+  .hl-opt:hover{background:#f2f4f7}
+  .hl-opt .d{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+  .hl-opt.on{background:var(--tech-soft);border-color:var(--tech);color:var(--tech);font-weight:700}
+  .hl-opt .hl-n{margin-left:auto;font-size:10px;font-weight:700;color:var(--muted);background:#eef1f6;border-radius:20px;padding:0 6px}
+  .hl-opt.on .hl-n{background:#fff;color:var(--tech)}
+  /* Effet de mise en évidence sur l'organigramme */
+  body.hl-active #canvas .card:not(.hl-on),body.hl-active #canvas .mini:not(.hl-on){opacity:.16;filter:grayscale(.55)}
+  #canvas .card.hl-on,#canvas .mini.hl-on{box-shadow:0 0 0 2px var(--tech),0 6px 18px rgba(37,99,235,.28);z-index:3}
+  .card,.mini{transition:opacity .2s,filter .2s,box-shadow .13s}
   .hgroup{display:flex;align-items:center;gap:6px;padding:0 4px}
   .hsep{width:1px;height:22px;background:var(--border)}
   .brand h1 .beta{font-size:9px;font-weight:700;color:var(--tech);background:var(--tech-soft);border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle;letter-spacing:.02em}
@@ -903,7 +946,8 @@
   .fiche-hint{font-size:11px;color:var(--faint);margin-top:8px;line-height:1.5}
 
   @media print{
-    header,#overlay,#editor,#poolPanel,#zoomDock,#dropDock,#affectHint,#burgerMenu,#burgerOv,.actions,.toggle,.add-mini,.add-lead,.node-tools,.foldbtn{display:none!important}
+    header,#overlay,#editor,#poolPanel,#zoomDock,#hlDock,#dropDock,#affectHint,#burgerMenu,#burgerOv,.actions,.toggle,.add-mini,.add-lead,.node-tools,.foldbtn{display:none!important}
+    #canvas .card.hl-on,#canvas .mini.hl-on{box-shadow:none!important} body.hl-active #canvas .card,body.hl-active #canvas .mini{opacity:1!important;filter:none!important}
     #viewport{overflow:visible;width:100%!important}#canvas{position:static;transform:none!important;padding:0}
     body{overflow:visible}
     .card:hover,.mini:hover{transform:none;box-shadow:var(--shadow)}
@@ -949,6 +993,27 @@
   <span class="lvl" id="zLvl">100%</span>
   <button id="zIn" title="Zoomer">+</button>
   <button id="zFit" title="Ajuster tout à l'écran">⤢</button>
+</div>
+<div id="hlDock">
+  <div class="hl-panel" id="hlPanel">
+    <div class="hlp-head"><span>Mettre en évidence</span><button class="hlp-clear" id="hlClear">Tout afficher</button></div>
+    <div class="hlp-scroll">
+      <div class="hlp-sec">Statut</div>
+      <button class="hl-opt" data-hl="open"><i class="d" style="background:var(--open)"></i>Postes à pourvoir</button>
+      <button class="hl-opt" data-hl="filled"><i class="d" style="background:#15803d"></i>Postes pourvus</button>
+      <button class="hl-opt" data-hl="temp"><i class="d" style="background:#6d28d9"></i>Missions TEMP</button>
+      <button class="hl-opt" data-hl="over"><i class="d" style="background:#dc2626"></i>Sur-alloués (&gt;100%)</button>
+      <div class="hlp-sec">Filière</div>
+      <button class="hl-opt" data-hl="side:produit"><i class="d" style="background:var(--produit)"></i>Produit</button>
+      <button class="hl-opt" data-hl="side:tech"><i class="d" style="background:var(--tech)"></i>Tech</button>
+      <div class="hlp-sec">Localisation</div>
+      <button class="hl-opt" data-hl="loc:FR"><i class="d" style="background:#0369a1"></i>Hub · FR</button>
+      <button class="hl-opt" data-hl="loc:Maroc"><i class="d" style="background:#047857"></i>COE · Maroc</button>
+      <div class="hlp-sec">Famille métier</div>
+      <div id="hlFams"></div>
+    </div>
+  </div>
+  <button id="hlToggle" title="Mettre des catégories de l'organigramme en évidence"><span class="hl-ic">🔆</span><span class="hl-lbl" id="hlLbl">Focus</span></button>
 </div>
 
 <div id="burgerOv"></div>
@@ -1353,7 +1418,7 @@ function onLogout() {
 /* ---------------- Modèle ---------------- */
 const uid=()=>Math.random().toString(36).slice(2,9);
 // Statut = automatique (nom rempli → pourvu, vide → à pourvoir). TEMP = flag indépendant cumulable.
-function person(role,side,name='',loc='',status='',tempUntil=''){const temp=status==='TEMP';return{pid:uid(),role,side,name,loc,status:name?'Occupé':'Ouvert',temp,tempUntil:temp?tempUntil:'',alloc:100,allocMode:'full'};}
+function person(role,side,name='',loc='',status='',tempUntil=''){const temp=status==='TEMP';return{pid:uid(),role,side,name,loc,status:name?'Occupé':'Ouvert',temp,tempUntil:temp?tempUntil:'',alloc:100,allocMode:'full',reqId:''};}
 function isOpen(p){ return !p.name; }
 function isTemp(p){ return p.temp===true||p.status==='TEMP'; }
 const OPEN_LABEL='À pourvoir';
@@ -1514,7 +1579,7 @@ function migrate(){
     if(!Array.isArray(g.responsibilities))g.responsibilities=(m.r||[]).slice();
     if(g.jobProfile===undefined)g.jobProfile='';
   });
-  const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.temp===undefined)p.temp=(p.status==='TEMP'); if(p.status==='TEMP')p.status=p.name?'Occupé':'Ouvert'; if(!p.status)p.status=p.name?'Occupé':'Ouvert'; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
+  const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.reqId===undefined)p.reqId=''; if(p.temp===undefined)p.temp=(p.status==='TEMP'); if(p.status==='TEMP')p.status=p.name?'Occupé':'Ouvert'; if(!p.status)p.status=p.name?'Occupé':'Ouvert'; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
   // direction {product,tech} -> {leads:[]}
   const d=state.direction||{};
   if(!Array.isArray(d.leads)){ d.leads=[]; if(d.product)d.leads.push(d.product); if(d.tech)d.leads.push(d.tech); delete d.product; delete d.tech; }
@@ -1575,21 +1640,24 @@ function chipsRow(p,cls){ const parts=[locChip(p),openChip(p),tempChip(p),allocC
 function overBadge(p){ if(!(p.name && totalAllocOf(p)>100)) return ''; return `<span class="over-badge" title="${esc(p.name)} : ${totalAllocOf(p)}% cumulés — dépasse 100% (${OVER_TXT})">!</span>`; }
 const OVER_TXT='cumul de temps partiels';
 function pClasses(p){ return `${p.side} ${isOpen(p)?'isopen':''} ${isTemp(p)?'istemp':''} ${p.name&&totalAllocOf(p)>100?'isover':''}`; }
+// Ligne « nom » : le nom si pourvu ; sinon la réf. de recrutement (le statut « à pourvoir »
+// est déjà porté par le chip, on ne le répète pas ici).
+function nameLine(p,cls){ if(!isOpen(p)) return `<div class="${cls}">${esc(p.name)}</div>`; return `<div class="${cls} reqline">${p.reqId?('#'+esc(p.reqId)):''}</div>`; }
 function cardHTML(p){
-  reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
+  reg(p);
   return `<div class="card ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>${overBadge(p)}
     <div class="role"><span class="lead-mark">◆</span>${esc(p.role)}</div>
-    <div class="name ${open?'open':''}">${esc(name)}</div>
+    ${nameLine(p,'name')}
     ${chipsRow(p,'foot')}
   </div>`;
 }
 function miniHTML(p){
-  reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
+  reg(p);
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>${overBadge(p)}
     <div class="m-role">${esc(p.role)}</div>
-    <div class="m-name ${open?'open':''}">${esc(name)}</div>
+    ${nameLine(p,'m-name')}
     ${chipsRow(p,'foot')}
   </div>`;
 }
@@ -1635,11 +1703,11 @@ function addToolsHTML(ctxHead,showTribu,always){
   </div>`;
 }
 function resourceMiniHTML(p){
-  reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
+  reg(p);
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>${overBadge(p)}
     <div class="m-role">${esc(p.role)}</div>
-    <div class="m-name ${open?'open':''}">${esc(name)}</div>
+    ${nameLine(p,'m-name')}
     ${chipsRow(p,'foot')}
   </div>`;
 }
@@ -1724,6 +1792,7 @@ function render(){
   canvas.innerHTML=`<div class="tree"><ul><li class="rootnode ${dirColl?'collapsed':''}">${dirNode}${childrenHTML}</li></ul></div>`;
   updateStats();
   renderPool();
+  if(typeof applyHighlight==='function') applyHighlight();
   fitIfNeeded();
 }
 function updateStats(){
@@ -1810,6 +1879,33 @@ function addLead(kind,ctxId){
 }
 
 /* ---------------- Éditeur ---------------- */
+// Statistiques d'un bloc (pour enrichir le panneau de description)
+function statPersons(obj,kind){
+  if(kind==='squad') return leadsOf(obj).concat(obj.members);
+  if(kind==='cell') return (obj.members||[]).slice();
+  if(kind==='tribe'){ let a=leadsOf(obj).slice(); (obj.squads||[]).forEach(s=>{ a=a.concat(leadsOf(s),s.members); }); (obj.cells||[]).forEach(c=>a=a.concat(c.members||[])); return a; }
+  if(kind==='dir') return allPersons();
+  return [];
+}
+function statBox(ps){
+  const s={total:ps.length,filled:0,open:0,temp:0,fr:0,coe:0,prod:0,tech:0,over:0};
+  ps.forEach(p=>{ if(p.name)s.filled++; else s.open++; if(isTemp(p))s.temp++; if(p.loc==='FR')s.fr++; else if(p.loc==='Maroc')s.coe++; if(p.side==='produit')s.prod++; else if(p.side==='tech')s.tech++; if(p.name&&totalAllocOf(p)>100)s.over++; });
+  return s;
+}
+function statsGridHTML(obj,kind){
+  const s=statBox(statPersons(obj,kind));
+  const cell=(n,l,cls)=>`<div class="esg ${cls||''}"><b>${n}</b><span>${l}</span></div>`;
+  const bar=(s.prod+s.tech>0)?`<div class="esg-bar"><div class="esgb prod" style="flex:${s.prod||0.0001}"></div><div class="esgb tech" style="flex:${s.tech||0.0001}"></div></div><div class="esg-barleg"><span><i class="d prod"></i>Produit ${s.prod}</span><span><i class="d tech"></i>Tech ${s.tech}</span></div>`:'';
+  return `<div class="ed-stats"><div class="esg-grid">
+    ${cell(s.total,'postes')}
+    ${cell(s.filled,'pourvus','ok')}
+    ${cell(s.open,'à pourvoir','warn')}
+    ${cell(s.temp,'TEMP','tmp')}
+    ${cell(s.fr,'Hub · FR')}
+    ${cell(s.coe,'COE · Maroc')}
+    ${s.over?cell(s.over,'suralloués','bad'):''}
+  </div>${bar}</div>`;
+}
 let edCtx=null;
 function openEditor(obj,kind){
   edCtx={obj,kind}; const ov=$('#overlay'), ed=$('#editor');
@@ -1819,12 +1915,12 @@ function openEditor(obj,kind){
     const hopts=state.heads.map((h,i)=>`<option value="${h.id}" ${curHead&&h.id===curHead.id?'selected':''}>${esc(headLabel(h,i))}</option>`).join('');
     $('#edBody').innerHTML=`
       <div class="field"><label>Nom de la squad</label><input id="f-sqname" value="${esc(obj.name)}"></div>
-      <div class="field"><label>Description / mission</label><textarea class="f" id="f-sqdesc" placeholder="Objectif de la squad, périmètre...">${esc(obj.desc||'')}</textarea></div>
+      ${statsGridHTML(obj,'squad')}
+      <div class="field"><label>Description / mission</label><textarea class="f big" id="f-sqdesc" placeholder="Objectif de la squad, périmètre, produit couvert, KPIs…">${esc(obj.desc||'')}</textarea></div>
       <div class="field"><label>Rattachement</label>
         <select id="f-sqhead" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
           <option value="__dir__" ${!curHead?'selected':''}>Direction — squad volante (hors tribu)</option>
           ${hopts}<option value="__new__">＋ Nouvelle tribu</option></select></div>
-      <div class="ed-stat"><span><b>${leadsOf(obj).length}</b> leads</span><span><b>${obj.members.length}</b> membres</span></div>
       <div class="hint">Ajoute/retire les leads (PM, Tech Lead, autre rôle) avec le bouton <b>＋</b> sur la squad, ou clique une carte pour l'éditer.</div>`;
     $('#edFoot').innerHTML=`<button class="btn" id="edDelSquad" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button><button class="btn primary" id="edSave">Enregistrer</button>`;
     $('#edSave').onclick=()=>{
@@ -1840,22 +1936,22 @@ function openEditor(obj,kind){
     $('#edKind').textContent='Support Cell';
     $('#edBody').innerHTML=`
       <div class="field"><label>Nom de la Support Cell</label><input id="f-cellname" value="${esc(obj.name)}"></div>
-      <div class="ed-stat"><span><b>${obj.members.length}</b> ressources</span></div>
+      ${statsGridHTML(obj,'cell')}
+      <div class="field"><label>Description / mission</label><textarea class="f big" id="f-celldesc" placeholder="Expertise transverse, périmètre d'intervention…">${esc(obj.desc||'')}</textarea></div>
       <div class="hint">Cellule d'experts transverses rattachée à la tribu. Chaque ressource est allouée en % de son temps. Ajoute des ressources avec « ＋ Ressource ».</div>`;
     $('#edFoot').innerHTML=`<button class="btn" id="edDelCell" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button><button class="btn primary" id="edSave">Enregistrer</button>`;
-    $('#edSave').onclick=()=>{ obj.name=$('#f-cellname').value.trim()||'Support Cell'; commit(); closeEditor(); };
+    $('#edSave').onclick=()=>{ obj.name=$('#f-cellname').value.trim()||'Support Cell'; obj.desc=$('#f-celldesc').value.trim(); commit(); closeEditor(); };
     $('#edDelCell').onclick=()=>{ askConfirm({title:'Supprimer la Support Cell',message:`« <b>${esc(obj.name)}</b> » et ses ressources seront supprimées.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ const h=findHeadOfCell(obj.id); if(h)h.cells=h.cells.filter(c=>c.id!==obj.id); commit(); closeEditor(); } }); };
   } else if(kind==='tribe'||kind==='dir'){
     const isDir=kind==='dir';
     $('#edKind').textContent=isDir?'Direction':'Tribu';
-    const stats=isDir
-      ? `<div class="ed-stat"><span><b>${leadsOf(obj).length}</b> leads</span></div>`
-      : `<div class="ed-stat"><span><b>${leadsOf(obj).length}</b> leads</span><span><b>${obj.squads.length}</b> squads</span><span><b>${(obj.cells||[]).length}</b> cells</span></div>`;
+    const extra=isDir?'':`<div class="ed-substat"><span><b>${obj.squads.length}</b> squads</span><span><b>${(obj.cells||[]).length}</b> Support Cells</span></div>`;
     $('#edBody').innerHTML=`
       ${isDir?'':`<div class="field"><label>Nom de la tribu</label><input id="f-tname" value="${esc(obj.name||'')}" placeholder="ex. Growth, Core, Data…"></div>`}
-      <div class="field"><label>Description / mission</label><textarea class="f" id="f-tdesc" placeholder="Mission, périmètre, objectifs…">${esc(obj.desc||'')}</textarea></div>
-      ${stats}
-      <div class="hint">Ajoute des rôles (${isDir?'CPO, CTO, CPTO…':'HoP, EM, autre…'}) avec le bouton <b>＋</b> sur le bloc. Clique une carte pour l'éditer.</div>`;
+      ${statsGridHTML(obj,isDir?'dir':'tribe')}
+      ${extra}
+      <div class="field"><label>Description / mission</label><textarea class="f big" id="f-tdesc" placeholder="Mission, périmètre, objectifs, OKRs…">${esc(obj.desc||'')}</textarea></div>
+      <div class="hint">${isDir?'Statistiques calculées sur toute l\'organisation. ':''}Ajoute des rôles (${isDir?'CPO, CTO, CPTO…':'HoP, EM, autre…'}) avec le bouton <b>＋</b> sur le bloc.</div>`;
     $('#edFoot').innerHTML=isDir
       ? `<button class="btn primary" id="edSave" style="flex:1;justify-content:center">Enregistrer</button>`
       : `<button class="btn" id="edDelTribe" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button><button class="btn primary" id="edSave">Enregistrer</button>`;
@@ -1907,6 +2003,7 @@ function openEditor(obj,kind){
       </div>`;
     $('#edBody').innerHTML=`
       <div class="field"><label>Nom</label><input id="f-name" value="${esc(p.name)}" placeholder="Laisser vide = poste « ${OPEN_LABEL} »" autofocus></div>
+      <div class="field"><label>N° de demande de recrutement <span class="fopt">— poste à pourvoir</span></label><input id="f-reqid" value="${esc(p.reqId||'')}" placeholder="ex. REQ-2026-014"></div>
       ${roleField}
       ${sideField}
       ${allocField}
@@ -1926,6 +2023,7 @@ function openEditor(obj,kind){
     $('#edFoot').innerHTML=`${delBtn}<button class="btn primary" id="edSave">Enregistrer</button>`;
     $('#edSave').onclick=()=>{
       p.name=$('#f-name').value.trim();
+      p.reqId=$('#f-reqid')?$('#f-reqid').value.trim():(p.reqId||'');
       const custom=$('#f-role-custom')?.value.trim(); p.role=custom||$('#f-role').value.trim()||p.role;
       const side=segVal('seg-side'); if(side)p.side=side;
       p.loc=segVal('seg-loc');
@@ -2003,6 +2101,37 @@ window.addEventListener('mouseup',()=>{ panning=false; viewport.classList.remove
 function zoomBtn(f){ const vw=viewport.clientWidth/2, vh=viewport.clientHeight/2, ns=clamp(scale*f,0.25,2.5); tx=vw-(vw-tx)*(ns/scale); ty=vh-(vh-ty)*(ns/scale); scale=ns; apply(); }
 $('#zIn').onclick=()=>zoomBtn(1.2); $('#zOut').onclick=()=>zoomBtn(1/1.2); $('#zFit').onclick=fitView;
 window.addEventListener('resize',()=>apply());
+
+/* ---------------- Focus / mise en évidence de catégories ---------------- */
+let hlMode=null;
+const HL_LABELS={open:'Postes à pourvoir',filled:'Postes pourvus',temp:'Missions TEMP',over:'Sur-alloués','side:produit':'Produit','side:tech':'Tech','loc:FR':'Hub · FR','loc:Maroc':'COE · Maroc'};
+function hlLabelOf(m){ if(!m)return 'Focus'; if(m.indexOf('fam:')===0)return famLabel(m.slice(4)); return HL_LABELS[m]||'Focus'; }
+function hlMatch(p){ const m=hlMode; if(!m)return true;
+  if(m==='open')return isOpen(p); if(m==='filled')return !!p.name; if(m==='temp')return isTemp(p);
+  if(m==='over')return !!p.name && totalAllocOf(p)>100;
+  if(m==='side:produit')return p.side==='produit'; if(m==='side:tech')return p.side==='tech';
+  if(m==='loc:FR')return p.loc==='FR'; if(m==='loc:Maroc')return p.loc==='Maroc';
+  if(m.indexOf('fam:')===0)return famOfRole(p.role)===m.slice(4);
+  return true;
+}
+function hlCount(m){ const save=hlMode; hlMode=m; let n=0; allPersons().forEach(p=>{ if(hlMatch(p))n++; }); hlMode=save; return n; }
+function applyHighlight(){
+  const on=!!hlMode;
+  document.body.classList.toggle('hl-active',on);
+  document.querySelectorAll('#canvas .card[data-pid],#canvas .mini[data-pid]').forEach(el=>{
+    const p=pmap[el.dataset.pid]; const match=!p||hlMatch(p);
+    el.classList.toggle('hl-on',on&&match);
+  });
+  const lbl=$('#hlLbl'); if(lbl)lbl.textContent=hlLabelOf(hlMode);
+  document.querySelectorAll('#hlPanel .hl-opt').forEach(b=>b.classList.toggle('on',b.dataset.hl===hlMode));
+}
+function fillHlFamilies(){ const w=$('#hlFams'); if(!w)return; w.innerHTML=FAMILIES.map(f=>`<button class="hl-opt" data-hl="fam:${f.key}"><i class="d" style="background:${f.key==='produit'?'var(--produit)':'var(--tech)'}"></i>${esc(f.label)}</button>`).join(''); }
+function updateHlCounts(){ document.querySelectorAll('#hlPanel .hl-opt').forEach(b=>{ const n=hlCount(b.dataset.hl); let tag=b.querySelector('.hl-n'); if(!tag){ tag=document.createElement('span'); tag.className='hl-n'; b.appendChild(tag); } tag.textContent=n; }); }
+fillHlFamilies();
+$('#hlToggle').onclick=()=>{ const d=$('#hlDock'); const open=!d.classList.contains('open'); d.classList.toggle('open',open); if(open)updateHlCounts(); };
+$('#hlClear').onclick=()=>{ hlMode=null; applyHighlight(); };
+$('#hlPanel').addEventListener('click',e=>{ const b=e.target.closest('.hl-opt'); if(!b)return; hlMode=(hlMode===b.dataset.hl)?null:b.dataset.hl; applyHighlight(); });
+document.addEventListener('click',e=>{ const d=$('#hlDock'); if(d&&d.classList.contains('open')&&!e.target.closest('#hlDock')) d.classList.remove('open'); });
 
 /* ---------------- Toolbar ---------------- */
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200); }
@@ -2401,8 +2530,7 @@ function renderAdmin(){
         <div id="au-list"><div class="dash-empty">Chargement…</div></div>
       </div>
     </div>
-    <div class="dash-sec"><h3>Profils prédéfinis</h3><div class="panelbox">${ROLE_TEMPLATES.map(t=>`<div class="tmpl-row"><span class="tmpl-name">${esc(t.label)}</span><span class="tmpl-desc">${esc(t.desc)}</span><span class="tmpl-perms">${t.perms.length?t.perms.map(k=>esc((PERMISSIONS.find(p=>p.key===k)||{}).label)).join(' · '):'Lecture seule'}</span></div>`).join('')}</div></div>
-    <div class="dash-sec"><h3>Activation (une seule fois, côté Supabase)</h3><div class="panelbox"><div class="admin-setup">${setupInstructions()}</div></div></div>`;
+    <div class="dash-sec"><h3>Profils prédéfinis</h3><div class="panelbox">${ROLE_TEMPLATES.map(t=>`<div class="tmpl-row"><span class="tmpl-name">${esc(t.label)}</span><span class="tmpl-desc">${esc(t.desc)}</span><span class="tmpl-perms">${t.perms.length?t.perms.map(k=>esc((PERMISSIONS.find(p=>p.key===k)||{}).label)).join(' · '):'Lecture seule'}</span></div>`).join('')}</div></div>`;
   $('#au-tmpl').onchange=()=>{ const t=ROLE_TEMPLATES.find(x=>x.key===$('#au-tmpl').value); if(t){ document.querySelectorAll('#au-perms .perm-check').forEach(l=>{ const cb=l.querySelector('input'); cb.checked=t.perms.includes(cb.dataset.perm); l.classList.toggle('on',cb.checked); }); } };
   $('#au-perms').addEventListener('change',e=>{ const l=e.target.closest('.perm-check'); if(l)l.classList.toggle('on',e.target.checked); const g=[...document.querySelectorAll('#au-perms [data-perm]:checked')].map(i=>i.dataset.perm); $('#au-tmpl').value=templateForPerms(g); });
   $('#au-create').onclick=adminCreateUser;
@@ -2434,7 +2562,7 @@ async function loadMembers(){
     box.querySelectorAll('[data-mreset]').forEach(b=>b.onclick=()=>{ const row=b.closest('.member-row'); const email=row.dataset.email; askConfirm({title:'Réinitialiser le mot de passe',message:`Générer un nouveau mot de passe pour <b>${esc(email)}</b> ? La personne devra le changer à sa prochaine connexion.`,confirmLabel:'Réinitialiser',danger:false}).then(async ok=>{ if(!ok)return; b.disabled=true; b.textContent='…'; try{ const data=await adminInvoke('reset',{email}); const box2=row.querySelector('[data-reset-box]'); box2.innerHTML=`<div class="cred-box"><div class="cred-title">🔑 Nouveau mot de passe — communique-le</div><div class="cred-row"><span>Email</span><code>${esc(email)}</code></div><div class="cred-row"><span>Mot de passe</span><code>${esc(data.password)}</code><button class="lnk" data-copy="${esc(data.password)}">Copier</button></div></div>`; box2.querySelector('[data-copy]').onclick=ev=>{ navigator.clipboard.writeText(ev.target.dataset.copy); toast('Mot de passe copié'); }; }catch(e){ toast('Erreur : '+e.message); } b.disabled=false; b.textContent='Réinit. mdp'; }); });
     box.querySelectorAll('[data-mrm]').forEach(b=>b.onclick=()=>{ const email=b.closest('.member-row').dataset.email; askConfirm({title:'Retirer l\'accès',message:`Retirer l'accès de <b>${esc(email)}</b> ?`,confirmLabel:'Retirer'}).then(async ok=>{ if(ok){ try{ await adminInvoke('remove',{email}); loadMembers(); }catch(e){ toast('Erreur : '+e.message); } } }); });
   }catch(e){
-    box.innerHTML=`<div class="admin-note warn">Impossible de lister les membres — l'Edge Function n'est probablement pas encore déployée / à jour (voir « Activation »).<br><span style="opacity:.75;font-size:11px">${esc(e.message||String(e))}</span></div>`;
+    box.innerHTML=`<div class="admin-note warn">Impossible de lister les membres — l'Edge Function de gestion des utilisateurs n'est probablement pas encore déployée / à jour.<br><span style="opacity:.75;font-size:11px">${esc(e.message||String(e))}</span></div>`;
   }
 }
 async function adminCreateUser(){
