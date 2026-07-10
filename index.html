@@ -1515,10 +1515,10 @@ function moveSquad(sqId,target){
 }
 function moveCell(cellId,targetHeadId){
   let cell=null;
-  state.heads.forEach(h=>{ const i=(h.cells||[]).findIndex(c=>c.id===cellId); if(i>=0){ cell=h.cells[i]; h.cells.splice(i,1); } });
+  cellHosts().forEach(host=>{ const i=(host.cells||[]).findIndex(c=>c.id===cellId); if(i>=0){ cell=host.cells[i]; host.cells.splice(i,1); } });
   if(!cell)return;
-  const nh=state.heads.find(h=>h.id===targetHeadId);
-  if(nh){ nh.cells=nh.cells||[]; nh.cells.push(cell); collapsed.delete(nh.id); }
+  const target=targetHeadId==='__dir__'?state.direction:state.heads.find(h=>h.id===targetHeadId);
+  if(target){ target.cells=target.cells||[]; target.cells.push(cell); if(target!==state.direction)collapsed.delete(target.id); }
 }
 function newHead(){
   return {id:uid(), desc:'',
@@ -1648,6 +1648,8 @@ function migrate(){
   if(!Array.isArray(d.leads)){ d.leads=[]; if(d.product)d.leads.push(d.product); if(d.tech)d.leads.push(d.tech); delete d.product; delete d.tech; }
   if(d.desc===undefined)d.desc='';
   if(!d.leads.length)d.leads=[person('CPO','produit'),person('CTO','tech')];
+  if(!Array.isArray(d.cells))d.cells=[];
+  d.cells.forEach(c=>c.members.forEach(fixP));
   state.direction=d;
   // squad {pm,lead} -> {leads:[]}
   const fixSquad=s=>{ if(!Array.isArray(s.leads)){ s.leads=[]; if(s.pm)s.leads.push(s.pm); if(s.lead)s.leads.push(s.lead); } delete s.pm; delete s.lead; if(s.desc===undefined)s.desc=''; s.leads.forEach(fixP); s.members.forEach(fixP); };
@@ -1672,6 +1674,7 @@ let _allocByName={};
 function allPersons(){
   const out=[]; const d=state.direction;
   leadsOf(d).forEach(p=>out.push(p));
+  (d.cells||[]).forEach(c=>c.members.forEach(p=>out.push(p)));
   (state.heads||[]).forEach(h=>{ leadsOf(h).forEach(p=>out.push(p)); (h.squads||[]).forEach(s=>{ leadsOf(s).forEach(p=>out.push(p)); s.members.forEach(p=>out.push(p)); }); (h.cells||[]).forEach(c=>c.members.forEach(p=>out.push(p))); });
   (state.squads||[]).forEach(s=>{ leadsOf(s).forEach(p=>out.push(p)); s.members.forEach(p=>out.push(p)); });
   return out;
@@ -1828,7 +1831,7 @@ function relayoutCells(){
   const s=scale||1;
   document.querySelectorAll('#canvas [data-tribe-li]').forEach(li=>{
     const cluster=li.querySelector(':scope > .tribe-cluster');
-    const tribe=li.querySelector('.tribe.blk-tribe');
+    const tribe=li.querySelector('.tribe.blk-tribe, .tribe.blk-dir');
     if(!cluster||!tribe){ li.classList.remove('offc'); li.style.removeProperty('--coreoff'); return; }
     const t=tribe.getBoundingClientRect(), l=li.getBoundingClientRect();
     cluster.querySelectorAll('.tc-side.left .cell-wrap').forEach(cw=>{ const r=cw.getBoundingClientRect(); cw.style.setProperty('--cw', Math.max(10,(t.left-r.right)/s)+'px'); });
@@ -1852,7 +1855,7 @@ function render(){
   const dTools=`<div class="node-tools${hasChildren?'':' always'}">
       <button class="ntbtn tribu" data-action="add-head" title="Nouvelle tribu">＋ Tribu</button>
       <button class="ntbtn add" data-action="add-squad" data-head="__dir__" title="Nouvelle squad volante">＋ Squad</button>
-      <button class="ntbtn cellbtn" data-action="add-cell" data-head="" title="Nouvelle Support Cell">＋ Cell</button>
+      <button class="ntbtn cellbtn" data-action="add-cell" data-head="__dir__" title="Nouvelle Support Cell rattachée à la Direction">＋ Cell</button>
     </div>`;
   const dirNode=`<div class="node-content node-direction">
       <div class="tribe direction-tribe blk-dir" data-blocktarget="dir" data-blockdrop="leads" data-lead-lk="direction" data-lead-li="__dir__">
@@ -1864,7 +1867,15 @@ function render(){
         ${leadsHTML(d,'direction','__dir__')}
       </div>${dFold}${dTools}</div>`;
   const childrenHTML=hasChildren?`<ul>${state.heads.map(headHTML).join('')}${flySquads.map(sq=>`<li><div class="node-content">${squadHTML(sq,true)}</div></li>`).join('')}</ul>`:'';
-  canvas.innerHTML=`<div class="tree"><ul><li class="rootnode ${dirColl?'collapsed':''}">${dirNode}${childrenHTML}</li></ul></div>`;
+  // Support Cells rattachées à la Direction : mêmes colonnes latérales en flux que pour les tribus
+  const dCells=d.cells||[];
+  const wrapCell=c=>`<div class="cell-wrap">${cellHTML(c)}</div>`;
+  const dLeft=dCells.filter((_,i)=>i%2===0), dRight=dCells.filter((_,i)=>i%2===1);
+  const hasDCells=dCells.length && !dirColl;
+  const dInner=hasDCells
+    ? `<div class="tribe-cluster">${dLeft.length?`<div class="tc-side left">${dLeft.map(wrapCell).join('')}</div>`:''}<div class="tc-core">${dirNode}${childrenHTML}</div>${dRight.length?`<div class="tc-side right">${dRight.map(wrapCell).join('')}</div>`:''}</div>`
+    : `${dirNode}${childrenHTML}`;
+  canvas.innerHTML=`<div class="tree"><ul><li class="rootnode ${dirColl?'collapsed':''}" data-tribe-li="__dir__">${dInner}</li></ul></div>`;
   updateStats();
   renderPool();
   if(typeof applyHighlight==='function') applyHighlight();
@@ -1915,13 +1926,16 @@ function findMemberCtx(pid){
   for(const s of (state.squads||[])){ const i=s.members.findIndex(m=>m.pid===pid); if(i>=0) return {squad:s,index:i}; }
   return null;
 }
-function findCell(id){ for(const h of state.heads) for(const c of (h.cells||[])) if(c.id===id) return c; return null; }
-function findCellCtx(pid){ for(const h of state.heads) for(const c of (h.cells||[])){ const i=c.members.findIndex(m=>m.pid===pid); if(i>=0) return {cell:c,index:i}; } return null; }
-function findHeadOfCell(id){ return state.heads.find(h=>(h.cells||[]).some(c=>c.id===id))||null; }
+// Conteneurs pouvant porter des Support Cells : la Direction + toutes les tribus
+function cellHosts(){ return [state.direction, ...state.heads]; }
+function findCell(id){ for(const host of cellHosts()) for(const c of (host.cells||[])) if(c.id===id) return c; return null; }
+function findCellCtx(pid){ for(const host of cellHosts()) for(const c of (host.cells||[])){ const i=c.members.findIndex(m=>m.pid===pid); if(i>=0) return {cell:c,index:i}; } return null; }
+function findHeadOfCell(id){ return cellHosts().find(host=>(host.cells||[]).some(c=>c.id===id))||null; }
 // Localise une personne partout dans le modèle (leads dir/tribu/squad, membres, cellules, vivier)
 function locate(pid){
   const d=state.direction; let i=leadsOf(d).findIndex(p=>p.pid===pid);
   if(i>=0)return{kind:'dir-lead',list:d.leads,index:i,cat:'direction',container:d};
+  for(const c of (d.cells||[])){ i=c.members.findIndex(p=>p.pid===pid); if(i>=0)return{kind:'cell',list:c.members,index:i,cat:'support',container:c}; }
   for(const h of state.heads){
     i=leadsOf(h).findIndex(p=>p.pid===pid); if(i>=0)return{kind:'tribe-lead',list:h.leads,index:i,cat:'lead',container:h};
     for(const s of h.squads){
@@ -2010,13 +2024,20 @@ function openEditor(obj,kind){
     $('#edDelSquad').onclick=()=>{ askConfirm({title:'Supprimer la squad',message:`« <b>${esc(obj.name)}</b> » et ses membres seront supprimés.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ deleteSquad(obj.id); commit(); closeEditor(); } }); };
   } else if(kind==='cell'){
     $('#edKind').textContent='Support Cell';
+    const curHost=findHeadOfCell(obj.id);
+    const curCellId=curHost===state.direction?'__dir__':(curHost?curHost.id:'__dir__');
+    const chopts=state.heads.map((h,i)=>`<option value="${h.id}" ${h.id===curCellId?'selected':''}>${esc(headLabel(h,i))}</option>`).join('');
     $('#edBody').innerHTML=`
       <div class="field"><label>Nom de la Support Cell</label><input id="f-cellname" value="${esc(obj.name)}"></div>
       ${statsGridHTML(obj,'cell')}
+      <div class="field"><label>Rattachement</label>
+        <select id="f-cellhost" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
+          <option value="__dir__" ${curCellId==='__dir__'?'selected':''}>Direction</option>
+          ${chopts}</select></div>
       <div class="field"><label>Description / mission</label><textarea class="f big" id="f-celldesc" placeholder="Expertise transverse, périmètre d'intervention…">${esc(obj.desc||'')}</textarea></div>
-      <div class="hint">Cellule d'experts transverses rattachée à la tribu. Chaque ressource est allouée en % de son temps. Ajoute des ressources avec « ＋ Ressource ».</div>`;
+      <div class="hint">Cellule d'experts transverses rattachée à la Direction ou à une tribu. Chaque ressource est allouée en % de son temps.</div>`;
     $('#edFoot').innerHTML=`<button class="btn" id="edDelCell" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button><button class="btn primary" id="edSave">Enregistrer</button>`;
-    $('#edSave').onclick=()=>{ obj.name=$('#f-cellname').value.trim()||'Support Cell'; obj.desc=$('#f-celldesc').value.trim(); commit(); closeEditor(); };
+    $('#edSave').onclick=()=>{ obj.name=$('#f-cellname').value.trim()||'Support Cell'; obj.desc=$('#f-celldesc').value.trim(); const tgt=$('#f-cellhost').value; if(tgt!==curCellId)moveCell(obj.id,tgt); commit(); closeEditor(); };
     $('#edDelCell').onclick=()=>{ askConfirm({title:'Supprimer la Support Cell',message:`« <b>${esc(obj.name)}</b> » et ses ressources seront supprimées.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ const h=findHeadOfCell(obj.id); if(h)h.cells=h.cells.filter(c=>c.id!==obj.id); commit(); closeEditor(); } }); };
   } else if(kind==='tribe'||kind==='dir'){
     const isDir=kind==='dir';
@@ -3018,10 +3039,10 @@ function blockMoveInfo(db,tgt){
     if(tgt.head===curId) return {ok:false, reason:'Squad déjà rattachée ici'};
     return {ok:true, label: tgt.head==='__dir__'?'Rendre volante (Direction)':('Rattacher à '+headName(tgt.head))};
   } else {
-    if(tgt.head==='__dir__') return {ok:false, reason:'Une Support Cell doit être rattachée à une tribu'};
-    const cur=findHeadOfCell(db.id); const curId=cur?cur.id:null;
+    const cur=findHeadOfCell(db.id);
+    const curId=cur===state.direction?'__dir__':(cur?cur.id:null);
     if(tgt.head===curId) return {ok:false, reason:'Cellule déjà rattachée ici'};
-    return {ok:true, label:'Rattacher à '+headName(tgt.head)};
+    return {ok:true, label: tgt.head==='__dir__'?'Rattacher à la Direction':('Rattacher à '+headName(tgt.head))};
   }
 }
 document.addEventListener('dragstart',e=>{
@@ -3229,12 +3250,13 @@ function openCellCreator(headId){
   cellHeadId=headId; cellDraft=[{role:'',side:'tech',name:'',loc:'',alloc:'100'}];
   const roleOpts=TRANSVERSE_ROLES.map(r=>`<option value="${r}">`).join('');
   const tribeOpts=state.heads.map((h,i)=>`<option value="${h.id}" ${h.id===headId?'selected':''}>${esc(headLabel(h,i))}</option>`).join('');
+  const dirOpt=`<option value="__dir__" ${headId==='__dir__'?'selected':''}>Direction</option>`;
   $('#mBody').innerHTML=`
     <div class="section">Support Cell</div>
     <div class="fld"><label>Nom de la cellule *</label><input id="cc-name" placeholder="ex: Support Cell — Design"></div>
-    <div class="fld"><label>Rattachement — binôme HoP / EM *</label>
-      <select id="cc-head">${tribeOpts}<option value="__new__">＋ Nouveau binôme HoP / EM</option></select></div>
-    <div class="hint">Ressources transverses (QA, architecte, design, data…) rattachées à ce binôme et allouées en % aux squads de la tribu.</div>
+    <div class="fld"><label>Rattachement *</label>
+      <select id="cc-head">${dirOpt}${tribeOpts}<option value="__new__">＋ Nouvelle tribu (binôme HoP / EM)</option></select></div>
+    <div class="hint">Ressources transverses (QA, architecte, design, data…) rattachées à la Direction ou à une tribu, allouées en % aux équipes.</div>
     <div class="section" style="margin-top:16px">Ressources</div>
     <div id="cc-res"></div>
     <button class="add-row" id="cc-addres">＋ Ajouter une ressource</button>
@@ -3265,12 +3287,13 @@ function createCell(){
   const name=$('#cc-name').value.trim();
   if(!name){ $('#cc-name').focus(); $('#cc-name').style.borderColor='#dc2626'; return; }
   const sel=$('#cc-head')?$('#cc-head').value:cellHeadId;
-  let head;
-  if(sel==='__new__'||!state.heads.length){ head=newHead(); state.heads.push(head); }
-  else head=state.heads.find(h=>h.id===sel)||state.heads[0];
   const cell=newCell(name);
   cellDraft.forEach(m=>{ if(m.role.trim()||m.name.trim()) cell.members.push(resource(m.role.trim(),m.name.trim(),m.loc||'',m.alloc,m.side||'tech')); });
-  head.cells=head.cells||[]; head.cells.push(cell);
+  let host;
+  if(sel==='__dir__'){ host=state.direction; }
+  else if(sel==='__new__'||!state.heads.length){ host=newHead(); state.heads.push(host); }
+  else host=state.heads.find(h=>h.id===sel)||state.heads[0];
+  host.cells=host.cells||[]; host.cells.push(cell);
   closeModal(); commit(); toast('Support Cell « '+name+' » créée');
 }
 
