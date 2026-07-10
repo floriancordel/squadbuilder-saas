@@ -49,23 +49,28 @@ Deno.serve(async (req) => {
     const orgId = body.org_id;
     if (!orgId) return json({ error: "org_id manquant" }, 400);
 
-    // 2) L'appelant doit être owner/admin de cette org
+    // 2) L'appelant doit pouvoir gérer les utilisateurs (owner/admin, ou permission users.manage)
     const { data: mem } = await admin
-      .from("memberships").select("role")
+      .from("memberships").select("role, permissions")
       .eq("org_id", orgId).eq("email", (user.email || "").toLowerCase()).limit(1);
     const callerRole = mem?.[0]?.role;
-    if (callerRole !== "owner" && callerRole !== "admin") {
-      return json({ error: "Action réservée au propriétaire de l'organisation" }, 403);
+    const callerPerms: string[] = mem?.[0]?.permissions || [];
+    const canManage = callerRole === "owner" || callerRole === "admin" || callerPerms.includes("users.manage");
+    if (!canManage) {
+      return json({ error: "Action réservée à un administrateur de l'organisation" }, 403);
     }
 
     if (action === "list") {
       const { data: members } = await admin
-        .from("memberships").select("email, role").eq("org_id", orgId);
+        .from("memberships").select("email, role, permissions").eq("org_id", orgId);
       return json({ members: members || [] });
     }
 
     const email = (body.email || "").toLowerCase().trim();
     if (!email) return json({ error: "Email requis" }, 400);
+    const ALL = ["org.edit", "roles.edit", "users.manage"];
+    const permissions: string[] = Array.isArray(body.permissions) ? body.permissions.filter((p: string) => ALL.includes(p)) : [];
+    const role = typeof body.role === "string" ? body.role : "viewer";
 
     if (action === "remove") {
       if (email === (user.email || "").toLowerCase()) return json({ error: "Vous ne pouvez pas retirer votre propre accès" }, 400);
@@ -73,16 +78,23 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (action === "update") {
+      // Modifier les droits d'un membre existant (pas le owner)
+      const { data: target } = await admin.from("memberships").select("role").eq("org_id", orgId).eq("email", email).limit(1);
+      if (target?.[0]?.role === "owner") return json({ error: "Le propriétaire ne peut pas être modifié" }, 400);
+      await admin.from("memberships").update({ role, permissions }).eq("org_id", orgId).eq("email", email);
+      return json({ ok: true, email, role, permissions });
+    }
+
     // action === "create"
-    const role = body.role === "viewer" ? "viewer" : "editor";
     const password = body.password || genPassword();
     const { error: cErr } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
     // Si le compte existe déjà, on continue quand même pour (ré)attribuer l'accès
     if (cErr && !/already been registered|already exists/i.test(cErr.message)) {
       return json({ error: cErr.message }, 400);
     }
-    await admin.from("memberships").upsert({ org_id: orgId, email, role });
-    return json({ ok: true, email, password, role, existed: !!cErr });
+    await admin.from("memberships").upsert({ org_id: orgId, email, role, permissions });
+    return json({ ok: true, email, password, role, permissions, existed: !!cErr });
   } catch (e) {
     return json({ error: String(e?.message || e) }, 500);
   }

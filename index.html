@@ -638,7 +638,30 @@
   .pill.temp{background:#fef3c7;color:#92400e} .pill.open{background:var(--open-bg);color:var(--open)} .pill.over{background:#fee2e2;color:#b91c1c}
   .dash-empty{color:var(--faint);font-size:12.5px;padding:6px 2px}
   /* Administration */
-  .admin-form{display:flex;flex-direction:column;gap:8px}
+  .admin-form{display:flex;flex-direction:column;gap:10px}
+  .af-field>label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin:2px 0 6px}
+  .perm-checks{display:flex;flex-direction:column;gap:7px}
+  .perm-check{display:flex;align-items:flex-start;gap:9px;border:1px solid var(--border);border-radius:9px;padding:9px 11px;cursor:pointer;background:#fff;transition:.12s}
+  .perm-check:hover{border-color:var(--line)}
+  .perm-check.on{border-color:var(--tech);background:var(--tech-soft)}
+  .perm-check input{margin-top:2px;accent-color:var(--tech);cursor:pointer;flex:0 0 auto}
+  .perm-check .pc-txt{font-size:12.5px;color:var(--ink);line-height:1.35}
+  .perm-check .perm-desc{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:1px}
+  .member-list{display:flex;flex-direction:column;gap:8px}
+  .member-row{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#fff}
+  .member-row.editing{border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
+  .mr-top{display:flex;align-items:center;gap:8px}
+  .mr-email{font-size:13px;font-weight:600;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mr-actions{margin-left:auto;display:flex;gap:8px;flex:0 0 auto}
+  .mr-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .member-row.editing .perm-checks{margin:10px 0}
+  .member-row .mr-actions .btn{padding:6px 12px}
+  .pill.sm{font-size:10px;background:#eef2ff;color:#4338ca}
+  .tmpl-row{display:flex;align-items:baseline;gap:10px;padding:8px 2px;border-bottom:1px solid var(--border);font-size:12.5px;flex-wrap:wrap}
+  .tmpl-row:last-child{border-bottom:0}
+  .tmpl-row .tmpl-name{font-weight:700;color:var(--ink);min-width:120px}
+  .tmpl-row .tmpl-desc{color:var(--muted);flex:1;min-width:180px}
+  .tmpl-row .tmpl-perms{font-size:11px;color:var(--tech);font-weight:600}
   .admin-form input,.admin-form select{border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;color:var(--ink)}
   .admin-form input:focus,.admin-form select:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
   .admin-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:10px;background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:9px 11px}
@@ -655,11 +678,14 @@
   .admin-setup ol{margin:8px 0;padding-left:20px} .admin-setup li{margin:3px 0}
   .admin-setup code{background:#f3f4f6;border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:11.5px;color:var(--ink)}
   /* Lecture seule (viewer) : on masque les affordances d'édition */
-  body.is-viewer .add-lead,body.is-viewer .add-mini,body.is-viewer .add-slot,body.is-viewer .node-tools,body.is-viewer .cap-edit,body.is-viewer #modeSwitch [data-mode="affect"]{display:none!important}
+  /* Pas de droit "org.edit" → organigramme en lecture seule */
+  body.ro-org .add-lead,body.ro-org .add-slot,body.ro-org .node-tools,body.ro-org .cap-edit,body.ro-org #modeSwitch [data-mode="affect"]{display:none!important}
+  /* Pas de droit "roles.edit" → référentiel en lecture seule */
+  body.ro-roles .gtree-add,body.ro-roles .gtree-edit,body.ro-roles .fiche-del,body.ro-roles #glossAdd{display:none!important}
+  body.ro-roles .fiche input,body.ro-roles .fiche select,body.ro-roles .fiche textarea,body.ro-roles .fiche .seg,body.ro-roles .fiche .skill-chip button,body.ro-roles .fiche .resp-item button,body.ro-roles .fiche .blk-check{pointer-events:none;opacity:.75}
+  body.ro-roles .skill-input,body.ro-roles .resp-input{display:none}
   body.view-mode #modeSwitch,body.view-mode #shareBtn,body.view-mode #burgerBtn,body.view-mode #logoutBtn{display:none!important}
   body.view-mode .brand h1::after{content:' · Vue partagée';font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0}
-  body.is-viewer .ro-badge{display:inline-flex}
-  .ro-badge{display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:20px;padding:3px 10px}
   #editor.ro .ed-foot{display:none}
   #editor.ro input,#editor.ro textarea,#editor.ro select,#editor.ro .seg,#editor.ro .switch-row{pointer-events:none;opacity:.72}
 
@@ -1086,9 +1112,36 @@ $('#logoutBtn').onclick = async () => {
   await sb.auth.signOut();
 };
 
-let currentRole = 'owner';
-const ROLE_LABELS = {owner:'Propriétaire', admin:'Administrateur', editor:'Éditeur', viewer:'Lecteur', demo:'Démo'};
-function fillProfile(email, role){
+/* ---------------- Permissions & rôles ---------------- */
+const PERMISSIONS=[
+  {key:'org.edit',label:"Éditer l'organigramme",desc:'Créer / modifier squads, tribus, cellules, personnes et affecter par glisser-déposer.'},
+  {key:'roles.edit',label:'Éditer les fiches de poste',desc:'Modifier le référentiel : rôles, compétences, responsabilités, familles, blocs.'},
+  {key:'users.manage',label:'Gérer les utilisateurs',desc:'Créer des comptes et gérer leurs droits.'},
+];
+const ALL_PERMS=PERMISSIONS.map(p=>p.key);
+const ROLE_TEMPLATES=[
+  {key:'viewer',label:'Lecteur',perms:[],desc:'Consultation seule — aucune modification.'},
+  {key:'contributor',label:'Contributeur',perms:['org.edit'],desc:"Édite l'organigramme, mais pas les fiches de poste."},
+  {key:'editor',label:'Éditeur',perms:['org.edit','roles.edit'],desc:'Édite l\'organigramme et les fiches de poste.'},
+  {key:'admin',label:'Administrateur',perms:['org.edit','roles.edit','users.manage'],desc:'Tous les droits, y compris la gestion des utilisateurs.'},
+];
+const ROLE_LABELS={owner:'Propriétaire',admin:'Administrateur',editor:'Éditeur',contributor:'Contributeur',viewer:'Lecteur',demo:'Démo'};
+let currentRole='owner', currentPerms=ALL_PERMS.slice();
+function can(k){ return currentRole==='owner'||currentRole==='demo'||currentPerms.includes(k); }
+function permsForRole(role,perms){
+  if(role==='owner'||role==='demo') return ALL_PERMS.slice();
+  if(Array.isArray(perms)&&perms.length) return perms.slice();
+  const t=ROLE_TEMPLATES.find(x=>x.key===role); return t?t.perms.slice():[];
+}
+function templateForPerms(perms){ const t=ROLE_TEMPLATES.find(t=>t.perms.length===perms.length&&t.perms.every(p=>perms.includes(p))); return t?t.key:'custom'; }
+function applyPerms(){
+  document.body.classList.toggle('is-admin', can('users.manage'));
+  document.body.classList.toggle('ro-org', !can('org.edit'));
+  document.body.classList.toggle('ro-roles', !can('roles.edit'));
+  if(!can('org.edit') && mode==='affect'){ mode='edit'; if(typeof applyMode==='function')applyMode(); }
+}
+function fillProfile(email, role, perms){
+  currentRole=role; currentPerms=permsForRole(role,perms);
   const name=(email||'').split('@')[0]||'—';
   const initials=(name.replace(/[^a-zA-Z0-9]/g,'')||'?').slice(0,2).toUpperCase();
   $('#pfAvatar').textContent=initials; $('#pfAvatar2').textContent=initials;
@@ -1096,13 +1149,12 @@ function fillProfile(email, role){
   $('#userEmail').textContent=email||'';
   const rl=ROLE_LABELS[role]||role||'—';
   $('#pfRole').textContent=rl; $('#pfRoleBadge').textContent=rl;
-  const admin = role==='owner'||role==='admin'||role==='demo';
-  document.body.classList.toggle('is-admin', admin);
-  document.body.classList.toggle('is-viewer', role==='viewer');
+  applyPerms();
 }
-async function fetchRole(orgId, email){
-  try{ const {data}=await sb.from('memberships').select('role').eq('org_id',orgId).eq('email',(email||'').toLowerCase()).limit(1);
-    return (data&&data[0]&&data[0].role)||'owner'; }catch(_){ return 'owner'; }
+async function fetchMembership(orgId, email){
+  try{ const {data}=await sb.from('memberships').select('*').eq('org_id',orgId).eq('email',(email||'').toLowerCase()).limit(1);
+    const m=data&&data[0]; return {role:(m&&m.role)||'owner', perms:(m&&m.permissions)||null}; }
+  catch(_){ return {role:'owner',perms:null}; }
 }
 async function onLogin(user) {
   $('#loginScreen').classList.add('hidden');
@@ -1115,8 +1167,8 @@ async function onLogin(user) {
     state = seed();
     if (currentOrg) await saveOrg();
   }
-  currentRole = currentOrg ? await fetchRole(currentOrg.id, user.email) : 'owner';
-  fillProfile(user.email, currentRole);
+  const m = currentOrg ? await fetchMembership(currentOrg.id, user.email) : {role:'owner',perms:null};
+  fillProfile(user.email, m.role, m.perms);
   firstFit = true;
   render();
 }
@@ -1519,6 +1571,7 @@ function updateStats(){
 canvas.addEventListener('click',e=>{
   const t=e.target.closest('[data-action]'); if(!t)return;
   const a=t.dataset.action;
+  if(['add-lead','add-head','add-squad','add-member','add-cell','add-res','del-head','del-squad'].includes(a) && !can('org.edit'))return;
   if(a==='edit'){ openEditor(pmap[t.dataset.pid],'person'); }
   else if(a==='edit-squad'){ const sq=findSquad(t.dataset.squad); openEditor(sq,'squad'); }
   else if(a==='edit-tribe'){ const h=state.heads.find(x=>x.id===t.dataset.head); if(h)openEditor(h,'tribe'); }
@@ -1714,7 +1767,7 @@ function openEditor(obj,kind){
       else doDel();
     };
   }
-  ed.classList.toggle('ro', currentRole==='viewer');
+  ed.classList.toggle('ro', !can('org.edit'));
   ov.classList.add('open'); ed.classList.add('open');
 }
 let segState={};
@@ -2061,9 +2114,10 @@ function renderFiche(){ const el=$('#gfiche'); if(el)el.innerHTML=ficheHTML(glos
 function ficheRole(el){ const f=el.closest('.fiche'); return f?glossRoleById(f.dataset.id):null; }
 $('#sheetBody').addEventListener('click',e=>{
   if(sheetView!=='gloss')return;
-  const eb=e.target.closest('#glossEditBtn'); if(eb){ glossEdit=!glossEdit; renderGlossary(); return; }
   const ct=e.target.closest('[data-cat-toggle]'); if(ct){ const k=ct.dataset.catToggle; glossExpanded.has(k)?glossExpanded.delete(k):glossExpanded.add(k); ct.closest('.gt-cat').classList.toggle('open'); return; }
   const rn=e.target.closest('[data-role]'); if(rn){ glossSel=rn.dataset.role; document.querySelectorAll('.gt-role.sel').forEach(x=>x.classList.remove('sel')); rn.classList.add('sel'); renderFiche(); return; }
+  if(!can('roles.edit'))return; // édition du référentiel interdite
+  const eb=e.target.closest('#glossEditBtn'); if(eb){ glossEdit=!glossEdit; renderGlossary(); return; }
   const add=e.target.closest('#glossAdd'); if(add){ openRoleDlg(); return; }
   const del=e.target.closest('[data-gdel]'); if(del){ const g=ficheRole(del); if(g){ askConfirm({title:'Supprimer le rôle',message:`Le rôle « <b>${esc(g.name)}</b> » sera retiré du référentiel.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.glossary=state.glossary.filter(x=>x.id!==g.id); if(glossSel===g.id)glossSel=null; save(); rebuildRoleLists(); renderGlossary(); toast('Rôle supprimé'); } }); } return; }
   const sideBtn=e.target.closest('[data-gs]'); if(sideBtn){ const g=ficheRole(sideBtn); if(g){ g.side=sideBtn.dataset.gs; save(); renderGlossary(); } return; }
@@ -2072,13 +2126,13 @@ $('#sheetBody').addEventListener('click',e=>{
   const bc=e.target.closest('[data-block]'); if(bc){ const g=ficheRole(bc); if(g){ g.blocks=g.blocks||[]; const k=bc.dataset.block; const i=g.blocks.indexOf(k); if(i>=0)g.blocks.splice(i,1); else g.blocks.push(k); save(); bc.closest('.blk-check').classList.toggle('on',g.blocks.includes(k)); } return; }
 });
 $('#sheetBody').addEventListener('keydown',e=>{
-  if(sheetView!=='gloss')return;
+  if(sheetView!=='gloss'||!can('roles.edit'))return;
   const addTo=(arrName,cls)=>{ e.preventDefault(); const v=e.target.value.trim(); if(!v)return; const g=ficheRole(e.target); if(!g)return; g[arrName]=g[arrName]||[]; g[arrName].push(v); save(); renderFiche(); const inp=document.querySelector('.'+cls); if(inp)inp.focus(); };
   if(e.key==='Enter'&&e.target.classList.contains('skill-input')) addTo('skills','skill-input');
   else if(e.key==='Enter'&&e.target.classList.contains('resp-input')) addTo('responsibilities','resp-input');
 });
 $('#sheetBody').addEventListener('input',e=>{
-  if(sheetView!=='gloss')return;
+  if(sheetView!=='gloss'||!can('roles.edit'))return;
   const f=e.target.closest('[data-gf]'); if(!f)return;
   const g=ficheRole(f); if(!g)return;
   const field=f.dataset.gf;
@@ -2088,7 +2142,7 @@ $('#sheetBody').addEventListener('input',e=>{
 });
 // Drag & drop des rôles entre familles (mode édition)
 let _dragRole=null;
-$('#sheetBody').addEventListener('dragstart',e=>{ const el=e.target.closest('[data-drag-role]'); if(!el)return; _dragRole=el.dataset.dragRole; e.dataTransfer.effectAllowed='move'; el.classList.add('gt-dragging'); });
+$('#sheetBody').addEventListener('dragstart',e=>{ if(!can('roles.edit'))return; const el=e.target.closest('[data-drag-role]'); if(!el)return; _dragRole=el.dataset.dragRole; e.dataTransfer.effectAllowed='move'; el.classList.add('gt-dragging'); });
 $('#sheetBody').addEventListener('dragend',e=>{ const el=e.target.closest('[data-drag-role]'); if(el)el.classList.remove('gt-dragging'); document.querySelectorAll('.gt-roles.famover').forEach(n=>n.classList.remove('famover')); _dragRole=null; });
 $('#sheetBody').addEventListener('dragover',e=>{ if(!_dragRole)return; const z=e.target.closest('[data-fam-drop]'); if(!z)return; e.preventDefault(); document.querySelectorAll('.gt-roles.famover').forEach(n=>{if(n!==z)n.classList.remove('famover');}); z.classList.add('famover'); });
 $('#sheetBody').addEventListener('drop',e=>{ if(!_dragRole)return; const z=e.target.closest('[data-fam-drop]'); if(!z)return; e.preventDefault(); const g=glossRoleById(_dragRole); const fam=z.dataset.famDrop; if(g&&g.family!==fam){ g.family=fam; glossSel=g.id; glossExpanded.add(fam); save(); toast('« '+g.name+' » déplacé vers '+famLabel(fam)); renderGlossary(); } _dragRole=null; });
@@ -2100,73 +2154,95 @@ async function adminInvoke(action, payload){
   if(data && data.error) throw new Error(data.error);
   return data;
 }
+function permChecksHTML(granted){
+  return PERMISSIONS.map(p=>`<label class="perm-check ${granted.includes(p.key)?'on':''}"><input type="checkbox" data-perm="${p.key}" ${granted.includes(p.key)?'checked':''}><span class="pc-txt"><b>${esc(p.label)}</b><span class="perm-desc">${esc(p.desc)}</span></span></label>`).join('');
+}
+function tmplOptionsHTML(sel){ return ROLE_TEMPLATES.map(t=>`<option value="${t.key}" ${t.key===sel?'selected':''}>${esc(t.label)}</option>`).join('')+`<option value="custom" ${sel==='custom'?'selected':''}>Personnalisé</option>`; }
+let adminEditEmail=null;
 function renderAdmin(){
   const body=$('#sheetBody');
-  const isAdmin = currentRole==='owner'||currentRole==='admin'||currentRole==='demo';
-  if(!isAdmin){ body.innerHTML=`<div class="dash-empty" style="padding:40px">🔒 Réservé aux administrateurs.</div>`; return; }
+  if(!can('users.manage')){ body.innerHTML=`<div class="dash-empty" style="padding:40px">🔒 Réservé aux administrateurs.</div>`; return; }
   const demoNote = (!currentOrg) ? `<div class="admin-note warn">Mode démo : la création de comptes nécessite d'être connecté avec un vrai compte (sur le site déployé, pas en preview).</div>` : '';
+  const defPerms=ROLE_TEMPLATES.find(t=>t.key==='editor').perms;
   body.innerHTML=`
     ${demoNote}
     <div class="dash-cols">
       <div class="panelbox">
-        <h4>Inviter un utilisateur</h4>
+        <h4>Créer un utilisateur</h4>
         <div class="admin-form">
           <input id="au-email" type="email" placeholder="email@entreprise.com">
-          <select id="au-role"><option value="editor">Éditeur — lecture + écriture</option><option value="viewer">Lecteur — lecture seule</option></select>
+          <div class="af-field"><label>Profil (template de droits)</label><select id="au-tmpl">${tmplOptionsHTML('editor')}</select></div>
+          <div class="af-field"><label>Droits</label><div class="perm-checks" id="au-perms">${permChecksHTML(defPerms)}</div></div>
           <button class="btn primary" id="au-create" style="justify-content:center">Créer le compte</button>
         </div>
         <div id="au-result"></div>
-        <div class="admin-note">Un mot de passe est généré automatiquement — transmets-le à la personne, elle pourra le changer.</div>
+        <div class="admin-note">Un mot de passe est généré automatiquement — transmets-le à la personne. Elle pourra le changer.</div>
       </div>
       <div class="panelbox">
         <h4>Utilisateurs & accès</h4>
         <div id="au-list"><div class="dash-empty">Chargement…</div></div>
       </div>
     </div>
-    <div class="dash-sec"><h3>Activation (une seule fois)</h3>
-      <div class="panelbox"><div class="admin-setup">${setupInstructions()}</div></div>
-    </div>`;
+    <div class="dash-sec"><h3>Profils prédéfinis</h3><div class="panelbox">${ROLE_TEMPLATES.map(t=>`<div class="tmpl-row"><span class="tmpl-name">${esc(t.label)}</span><span class="tmpl-desc">${esc(t.desc)}</span><span class="tmpl-perms">${t.perms.length?t.perms.map(k=>esc((PERMISSIONS.find(p=>p.key===k)||{}).label)).join(' · '):'Lecture seule'}</span></div>`).join('')}</div></div>
+    <div class="dash-sec"><h3>Activation (une seule fois, côté Supabase)</h3><div class="panelbox"><div class="admin-setup">${setupInstructions()}</div></div></div>`;
+  $('#au-tmpl').onchange=()=>{ const t=ROLE_TEMPLATES.find(x=>x.key===$('#au-tmpl').value); if(t){ document.querySelectorAll('#au-perms .perm-check').forEach(l=>{ const cb=l.querySelector('input'); cb.checked=t.perms.includes(cb.dataset.perm); l.classList.toggle('on',cb.checked); }); } };
+  $('#au-perms').addEventListener('change',e=>{ const l=e.target.closest('.perm-check'); if(l)l.classList.toggle('on',e.target.checked); const g=[...document.querySelectorAll('#au-perms [data-perm]:checked')].map(i=>i.dataset.perm); $('#au-tmpl').value=templateForPerms(g); });
   $('#au-create').onclick=adminCreateUser;
   loadMembers();
 }
+function memberRowHTML(m){
+  const perms=Array.isArray(m.permissions)?m.permissions:permsForRole(m.role,null);
+  if(m.role==='owner'){ return `<div class="member-row"><div class="mr-top"><div class="mr-email">${esc(m.email)}</div><span class="pill open">Propriétaire · tous droits</span></div></div>`; }
+  if(adminEditEmail===m.email){
+    return `<div class="member-row editing" data-email="${esc(m.email)}">
+      <div class="mr-top"><div class="mr-email">${esc(m.email)}</div></div>
+      <div class="perm-checks">${permChecksHTML(perms)}</div>
+      <div class="mr-actions"><button class="btn" data-mcancel>Annuler</button><button class="btn primary" data-msave>Enregistrer</button></div></div>`;
+  }
+  const tmpl=templateForPerms(perms);
+  const chips=perms.length?perms.map(k=>`<span class="pill">${esc((PERMISSIONS.find(p=>p.key===k)||{}).label||k)}</span>`).join(''):'<span class="pill">Lecture seule</span>';
+  return `<div class="member-row" data-email="${esc(m.email)}"><div class="mr-top"><div class="mr-email">${esc(m.email)}</div><span class="pill sm">${esc(ROLE_LABELS[tmpl]||'Personnalisé')}</span><div class="mr-actions"><button class="lnk" data-medit>Modifier</button><button class="lnk-del" data-mrm>Retirer</button></div></div><div class="mr-chips">${chips}</div></div>`;
+}
 async function loadMembers(){
   const box=$('#au-list'); if(!box)return;
-  if(!currentOrg){ box.innerHTML=`<div class="dash-empty">Indisponible en démo.</div>`; return; }
+  if(!currentOrg){ box.innerHTML=`<div class="dash-empty">Indisponible en démo (connecte-toi avec un vrai compte).</div>`; return; }
   try{
-    const data=await adminInvoke('list');
-    const members=(data&&data.members)||[];
-    box.innerHTML = members.length
-      ? `<table class="dtable"><thead><tr><th>Email</th><th>Rôle</th><th class="num"></th></tr></thead><tbody>${members.map(m=>`<tr><td>${esc(m.email)}</td><td><span class="pill ${m.role==='viewer'?'':'open'}">${ROLE_LABELS[m.role]||m.role}</span></td><td class="num">${m.role==='owner'?'':`<button class="lnk-del" data-rm="${esc(m.email)}">Retirer</button>`}</td></tr>`).join('')}</tbody></table>`
-      : `<div class="dash-empty">Aucun membre.</div>`;
-    box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ askConfirm({title:'Retirer l\'accès',message:`Retirer l'accès de <b>${esc(b.dataset.rm)}</b> ?`,confirmLabel:'Retirer'}).then(async ok=>{ if(ok){ try{ await adminInvoke('remove',{email:b.dataset.rm}); loadMembers(); }catch(e){ toast('Erreur : '+e.message); } } }); });
+    const data=await adminInvoke('list'); const members=(data&&data.members)||[];
+    box.innerHTML = members.length?`<div class="member-list">${members.map(memberRowHTML).join('')}</div>`:`<div class="dash-empty">Aucun membre.</div>`;
+    box.querySelectorAll('[data-medit]').forEach(b=>b.onclick=()=>{ adminEditEmail=b.closest('.member-row').dataset.email; loadMembers(); });
+    box.querySelectorAll('[data-mcancel]').forEach(b=>b.onclick=()=>{ adminEditEmail=null; loadMembers(); });
+    box.querySelectorAll('.member-row.editing .perm-check').forEach(l=>l.querySelector('input').addEventListener('change',e=>l.classList.toggle('on',e.target.checked)));
+    box.querySelectorAll('[data-msave]').forEach(b=>b.onclick=async()=>{ const row=b.closest('.member-row'); const email=row.dataset.email; const perms=[...row.querySelectorAll('[data-perm]:checked')].map(i=>i.dataset.perm); try{ await adminInvoke('update',{email,role:templateForPerms(perms),permissions:perms}); adminEditEmail=null; toast('Droits mis à jour'); loadMembers(); }catch(e){ toast('Erreur : '+e.message); } });
+    box.querySelectorAll('[data-mrm]').forEach(b=>b.onclick=()=>{ const email=b.closest('.member-row').dataset.email; askConfirm({title:'Retirer l\'accès',message:`Retirer l'accès de <b>${esc(email)}</b> ?`,confirmLabel:'Retirer'}).then(async ok=>{ if(ok){ try{ await adminInvoke('remove',{email}); loadMembers(); }catch(e){ toast('Erreur : '+e.message); } } }); });
   }catch(e){
-    box.innerHTML=`<div class="admin-note warn">Impossible de lister les membres — l'Edge Function n'est probablement pas encore déployée (voir « Activation » ci-dessous).<br><span style="opacity:.75;font-size:11px">${esc(e.message||String(e))}</span></div>`;
+    box.innerHTML=`<div class="admin-note warn">Impossible de lister les membres — l'Edge Function n'est probablement pas encore déployée / à jour (voir « Activation »).<br><span style="opacity:.75;font-size:11px">${esc(e.message||String(e))}</span></div>`;
   }
 }
 async function adminCreateUser(){
-  const email=$('#au-email').value.trim(), role=$('#au-role').value;
+  const email=$('#au-email').value.trim();
   if(!email){ toast('Email requis'); return; }
+  const perms=[...document.querySelectorAll('#au-perms [data-perm]:checked')].map(i=>i.dataset.perm);
+  const role=templateForPerms(perms);
   const btn=$('#au-create'); btn.disabled=true; btn.textContent='Création…';
   try{
-    const data=await adminInvoke('create',{email,role});
+    const data=await adminInvoke('create',{email,role,permissions:perms});
     $('#au-result').innerHTML=`<div class="cred-box"><div class="cred-title">✅ Compte créé — communique ces identifiants</div><div class="cred-row"><span>Email</span><code>${esc(data.email)}</code></div><div class="cred-row"><span>Mot de passe</span><code id="cred-pw">${esc(data.password)}</code><button class="lnk" id="cred-copy">Copier</button></div></div>`;
     $('#au-email').value='';
     $('#cred-copy').onclick=()=>{ navigator.clipboard.writeText(data.password); toast('Mot de passe copié'); };
     loadMembers();
   }catch(e){
-    $('#au-result').innerHTML=`<div class="admin-note warn">Échec : ${esc(e.message||String(e))}<br>Vérifie que l'Edge Function « create-user » est déployée.</div>`;
+    $('#au-result').innerHTML=`<div class="admin-note warn">Échec : ${esc(e.message||String(e))}<br>Vérifie que l'Edge Function « create-user » est déployée et à jour.</div>`;
   }
   btn.disabled=false; btn.textContent='Créer le compte';
 }
 function setupInstructions(){
-  return `Pour activer la création de comptes, déploie l'Edge Function <b>une seule fois</b> :
+  return `Deux choses à faire côté Supabase (une seule fois) :
   <ol>
-    <li>Installe la CLI Supabase : <code>npm i -g supabase</code></li>
-    <li>Connexion : <code>supabase login</code></li>
-    <li>Lien au projet : <code>supabase link --project-ref tinaakgjubesqwecnbuf</code></li>
-    <li>Déploiement : <code>supabase functions deploy create-user</code></li>
+    <li><b>SQL</b> — dans <b>SQL Editor</b>, colle et exécute le contenu de <code>supabase/access-control.sql</code> (ajoute la colonne <code>permissions</code> et les règles d'accès).</li>
+    <li><b>Edge Function</b> — dans un terminal :<br>
+      <code>npm i -g supabase</code> · <code>supabase login</code> · <code>supabase link --project-ref tinaakgjubesqwecnbuf</code> · <code>supabase functions deploy create-user</code></li>
   </ol>
-  Le code est dans <code>supabase/functions/create-user/index.ts</code> (déjà dans le repo). La clé <code>service_role</code> est fournie automatiquement à la fonction par Supabase.`;
+  Le code de la fonction est dans <code>supabase/functions/create-user/index.ts</code>. La clé <code>service_role</code> est fournie automatiquement à la fonction.`;
 }
 
 /* ================= Mode Affectation ================= */
