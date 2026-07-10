@@ -279,10 +279,10 @@
   li.collapsed > .node-content .toggle .bn{display:flex}
 
   /* ---------- Panneau d'édition ---------- */
-  #overlay{position:fixed;inset:0;background:rgba(17,24,39,.28);z-index:40;opacity:0;pointer-events:none;transition:.18s}
+  #overlay{position:fixed;inset:0;background:rgba(17,24,39,.4);z-index:70;opacity:0;pointer-events:none;transition:.18s}
   #overlay.open{opacity:1;pointer-events:auto}
-  #editor{position:fixed;top:0;right:0;height:100%;width:340px;background:#fff;box-shadow:var(--shadow-lg);z-index:50;transform:translateX(100%);transition:.22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
-  #editor.open{transform:none}
+  #editor{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(.98);width:440px;max-width:94vw;max-height:90vh;background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg);z-index:80;opacity:0;pointer-events:none;transition:.18s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+  #editor.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
   .ed-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border)}
   .ed-head .kind{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
   .ed-head .close{margin-left:auto;border:0;background:#f2f4f7;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--muted)}
@@ -421,7 +421,8 @@
   .modesw button:hover{color:var(--ink)}
   .modesw button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
   .modesw button.on[data-mode="affect"]{color:var(--tech)}
-  .modesw .ic{font-size:14px;line-height:1}
+  .modesw .ic{display:inline-flex;align-items:center;line-height:1}
+  .modesw .ic svg{width:14px;height:14px;display:block}
   /* overflow menu */
   .menu-wrap{position:relative}
   .menu-pop{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow-lg);padding:6px;min-width:190px;z-index:35;display:none;flex-direction:column;gap:1px}
@@ -524,15 +525,38 @@
   .pool-search input{width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;color:var(--ink)}
   .pool-search input:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
   .pool-body{flex:1;overflow:auto;padding:12px 14px 40px}
-  .pool-drop{border:1.5px dashed var(--line);border-radius:12px;padding:26px 16px;text-align:center;color:var(--muted);font-size:12.5px;background:#fcfdff;cursor:pointer;transition:.15s}
-  .pool-drop:hover,.pool-drop.dragover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
-  .pool-drop .pd-ic{font-size:26px;display:block;margin-bottom:8px;opacity:.6}
-  .pool-drop b{color:var(--ink);font-weight:600}
-  .pool-filters{display:flex;gap:5px;margin-top:9px}
-  .pool-filters button{flex:1;border:1px solid var(--border);background:#fff;border-radius:7px;padding:5px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer}
-  .pool-filters button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .pool-filters button.on[data-pf="produit"]{background:var(--produit);border-color:var(--produit)}
-  .pool-filters button.on[data-pf="tech"]{background:var(--tech);border-color:var(--tech)}
+  /* Segmented Vivier / Partiel */
+  .pool-type{display:flex;gap:3px;margin-top:10px;background:#f2f4f7;border:1px solid var(--border);border-radius:9px;padding:2px}
+  .pool-type button{flex:1;border:0;background:transparent;border-radius:7px;padding:6px 6px;font-size:11px;font-weight:650;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
+  .pool-type button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+  .pool-type button.on[data-pt="partial"]{color:#4338ca}
+  .pool-type .pt-n{font-size:9.5px;font-weight:800;background:rgba(15,23,42,.08);border-radius:20px;padding:0 5px;min-width:15px;text-align:center}
+  .pool-type button.on[data-pt="pool"] .pt-n{background:var(--tech-soft);color:var(--tech)}
+  .pool-type button.on[data-pt="partial"] .pt-n{background:#e0e7ff;color:#4338ca}
+  /* Filtres repliables */
+  .pool-ftoggle{display:flex;align-items:center;gap:7px;width:100%;margin-top:8px;border:1px solid var(--border);background:#fff;border-radius:8px;padding:7px 10px;font-size:11.5px;font-weight:650;color:var(--muted);cursor:pointer}
+  .pool-ftoggle:hover{border-color:var(--tech);color:var(--tech)}
+  .pool-ftoggle .pft-chev{margin-left:auto;transition:.15s;font-size:10px}
+  .pool-ftoggle.open .pft-chev{transform:rotate(180deg)}
+  .pool-ftoggle .pft-badge{font-size:9.5px;font-weight:800;color:#fff;background:var(--tech);border-radius:20px;padding:0 6px;display:none}
+  .pool-ftoggle .pft-badge.show{display:inline-block}
+  .pool-filters{display:none;flex-direction:column;gap:9px;margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:9px;background:#fbfcfe}
+  .pool-filters.open{display:flex}
+  .pf-row{display:flex;flex-direction:column;gap:5px}
+  .pf-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--faint)}
+  .pf-chips{display:flex;gap:5px}
+  .pf-chips button{flex:1;border:1px solid var(--border);background:#fff;border-radius:7px;padding:5px;font-size:10.5px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
+  .pf-chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .pf-chips[data-dim="side"] button.on[data-v="produit"]{background:var(--produit);border-color:var(--produit)}
+  .pf-chips[data-dim="side"] button.on[data-v="tech"]{background:var(--tech);border-color:var(--tech)}
+  .pf-select{width:100%;border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;color:var(--ink);background:#fff}
+  /* Overlay d'import par glisser-déposer de fichier (le panneau est déjà position:fixed) */
+  .pool-fileover{position:absolute;inset:0;z-index:5;background:rgba(37,99,235,.08);backdrop-filter:blur(1px);border:2.5px dashed var(--tech);border-radius:12px;margin:6px;display:none;align-items:center;justify-content:center;pointer-events:none}
+  body.pool-fileover-on .pool-fileover{display:flex}
+  .pfo-inner{text-align:center;color:var(--tech);font-size:13px;display:flex;flex-direction:column;gap:4px}
+  .pfo-inner .pfo-ic{font-size:30px}
+  .pfo-inner b{font-size:14px;color:var(--ink)}
+  .pfo-inner span{font-size:11px;color:var(--muted)}
   .pool-group{margin-bottom:12px;border:1px solid var(--border);border-radius:11px;overflow:hidden;background:#fbfcfe}
   .pool-group .pg-title{font-size:11px;font-weight:700;color:var(--ink);padding:8px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;background:#f3f6fb;user-select:none}
   .pool-group .pg-title:hover{background:#eef2f8}
@@ -892,8 +916,8 @@
     <div class="stats" id="stats" title="Ouvrir le dashboard analytics"></div>
   </div>
   <div class="modesw" id="modeSwitch">
-    <button data-mode="edit" class="on" title="Consulter l'organigramme"><span class="ic">👁</span>Lecture</button>
-    <button data-mode="affect" title="Éditer et affecter par glisser-déposer"><span class="ic">✎</span>Édition</button>
+    <button data-mode="edit" class="on" title="Consulter l'organigramme"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></span>Lecture</button>
+    <button data-mode="affect" title="Éditer et affecter par glisser-déposer"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>Édition</button>
   </div>
   <div class="h-right">
     <span class="save-state" id="saveState"></span>
@@ -985,13 +1009,21 @@
       <button id="poolClearBtn" class="danger" title="Vider le vivier">Vider</button>
     </div>
     <div class="pool-search"><input type="text" id="poolSearch" placeholder="Rechercher un nom, un rôle…"></div>
+    <div class="pool-type" id="poolType">
+      <button data-pt="pool" class="on">Vivier <span class="pt-n" id="ptPool">0</span></button>
+      <button data-pt="partial">⏳ Partiel <span class="pt-n" id="ptPart">0</span></button>
+    </div>
+    <button class="pool-ftoggle" id="poolFToggle" aria-expanded="false">Filtres<span class="pft-badge" id="poolFBadge"></span><span class="pft-chev">▾</span></button>
     <div class="pool-filters" id="poolFilters">
-      <button data-pf="all" class="on">Tous</button>
-      <button data-pf="produit">Produit</button>
-      <button data-pf="tech">Tech</button>
+      <div class="pf-row"><span class="pf-lbl">Filière</span><div class="pf-chips" data-dim="side">
+        <button data-v="all" class="on">Tous</button><button data-v="produit">Produit</button><button data-v="tech">Tech</button></div></div>
+      <div class="pf-row"><span class="pf-lbl">Localisation</span><div class="pf-chips" data-dim="loc">
+        <button data-v="all" class="on">Toutes</button><button data-v="FR">Hub · FR</button><button data-v="Maroc">COE · Maroc</button></div></div>
+      <div class="pf-row"><span class="pf-lbl">Famille métier</span><select id="poolFam" class="pf-select"><option value="all">Toutes les familles</option></select></div>
     </div>
   </div>
   <div class="pool-body" id="poolBody"></div>
+  <div class="pool-fileover" id="poolFileOver"><div class="pfo-inner"><span class="pfo-ic">📥</span><b>Déposez pour importer</b><span>Excel ou CSV</span></div></div>
 </aside>
 
 <div id="overlay"></div>
@@ -1108,6 +1140,10 @@ let state=null, collapsed=new Set(), pmap={};
 let mode='edit'; // 'edit' | 'affect'
 let poolFilter='';
 let poolSide='all';
+let poolLoc='all';
+let poolFam='all';
+let poolType='pool'; // 'pool' (vivier) | 'partial' (temps restants)
+let poolFiltersOpen=false;
 let poolCollapsed=new Set();
 const dragAttr=pid=>mode==='affect'?`draggable="true" data-drag="${pid}"`:'';
 
@@ -2470,38 +2506,68 @@ function remainderPersonHTML(r){
     </div>
   </div>`;
 }
+function famOfRole(role){ const g=glossFor(role); return g?g.family:''; }
+function poolMatch(p){
+  if(poolSide!=='all' && p.side!==poolSide) return false;
+  if(poolLoc!=='all' && (p.loc||'')!==poolLoc) return false;
+  if(poolFam!=='all' && famOfRole(p.role)!==poolFam) return false;
+  const f=poolFilter.trim().toLowerCase();
+  if(f && !((p.name||'')+' '+(p.role||'')).toLowerCase().includes(f)) return false;
+  return true;
+}
+function updatePoolFilterUI(){
+  $('#poolFam') && ($('#poolFam').value=poolFam);
+  document.querySelectorAll('#poolFilters .pf-chips[data-dim="side"] button').forEach(b=>b.classList.toggle('on',b.dataset.v===poolSide));
+  document.querySelectorAll('#poolFilters .pf-chips[data-dim="loc"] button').forEach(b=>b.classList.toggle('on',b.dataset.v===poolLoc));
+  document.querySelectorAll('#poolType button').forEach(b=>b.classList.toggle('on',b.dataset.pt===poolType));
+  const active=(poolSide!=='all'?1:0)+(poolLoc!=='all'?1:0)+(poolFam!=='all'?1:0);
+  const badge=$('#poolFBadge'); if(badge){ badge.textContent=active; badge.classList.toggle('show',active>0); }
+  const tog=$('#poolFToggle'); if(tog) tog.classList.toggle('open',poolFiltersOpen);
+  const fl=$('#poolFilters'); if(fl) fl.classList.toggle('open',poolFiltersOpen);
+}
 function renderPool(){
   const body=$('#poolBody'); if(!body) return;
   const pool=state.pool||[];
-  $('#poolCount').textContent=pool.length;
-  const dz=`<div class="pool-drop" id="poolDrop"><span class="pd-ic">📥</span><b>Déposez un fichier Excel ou CSV</b><br>ou cliquez pour parcourir<br><span style="font-size:11px;opacity:.75">Modèle dispo via « ⬇️ Modèle »</span></div>`;
-  // Groupe « Affectation partielle » (temps restants), au sommet du vivier
-  let rems=buildRemainders();
-  if(poolSide!=='all') rems=rems.filter(r=>r.side===poolSide);
-  const remColl=poolCollapsed.has('__rem__');
-  const remHTML=rems.length?`<div class="pool-group rem-group ${remColl?'coll':''}"><div class="pg-title rem" data-pg="__rem__"><span class="pg-chev">▼</span>⏳ Affectation partielle<span class="pg-n">${rems.length}</span></div><div class="pg-body">${rems.map(remainderPersonHTML).join('')}</div></div>`:'';
-  const f=poolFilter.trim().toLowerCase();
-  let filtered=pool;
-  if(poolSide!=='all') filtered=filtered.filter(p=>p.side===poolSide);
-  if(f) filtered=filtered.filter(p=>((p.name||'')+' '+(p.role||'')).toLowerCase().includes(f));
-  const groups={};
-  filtered.forEach(p=>{ const k=p.role||'Sans rôle'; (groups[k]=groups[k]||[]).push(p); });
-  const keys=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'fr'));
-  const inner=keys.length?keys.map(k=>{ const coll=poolCollapsed.has(k); return `<div class="pool-group ${coll?'coll':''}"><div class="pg-title" data-pg="${esc(k)}"><span class="pg-chev">▼</span>${esc(k)}<span class="pg-n">${groups[k].length}</span></div><div class="pg-body">${groups[k].map(poolPersonHTML).join('')}</div></div>`; }).join(''):(pool.length?`<div class="pool-empty">Aucun résultat.</div>`:'');
-  const empty=(!pool.length&&!rems.length)?`<div class="pool-empty">Le vivier est vide.<br>Importez un fichier ou ajoutez des personnes.</div>`:'';
-  body.innerHTML=dz+remHTML+inner+empty;
-  wirePoolDrop();
+  const rems=buildRemainders();
+  $('#poolCount').textContent=(poolType==='partial'?rems.length:pool.length);
+  $('#ptPool')&&($('#ptPool').textContent=pool.length);
+  $('#ptPart')&&($('#ptPart').textContent=rems.length);
+  updatePoolFilterUI();
+  let html='';
+  if(poolType==='partial'){
+    const list=rems.filter(poolMatch);
+    if(!rems.length) html=`<div class="pool-empty">Aucun temps partiel à réaffecter.<br>Passez quelqu'un en temps partiel (&lt; 100%) pour libérer du temps.</div>`;
+    else if(!list.length) html=`<div class="pool-empty">Aucun résultat pour ces filtres.</div>`;
+    else html=`<div class="pool-group rem-group"><div class="pg-body">${list.map(remainderPersonHTML).join('')}</div></div>`;
+  } else {
+    const filtered=pool.filter(poolMatch);
+    const groups={};
+    filtered.forEach(p=>{ const k=p.role||'Sans rôle'; (groups[k]=groups[k]||[]).push(p); });
+    const keys=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'fr'));
+    if(!pool.length) html=`<div class="pool-empty">Le vivier est vide.<br>Glissez un fichier ici ou cliquez « 📥 Importer ».</div>`;
+    else if(!keys.length) html=`<div class="pool-empty">Aucun résultat pour ces filtres.</div>`;
+    else html=keys.map(k=>{ const coll=poolCollapsed.has(k); return `<div class="pool-group ${coll?'coll':''}"><div class="pg-title" data-pg="${esc(k)}"><span class="pg-chev">▼</span>${esc(k)}<span class="pg-n">${groups[k].length}</span></div><div class="pg-body">${groups[k].map(poolPersonHTML).join('')}</div></div>`; }).join('');
+  }
+  body.innerHTML=html;
 }
+function fillPoolFamilies(){ const sel=$('#poolFam'); if(!sel)return; sel.innerHTML='<option value="all">Toutes les familles</option>'+FAMILIES.map(f=>`<option value="${f.key}">${esc(f.label)}</option>`).join(''); sel.value=poolFam; }
 $('#poolBody').addEventListener('click',e=>{ const t=e.target.closest('[data-pg]'); if(t){ const k=t.dataset.pg; poolCollapsed.has(k)?poolCollapsed.delete(k):poolCollapsed.add(k); renderPool(); return; } const pc=e.target.closest('.pcard'); if(pc&&!pc.classList.contains('rem')){ const p=pmap[pc.dataset.drag]; if(p) openEditor(p,'person'); } });
-$('#poolFilters').addEventListener('click',e=>{ const b=e.target.closest('[data-pf]'); if(!b)return; poolSide=b.dataset.pf; $('#poolFilters').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.pf===poolSide)); renderPool(); });
+$('#poolType').addEventListener('click',e=>{ const b=e.target.closest('[data-pt]'); if(!b)return; poolType=b.dataset.pt; renderPool(); });
+$('#poolFToggle').onclick=()=>{ poolFiltersOpen=!poolFiltersOpen; updatePoolFilterUI(); };
+$('#poolFilters').addEventListener('click',e=>{ const b=e.target.closest('.pf-chips button'); if(!b)return; const dim=b.closest('.pf-chips').dataset.dim; if(dim==='side')poolSide=b.dataset.v; else if(dim==='loc')poolLoc=b.dataset.v; renderPool(); });
+$('#poolFam') && ($('#poolFam').onchange=e=>{ poolFam=e.target.value; renderPool(); });
 $('#templateBtn2').onclick=()=>downloadTemplate();
-function wirePoolDrop(){
-  const dz=$('#poolDrop'); if(!dz) return;
-  dz.onclick=()=>$('#peopleInput').click();
-  dz.ondragover=e=>{ e.preventDefault(); e.stopPropagation(); dz.classList.add('dragover'); };
-  dz.ondragleave=()=>dz.classList.remove('dragover');
-  dz.ondrop=e=>{ e.preventDefault(); e.stopPropagation(); dz.classList.remove('dragover'); const file=e.dataTransfer.files[0]; if(file)parsePeopleFile(file); };
-}
+// Import par glisser-déposer de fichier sur tout le panneau
+(function wirePoolFileDrop(){
+  const panel=$('#poolPanel'); if(!panel)return;
+  let depth=0;
+  const hasFile=e=>e.dataTransfer && Array.from(e.dataTransfer.types||[]).includes('Files');
+  panel.addEventListener('dragenter',e=>{ if(!hasFile(e))return; e.preventDefault(); depth++; document.body.classList.add('pool-fileover-on'); });
+  panel.addEventListener('dragover',e=>{ if(!hasFile(e))return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; });
+  panel.addEventListener('dragleave',e=>{ if(!hasFile(e))return; depth--; if(depth<=0){ depth=0; document.body.classList.remove('pool-fileover-on'); } });
+  panel.addEventListener('drop',e=>{ if(!hasFile(e))return; e.preventDefault(); e.stopPropagation(); depth=0; document.body.classList.remove('pool-fileover-on'); const file=e.dataTransfer.files[0]; if(file)parsePeopleFile(file); });
+})();
+fillPoolFamilies();
 
 /* ---- Import Excel / CSV ---- */
 function normKey(k){ return String(k).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
