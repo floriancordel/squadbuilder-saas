@@ -207,8 +207,9 @@
 
   /* ---------- Rangée de leads dynamique + ajout de rôle ---------- */
   .leads-row{display:flex;gap:16px;justify-content:center;flex-wrap:nowrap;align-items:stretch}
-  .add-lead{align-self:center;min-width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--line);border-radius:9px;color:var(--muted);font-size:16px;font-weight:700;cursor:pointer;background:#fcfdff;transition:.12s;padding:0 4px}
-  .add-lead:hover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
+  /* Bouton d'ajout UNIFIÉ (leads, membres, ressources) : même format qu'une carte */
+  .add-slot{box-sizing:border-box;width:176px;min-height:60px;align-self:center;display:flex;align-items:center;justify-content:center;gap:6px;border:1.5px dashed var(--line);border-radius:11px;color:var(--muted);font-size:12.5px;font-weight:600;cursor:pointer;background:#fcfdff;transition:.12s}
+  .add-slot:hover{border-color:var(--tech);color:var(--tech);background:var(--tech-soft)}
   .node-direction .leads-row{gap:10px;padding:14px 18px}
   .bucket .leads-row{gap:10px;margin-bottom:12px}
   /* ---------- Header de bloc unifié (Direction / Tribu / Squad / Cell) ---------- */
@@ -375,10 +376,10 @@
   .user-bar .logout-btn:hover{background:#fef2f2;color:#dc2626;border-color:#fecaca}
 
   /* ---------- Header modernisé ---------- */
-  header{gap:12px}
-  .h-left{display:flex;align-items:center;gap:10px;flex:1 1 0;min-width:0}
-  .h-right{display:flex;align-items:center;gap:10px;flex:1 1 0;justify-content:flex-end}
-  .modesw{flex:0 0 auto}
+  header{gap:12px;flex-wrap:nowrap;min-height:52px;z-index:39}
+  .h-left{display:flex;align-items:center;gap:10px;flex:0 1 auto;min-width:0}
+  .h-right{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+  .modesw{flex:0 0 auto;margin:0 auto}
   /* Zoom flottant en bas à gauche */
   #zoomDock{position:fixed;left:16px;bottom:16px;z-index:36;display:flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:3px;box-shadow:var(--shadow-lg)}
   #zoomDock button{border:0;background:transparent;width:30px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--ink);line-height:1}
@@ -463,7 +464,7 @@
   .profile-pop button .mi{width:16px;text-align:center;opacity:.85}
 
   /* ---------- Volet Affectation (Ressources disponibles) ---------- */
-  #poolPanel{position:fixed;top:0;right:0;height:100%;width:340px;background:var(--panel);border-left:1px solid var(--border);box-shadow:-8px 0 24px rgba(16,24,40,.06);z-index:38;transform:translateX(100%);transition:.24s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+  #poolPanel{position:fixed;top:52px;right:0;height:calc(100% - 52px);width:340px;background:var(--panel);border-left:1px solid var(--border);box-shadow:-8px 0 24px rgba(16,24,40,.06);z-index:38;transform:translateX(100%);transition:.24s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
   body.mode-affect #poolPanel{transform:none}
   body.mode-affect #viewport{width:calc(100% - 340px)}
   /* Immersion mode affectation : fond teinté à points + zones de drop visibles */
@@ -534,7 +535,7 @@
   .rnd-grid.dropok,.cell-body.dropok,.leads-row.dropok{outline:2px dashed var(--tech);outline-offset:3px;border-radius:10px;background:var(--tech-soft)}
   .rnd-grid.dropno,.cell-body.dropno,.leads-row.dropno{outline:2px dashed #f87171;outline-offset:3px;border-radius:10px;background:#fef2f2}
   .card.dropfill,.mini.dropfill,.cres.dropfill{outline:2px solid var(--tech);outline-offset:2px}
-  body.mode-affect .add-mini,body.mode-affect .add-res{opacity:.5}
+  body.mode-affect .add-slot{opacity:.5}
   .stats{cursor:pointer;border-radius:8px;padding:3px 8px;transition:.12s}
   .stats:hover{background:#f2f4f7}
   .hbtn{font-size:12.5px;font-weight:600}
@@ -573,6 +574,24 @@
   #roleDlg.open,#shareDlg.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
   #shareOv{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:110;opacity:0;pointer-events:none;transition:.16s}
   #shareOv.open{opacity:1;pointer-events:auto}
+  #importOv{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:110;opacity:0;pointer-events:none;transition:.16s}
+  #importOv.open{opacity:1;pointer-events:auto}
+  #importDlg{position:fixed;top:50%;left:50%;transform:translate(-50%,-46%) scale(.97);width:500px;max-width:94vw;max-height:82vh;background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);z-index:112;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:.18s cubic-bezier(.4,0,.2,1)}
+  #importDlg.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  #importDlg .rd-body{overflow:auto}
+  .imp-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:6px}
+  .imp-kpi{border:1px solid var(--border);border-radius:11px;padding:12px;text-align:center;background:#f9fafb}
+  .imp-kpi .n{font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+  .imp-kpi .l{font-size:11px;color:var(--muted);margin-top:2px}
+  .imp-kpi.ok{background:#f0fdf4;border-color:#bbf7d0} .imp-kpi.ok .n{color:#15803d}
+  .imp-kpi.warn{background:#fffbeb;border-color:#fde68a} .imp-kpi.warn .n{color:#b45309}
+  .imp-sec{margin-top:16px}
+  .imp-sec-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin-bottom:8px}
+  .imp-list{list-style:none;margin:0;padding:0;max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:10px}
+  .imp-list li{display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:12.5px;border-bottom:1px solid var(--border)}
+  .imp-list li:last-child{border-bottom:0}
+  .imp-list .imp-role{margin-left:auto;font-size:11px;color:var(--muted)}
+  .imp-note{font-size:12px;color:var(--muted);margin-top:12px}
   .rd-head{display:flex;align-items:center;gap:11px;padding:16px 20px;border-bottom:1px solid var(--border)}
   .rd-head .rd-ic{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--produit),var(--tech));display:flex;align-items:center;justify-content:center;font-size:16px}
   .rd-head h3{margin:0;font-size:16px;font-weight:700}
@@ -941,6 +960,13 @@
     </div>
   </div>
   <div class="rd-foot"><button class="btn" id="sh-cancel">Fermer</button></div>
+</div>
+
+<div id="importOv"></div>
+<div id="importDlg" role="dialog" aria-modal="true">
+  <div class="rd-head"><div class="rd-ic">📥</div><div><h3>Rapport d'import</h3><div class="rd-sub" id="imp-status">—</div></div><button class="close" id="impClose">×</button></div>
+  <div class="rd-body" id="imp-body"></div>
+  <div class="rd-foot"><button class="btn primary" id="imp-ok" style="justify-content:center">Terminé</button></div>
 </div>
 
 <input type="file" id="fileInput" accept=".json" style="display:none">
@@ -1345,7 +1371,7 @@ function miniHTML(p){
 // Rangée de leads dynamique + bouton d'ajout de rôle (direction / tribu / squad)
 function leadsHTML(container,kind,ctxId){
   const cards=leadsOf(container).map(cardHTML).join('');
-  const add=`<div class="add-lead" data-action="add-lead" data-ck="${kind}" data-ci="${ctxId}" title="Ajouter un rôle">＋</div>`;
+  const add=`<div class="add-slot" data-action="add-lead" data-ck="${kind}" data-ci="${ctxId}" title="Ajouter un rôle">＋ Ajouter</div>`;
   return `<div class="leads-row" data-drop="leads" data-lk="${kind}" data-li="${ctxId}">${cards}${add}</div>`;
 }
 // Un rôle ne peut être déposé que dans les blocs pour lesquels il est paramétré
@@ -1360,7 +1386,7 @@ function squadHTML(sq,flying){
   const leadCount=leadsOf(sq).length;
   const total=leadCount+sq.members.length;
   const members=sq.members.map(miniHTML).join('');
-  const add=`<div class="add-mini add-slot" data-action="add-member" data-squad="${sq.id}">＋ Ajouter</div>`;
+  const add=`<div class="add-slot" data-action="add-member" data-squad="${sq.id}">＋ Ajouter</div>`;
   const rnd=`<div class="rnd-title">Équipe R&D · ${sq.members.length}</div><div class="rnd-grid" data-drop="squad" data-squad="${sq.id}">${members}${add}</div>`;
   const desc=sq.desc?`<div class="blk-desc">${esc(sq.desc)}</div>`:'';
   const body=isColl?'':`<div class="bucket-body">${leadsHTML(sq,'squad',sq.id)}${rnd}</div>`;
@@ -1394,7 +1420,7 @@ function resourceMiniHTML(p){
 function cellHTML(c){
   const isColl=collapsed.has(c.id);
   const members=c.members.map(resourceMiniHTML).join('');
-  const add=`<div class="add-mini add-slot" data-action="add-res" data-cell="${c.id}">＋ Ajouter</div>`;
+  const add=`<div class="add-slot" data-action="add-res" data-cell="${c.id}">＋ Ajouter</div>`;
   const body=isColl?'':`<div class="cell-body" data-drop="cell" data-cell="${c.id}">${members}${add}</div>`;
   const fold=`<button class="foldbtn cellfold ${isColl?'iscoll':''}" data-action="toggle" data-id="${c.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${c.members.length}</span></button>`;
   return `<div class="cell ${isColl?'iscoll':''}">
@@ -2229,14 +2255,47 @@ function downloadTemplate(){
   toast('Modèle Excel téléchargé');
 }
 $('#templateBtn').onclick=downloadTemplate;
+function fullKey(name){ return (name||'').trim().toLowerCase().replace(/\s+/g,' '); }
 function importPeopleFromRows(rows){
-  const people=rows.map(rowToPerson).filter(p=>p.name||(p.role&&p.role!=='Ressource'));
-  if(!people.length){ toast('Aucune ligne exploitable trouvée'); return; }
-  state.pool=(state.pool||[]).concat(people);
-  if(mode!=='affect'){ mode='affect'; applyMode(); }
-  commit();
-  toast(people.length+' personne(s) importée(s) dans le vivier');
+  const parsed=rows.map(rowToPerson);
+  // Unicité sur nom+prénom : on ignore les profils déjà présents (orga OU vivier)
+  const existing=new Set();
+  allPersons().forEach(p=>{ if(p.name)existing.add(fullKey(p.name)); });
+  (state.pool||[]).forEach(p=>{ if(p.name)existing.add(fullKey(p.name)); });
+  const added=[], dupes=[], empties=[]; const seen=new Set();
+  parsed.forEach(p=>{
+    const hasContent=p.name||(p.role&&p.role!=='Ressource');
+    if(!hasContent){ empties.push(p); return; }
+    if(p.name){
+      const k=fullKey(p.name);
+      if(existing.has(k)||seen.has(k)){ dupes.push(p); return; }
+      seen.add(k);
+    }
+    added.push(p);
+  });
+  if(added.length){
+    state.pool=(state.pool||[]).concat(added);
+    if(mode!=='affect'){ mode='affect'; applyMode(); }
+    commit();
+    if(currentOrg) saveOrg(); // persistance immédiate (au-delà du debounce)
+  }
+  showImportReport({total:parsed.length, added, dupes, empties});
 }
+function showImportReport(r){
+  const dupList=r.dupes.length?`<div class="imp-sec"><div class="imp-sec-h">Doublons ignorés (déjà présents) · ${r.dupes.length}</div><ul class="imp-list">${r.dupes.map(p=>`<li>${esc(p.name||'—')}<span class="imp-role">${esc(p.role||'')}</span></li>`).join('')}</ul></div>`:'';
+  const emptyNote=r.empties.length?`<div class="imp-note">${r.empties.length} ligne(s) vide(s) / sans rôle ignorée(s).</div>`:'';
+  $('#imp-body').innerHTML=`
+    <div class="imp-kpis">
+      <div class="imp-kpi ok"><div class="n">${r.added.length}</div><div class="l">importés</div></div>
+      <div class="imp-kpi warn"><div class="n">${r.dupes.length}</div><div class="l">doublons ignorés</div></div>
+      <div class="imp-kpi"><div class="n">${r.total}</div><div class="l">lignes lues</div></div>
+    </div>
+    ${dupList}${emptyNote}`;
+  $('#imp-status').textContent=r.added.length?`${r.added.length} profil(s) ajouté(s) au vivier « à affecter » et sauvegardés.`:'Aucun nouveau profil ajouté.';
+  $('#importOv').classList.add('open'); $('#importDlg').classList.add('open');
+}
+function closeImportDlg(){ $('#importOv').classList.remove('open'); $('#importDlg').classList.remove('open'); }
+$('#impClose').onclick=closeImportDlg; $('#importOv').onclick=closeImportDlg; $('#imp-ok').onclick=closeImportDlg;
 function parsePeopleFile(file){
   if(typeof XLSX==='undefined'){ toast('Lecteur Excel non chargé (réseau ?)'); return; }
   const r=new FileReader();
