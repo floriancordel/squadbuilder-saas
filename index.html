@@ -281,6 +281,35 @@
   .toggle .bn{position:absolute;top:-8px;right:-11px;background:var(--tech);color:#fff;font-size:9px;font-weight:700;border-radius:20px;padding:0 5px;height:14px;display:none;align-items:center}
   li.collapsed > .node-content .toggle .bn{display:flex}
 
+  /* ---------- Panneau de détail (mode Lecture, à droite, sans modale) ---------- */
+  #detailPanel{position:fixed;top:52px;right:0;height:calc(100% - 52px);width:340px;max-width:90vw;background:var(--panel);border-left:1px solid var(--border);box-shadow:-8px 0 24px rgba(16,24,40,.08);z-index:37;transform:translateX(100%);transition:.24s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+  #detailPanel.open{transform:none}
+  .dp-head{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .dp-kind{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);flex:1;min-width:0}
+  .dp-edit{border:1px solid var(--border);background:#fff;border-radius:8px;padding:5px 10px;font-size:11.5px;font-weight:600;color:var(--tech);cursor:pointer;white-space:nowrap}
+  .dp-edit:hover{background:var(--tech-soft);border-color:var(--tech)}
+  .dp-head .close{border:0;background:#f2f4f7;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--muted);flex:0 0 auto}
+  .dp-head .close:hover{background:#e5e7eb;color:var(--ink)}
+  .dp-body{flex:1;overflow:auto;padding:18px 16px 40px}
+  .dp-title{font-size:19px;font-weight:800;letter-spacing:-.02em;color:var(--ink);line-height:1.2}
+  .dp-role{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px}
+  .dp-sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+  .dp-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .dp-sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin:20px 0 8px}
+  .dp-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border)}
+  .dp-row:last-child{border-bottom:0}
+  .dp-row .k{color:var(--muted)} .dp-row .v{color:var(--ink);font-weight:600;text-align:right}
+  .dp-def{font-size:12.5px;color:var(--ink);line-height:1.55;background:#f9fafb;border:1px solid var(--border);border-radius:9px;padding:10px 12px}
+  .dp-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12.5px;font-weight:600;color:var(--tech);text-decoration:none}
+  .dp-link:hover{text-decoration:underline}
+  .dp-people{display:flex;flex-direction:column;gap:6px}
+  .dp-person{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:9px;padding:8px 10px;background:#fff}
+  .dp-person .dpp-dot{width:8px;height:8px;border-radius:3px;flex:0 0 auto}
+  .dp-person .dpp-main{min-width:0;flex:1}
+  .dp-person .dpp-name{font-size:12.5px;font-weight:650;color:var(--ink);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dp-person .dpp-name.open{color:var(--open);font-style:italic}
+  .dp-person .dpp-role{font-size:10.5px;color:var(--muted)}
+  body.view-mode #detailPanel .dp-edit{display:none}
   /* ---------- Panneau d'édition ---------- */
   #overlay{position:fixed;inset:0;background:rgba(17,24,39,.4);z-index:70;opacity:0;pointer-events:none;transition:.18s}
   #overlay.open{opacity:1;pointer-events:auto}
@@ -1104,6 +1133,15 @@
   <div class="ed-foot" id="edFoot"></div>
 </aside>
 
+<aside id="detailPanel">
+  <div class="dp-head">
+    <div class="dp-kind" id="dpKind">Détail</div>
+    <button class="dp-edit" id="dpEdit" title="Modifier (passe en mode Édition)">✎ Modifier</button>
+    <button class="close" id="dpClose">×</button>
+  </div>
+  <div class="dp-body" id="dpBody"></div>
+</aside>
+
 <div id="modalOv"></div>
 <div id="modal" role="dialog" aria-modal="true">
   <div class="m-head">
@@ -1816,17 +1854,17 @@ canvas.addEventListener('click',e=>{
   const t=e.target.closest('[data-action]'); if(!t)return;
   const a=t.dataset.action;
   if(['add-lead','add-head','add-squad','add-member','add-cell','add-res','del-head','del-squad'].includes(a) && !can('org.edit'))return;
-  if(a==='edit'){ openEditor(pmap[t.dataset.pid],'person'); }
-  else if(a==='edit-squad'){ const sq=findSquad(t.dataset.squad); openEditor(sq,'squad'); }
-  else if(a==='edit-tribe'){ const h=state.heads.find(x=>x.id===t.dataset.head); if(h)openEditor(h,'tribe'); }
-  else if(a==='edit-dir'){ openEditor(state.direction,'dir'); }
+  if(a==='edit'){ openInspect(pmap[t.dataset.pid],'person'); }
+  else if(a==='edit-squad'){ const sq=findSquad(t.dataset.squad); openInspect(sq,'squad'); }
+  else if(a==='edit-tribe'){ const h=state.heads.find(x=>x.id===t.dataset.head); if(h)openInspect(h,'tribe'); }
+  else if(a==='edit-dir'){ openInspect(state.direction,'dir'); }
   else if(a==='add-lead'){ addLead(t.dataset.ck,t.dataset.ci); }
   else if(a==='toggle'){ const id=t.dataset.id; collapsed.has(id)?collapsed.delete(id):collapsed.add(id); render(); }
   else if(a==='add-head'){ state.heads.push(newHead()); commit(); toast('Tribu ajoutée'); }
   else if(a==='add-squad'){ openSquadCreator(t.dataset.head); }
   else if(a==='add-member'){ const sq=findSquad(t.dataset.squad); const m=reg(person('Rôle R&D','tech')); sq.members.push(m); commit(); openEditor(m,'person'); }
   else if(a==='add-cell'){ openCellCreator(t.dataset.head); }
-  else if(a==='edit-cell'){ const c=findCell(t.dataset.cell); if(c)openEditor(c,'cell'); }
+  else if(a==='edit-cell'){ const c=findCell(t.dataset.cell); if(c)openInspect(c,'cell'); }
   else if(a==='add-res'){ const c=findCell(t.dataset.cell); const r=reg(resource('','', '',100,'tech')); c.members.push(r); commit(); openEditor(r,'person'); }
   else if(a==='del-head'){ const id=t.dataset.head; askConfirm({title:'Supprimer la tribu',message:'Cette tribu, ses squads et Support Cells seront supprimés.',confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.heads=state.heads.filter(x=>x.id!==id); commit(); } }); }
   else if(a==='del-squad'){ const id=t.dataset.squad; askConfirm({title:'Supprimer la squad',message:'Cette squad et ses membres seront supprimés.',confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ deleteSquad(id); commit(); } }); }
@@ -2002,8 +2040,8 @@ function openEditor(obj,kind){
         <div class="hint" style="margin-top:8px">Le statut est automatique : un poste <b>sans nom</b> est « ${OPEN_LABEL} », un poste <b>avec un nom</b> est pourvu. TEMP est indépendant et se cumule.</div>
       </div>`;
     $('#edBody').innerHTML=`
-      <div class="field"><label>Nom</label><input id="f-name" value="${esc(p.name)}" placeholder="Laisser vide = poste « ${OPEN_LABEL} »" autofocus></div>
-      <div class="field"><label>N° de demande de recrutement <span class="fopt">— poste à pourvoir</span></label><input id="f-reqid" value="${esc(p.reqId||'')}" placeholder="ex. REQ-2026-014"></div>
+      <div class="field"><label>Nom <span class="fopt">— renseigné = poste pourvu</span></label><input id="f-name" value="${esc(p.name)}" placeholder="Laisser vide = poste « ${OPEN_LABEL} »" autofocus></div>
+      <div class="field" id="reqid-wrap" style="display:${p.name?'none':'block'}"><label>N° de demande de recrutement <span class="fopt">— poste à pourvoir</span></label><input id="f-reqid" value="${esc(p.reqId||'')}" placeholder="ex. REQ-2026-014"></div>
       ${roleField}
       ${sideField}
       ${allocField}
@@ -2014,6 +2052,8 @@ function openEditor(obj,kind){
       </div></div>
       ${tempField}`;
     wireSeg('seg-side'); wireSeg('seg-loc'); wireSeg('seg-allocmode');
+    // Un poste est soit pourvu (nom) soit ouvert (n° de demande) — jamais les deux
+    $('#f-name').oninput=e=>{ const filled=!!e.target.value.trim(); const w=$('#reqid-wrap'); if(w)w.style.display=filled?'none':'block'; };
     $('#f-temp').onchange=e=>{ $('#f-temp-wrap').style.display=e.target.checked?'block':'none'; };
     $('#seg-allocmode').querySelectorAll('button').forEach(b=>{ const orig=b.onclick; b.onclick=(e)=>{ if(orig)orig(e); const w=$('#alloc-wrap'); if(w)w.style.display=b.dataset.v==='part'?'block':'none'; }; });
     document.querySelectorAll('#seg-alloc button').forEach(b=>b.onclick=()=>{ $('#f-alloc').value=b.dataset.v; });
@@ -2023,7 +2063,8 @@ function openEditor(obj,kind){
     $('#edFoot').innerHTML=`${delBtn}<button class="btn primary" id="edSave">Enregistrer</button>`;
     $('#edSave').onclick=()=>{
       p.name=$('#f-name').value.trim();
-      p.reqId=$('#f-reqid')?$('#f-reqid').value.trim():(p.reqId||'');
+      // Logique stricte : un poste pourvu (nom renseigné) n'a pas de n° de demande
+      p.reqId=p.name?'':($('#f-reqid')?$('#f-reqid').value.trim():(p.reqId||''));
       const custom=$('#f-role-custom')?.value.trim(); p.role=custom||$('#f-role').value.trim()||p.role;
       const side=segVal('seg-side'); if(side)p.side=side;
       p.loc=segVal('seg-loc');
@@ -2056,7 +2097,70 @@ function wireSeg(id){ const el=document.getElementById(id); if(!el)return;
 function segVal(id){ return document.getElementById(id)?segState[id]:''; }
 function closeEditor(){ $('#overlay').classList.remove('open'); $('#editor').classList.remove('open'); edCtx=null; }
 $('#edClose').onclick=closeEditor; $('#overlay').onclick=closeEditor;
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#confirmDlg').classList.contains('open')){ $('#cdCancel').click(); return; } if($('#roleDlg').classList.contains('open')){ closeRoleDlg(); return; } closeEditor(); closeModal(); closeSheet(); } });
+
+/* ---------------- Panneau de détail (mode Lecture) ---------------- */
+let detailCtx=null;
+// Aiguillage : en mode Édition → modale éditable ; en mode Lecture → volet de détail à droite
+function openInspect(obj,kind){ if(mode==='affect'){ closeDetail(); openEditor(obj,kind); } else { closeEditor(); openDetail(obj,kind); } }
+function personSpot(p){
+  const l=locate(p.pid); const k=l?l.kind:'';
+  const label={'dir-lead':'Direction','tribe-lead':'Lead de tribu','squad-lead':'Lead de squad','member':'Membre R&D','cell':'Ressource transverse','pool':'Vivier'}[k]||'Poste';
+  let where='';
+  if(l&&l.container){ const c=l.container; if(k==='dir-lead')where='Direction'; else if(k==='tribe-lead')where='Tribu'+(c.name?' · '+c.name:''); else if(k==='squad-lead'||k==='member')where=c.name||'Squad'; else if(k==='cell')where=c.name||'Support Cell'; }
+  return {label,where};
+}
+function detailPersonHTML(p){
+  const open=isOpen(p); const sp=personSpot(p);
+  const g=glossFor(p.role);
+  const chips=[locChip(p),openChip(p),tempChip(p),allocChip(p)].filter(Boolean).join('');
+  const total=p.name?totalAllocOf(p):0;
+  const rows=[];
+  rows.push(['Filière', p.side==='produit'?'Produit':'Tech']);
+  rows.push(['Localisation', p.loc==='FR'?'Hub · FR':p.loc==='Maroc'?'COE · Maroc':'—']);
+  if(open){ rows.push(['N° de demande', p.reqId?('#'+esc(p.reqId)):'Non renseigné']); }
+  else {
+    rows.push(['Temps de travail', p.allocMode==='part'?(allocOf(p)+'% (partiel)'):'Temps plein']);
+    if(total>100) rows.push(['Total alloué', '⚠ '+total+'% (suralloué)']);
+  }
+  if(isTemp(p)) rows.push(['Mission', 'TEMP'+(p.tempUntil?(' · jusqu\'au '+esc(p.tempUntil)):'')]);
+  if(sp.where) rows.push(['Rattachement', esc(sp.where)]);
+  const jp=g&&g.jobProfile?`<a class="dp-link" href="${esc(g.jobProfile)}" target="_blank" rel="noopener">📄 Fiche de poste ↗</a>`:'';
+  return `<div class="dp-role">${esc(p.role||'—')}</div>
+    <div class="dp-title ${open?'':''}" ${open?'style="color:var(--open)"':''}>${open?(p.reqId?('#'+esc(p.reqId)):OPEN_LABEL):esc(p.name)}</div>
+    ${chips?`<div class="dp-chips">${chips}</div>`:''}
+    <div class="dp-sec">Informations</div>
+    ${rows.map(r=>`<div class="dp-row"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')}
+    ${g&&g.definition?`<div class="dp-sec">Mission du rôle</div><div class="dp-def">${esc(g.definition)}</div>`:''}
+    ${jp}`;
+}
+function detailPeopleList(list){
+  return `<div class="dp-people">${list.map(p=>{ const open=isOpen(p); return `<div class="dp-person"><span class="dpp-dot" style="background:${p.side==='produit'?'var(--produit)':'var(--tech)'}"></span><div class="dpp-main"><div class="dpp-name ${open?'open':''}">${open?(p.reqId?('#'+esc(p.reqId)):OPEN_LABEL):esc(p.name)}</div><div class="dpp-role">${esc(p.role||'—')}</div></div>${chipsInline(p)}</div>`; }).join('')}</div>`;
+}
+function chipsInline(p){ const parts=[tempChip(p),(p.allocMode==='part'?`<span class="chip alloc">${allocOf(p)}%</span>`:'')].filter(Boolean); return parts.join(''); }
+function detailBlockHTML(obj,kind){
+  const name=kind==='dir'?'Direction':(kind==='tribe'?('Tribu'+(obj.name?' · '+esc(obj.name):'')):esc(obj.name||(kind==='cell'?'Support Cell':'Squad')));
+  const desc=obj.desc?`<div class="dp-sub">${esc(obj.desc)}</div>`:'';
+  const stats=statsGridHTML(obj,kind);
+  let people='';
+  if(kind==='squad'){ people=`<div class="dp-sec">Leads</div>${detailPeopleList(leadsOf(obj))}${obj.members.length?`<div class="dp-sec">Équipe R&D · ${obj.members.length}</div>${detailPeopleList(obj.members)}`:''}`; }
+  else if(kind==='cell'){ people=`<div class="dp-sec">Ressources · ${obj.members.length}</div>${detailPeopleList(obj.members)}`; }
+  else if(kind==='tribe'){ const sq=(obj.squads||[]).map(s=>s.name).join(', ')||'—'; people=`<div class="dp-sec">Leads</div>${detailPeopleList(leadsOf(obj))}<div class="dp-sec">Squads · ${(obj.squads||[]).length}</div><div class="dp-sub">${esc(sq)}</div>`; }
+  else if(kind==='dir'){ people=`<div class="dp-sec">Direction</div>${detailPeopleList(leadsOf(obj))}`; }
+  return `<div class="dp-title">${name}</div>${desc}${stats}${people}`;
+}
+function openDetail(obj,kind){
+  detailCtx={obj,kind};
+  const KL={person:'',squad:'Squad',tribe:'Tribu',dir:'Direction',cell:'Support Cell'};
+  if(kind==='person'){ $('#dpKind').textContent=personSpot(obj).label; $('#dpBody').innerHTML=detailPersonHTML(obj); }
+  else { $('#dpKind').textContent=KL[kind]||'Détail'; $('#dpBody').innerHTML=detailBlockHTML(obj,kind); }
+  $('#dpEdit').style.display=can('org.edit')?'':'none';
+  $('#detailPanel').classList.add('open');
+}
+function closeDetail(){ $('#detailPanel').classList.remove('open'); detailCtx=null; }
+$('#dpClose').onclick=closeDetail;
+$('#dpEdit').onclick=()=>{ if(!detailCtx)return; const {obj,kind}=detailCtx; closeDetail(); setMode('affect'); openEditor(obj,kind); };
+
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#confirmDlg').classList.contains('open')){ $('#cdCancel').click(); return; } if($('#roleDlg').classList.contains('open')){ closeRoleDlg(); return; } closeEditor(); closeDetail(); closeModal(); closeSheet(); } });
 
 /* ---------------- Zoom & déplacement ---------------- */
 let tx=0,ty=0,scale=1;
@@ -2599,7 +2703,7 @@ function applyMode(){
   document.body.classList.toggle('mode-affect', mode==='affect');
   $('#modeSwitch').querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
 }
-function setMode(m){ if(mode===m)return; mode=m; applyMode(); render(); }
+function setMode(m){ if(mode===m)return; mode=m; if(typeof closeDetail==='function')closeDetail(); applyMode(); render(); }
 $('#modeSwitch').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b)setMode(b.dataset.mode); });
 
 /* ---- Rendu du vivier ---- */
