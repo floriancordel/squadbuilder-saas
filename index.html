@@ -592,6 +592,9 @@
   body.mode-affect .mini.dragging,body.mode-affect .cres.dragging{opacity:.4}
   .rnd-grid.dropok,.cell-body.dropok,.leads-row.dropok{outline:2px dashed var(--tech);outline-offset:3px;border-radius:10px;background:var(--tech-soft)}
   .rnd-grid.dropno,.cell-body.dropno,.leads-row.dropno{outline:2px dashed #f87171;outline-offset:3px;border-radius:10px;background:#fef2f2}
+  /* Repli : le bloc entier devient une cible (crée le poste à la volée) */
+  .bucket.dropok,.cell.dropok,.tribe.dropok{outline:2.5px dashed var(--tech);outline-offset:3px;box-shadow:0 0 0 4px var(--tech-soft)}
+  .bucket.dropno,.cell.dropno,.tribe.dropno{outline:2.5px dashed #f87171;outline-offset:3px}
   .card.dropfill,.mini.dropfill,.cres.dropfill{outline:2px solid var(--tech);outline-offset:2px}
   /* Infobulle flottante expliquant la validité du dépôt */
   #dropTip{position:fixed;z-index:120;pointer-events:none;display:none;max-width:240px;font-size:12px;font-weight:650;line-height:1.35;color:#fff;background:rgba(17,24,39,.94);padding:7px 11px;border-radius:9px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
@@ -1613,7 +1616,7 @@ function squadHTML(sq,flying){
   const desc=sq.desc?`<div class="blk-desc">${esc(sq.desc)}</div>`:'';
   const body=isColl?'':`<div class="bucket-body">${leadsHTML(sq,'squad',sq.id)}${rnd}</div>`;
   const fold=`<button class="foldbtn sqfold ${isColl?'iscoll':''}" data-action="toggle" data-id="${sq.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${total}</span></button>`;
-  return `<div class="bucket ${isColl?'iscoll':''} ${flying?'flying':''}">
+  return `<div class="bucket ${isColl?'iscoll':''} ${flying?'flying':''}" data-blockdrop="squad" data-squad="${sq.id}">
     <div class="blk-head" data-action="edit-squad" data-squad="${sq.id}" ${mode==='affect'?`draggable="true" data-blockdrag="squad:${sq.id}"`:''}>
       <span class="blk-move" title="Glisser pour rattacher la squad à une autre tribu">⠿</span>
       <span class="blk-dot"></span>
@@ -1646,7 +1649,7 @@ function cellHTML(c){
   const add=`<div class="add-slot" data-action="add-res" data-cell="${c.id}">＋ Ajouter</div>`;
   const body=isColl?'':`<div class="cell-body" data-drop="cell" data-cell="${c.id}">${members}${add}</div>`;
   const fold=`<button class="foldbtn cellfold ${isColl?'iscoll':''}" data-action="toggle" data-id="${c.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${c.members.length}</span></button>`;
-  return `<div class="cell ${isColl?'iscoll':''}">
+  return `<div class="cell ${isColl?'iscoll':''}" data-blockdrop="cell" data-cell="${c.id}">
     <div class="blk-head" data-action="edit-cell" data-cell="${c.id}" ${mode==='affect'?`draggable="true" data-blockdrag="cell:${c.id}"`:''}>
       <span class="blk-move" title="Glisser pour rattacher la cellule à une autre tribu">⠿</span>
       <span class="blk-dot"></span>
@@ -1661,7 +1664,7 @@ function headHTML(h){
   const cells=h.cells||[];
   const childCount=h.squads.length+cells.length;
   const hasKids=childCount>0;
-  const tribe=`<div class="tribe blk-tribe" data-blocktarget="head:${h.id}">
+  const tribe=`<div class="tribe blk-tribe" data-blocktarget="head:${h.id}" data-blockdrop="leads" data-lead-lk="tribe" data-lead-li="${h.id}">
       <div class="blk-head" data-action="edit-tribe" data-head="${h.id}">
         <span class="blk-dot"></span>
         <div class="bh-txt"><span class="blk-title">Tribu${h.name?' · '+esc(h.name):''}</span>${h.desc?`<div class="blk-desc">${esc(h.desc)}</div>`:''}</div>
@@ -1709,7 +1712,7 @@ function render(){
       <button class="ntbtn cellbtn" data-action="add-cell" data-head="" title="Nouvelle Support Cell">＋ Cell</button>
     </div>`;
   const dirNode=`<div class="node-content node-direction">
-      <div class="tribe direction-tribe blk-dir" data-blocktarget="dir">
+      <div class="tribe direction-tribe blk-dir" data-blocktarget="dir" data-blockdrop="leads" data-lead-lk="direction" data-lead-li="__dir__">
         <div class="blk-head" data-action="edit-dir">
           <span class="blk-dot"></span>
           <div class="bh-txt"><span class="blk-title">Direction</span>${d.desc?`<div class="blk-desc">${esc(d.desc)}</div>`:''}</div>
@@ -2675,6 +2678,9 @@ function dropTargetOf(e){
   if(post){ const pid=post.dataset.pid, p=pmap[pid]; if(p&&!p.name&&pid!==dragPid)return {type:'fill',el:post,pid}; }
   const zone=e.target.closest('[data-drop]');
   if(zone){ const d=zone.dataset.drop; if(d==='leads')return{type:'leads',el:zone,lk:zone.dataset.lk,li:zone.dataset.li}; return {type:d,el:zone,squad:zone.dataset.squad,cell:zone.dataset.cell}; }
+  // Repli : tout le bloc est une cible — le poste est créé même sans slot ouvert
+  const blk=e.target.closest('[data-blockdrop]');
+  if(blk){ const d=blk.dataset.blockdrop; if(d==='leads')return{type:'leads',el:blk,lk:blk.dataset.leadLk,li:blk.dataset.leadLi}; return {type:d,el:blk,squad:blk.dataset.squad,cell:blk.dataset.cell}; }
   if(e.target.closest('#poolPanel'))return {type:'pool',el:$('#poolPanel')};
   return null;
 }
