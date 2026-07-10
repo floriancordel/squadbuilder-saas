@@ -351,6 +351,8 @@
   textarea.f:focus,.m-body input:focus,.m-body select:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
   .m-body input,.m-body select{border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px;width:100%;font-family:inherit;color:var(--ink)}
   .fld{margin-bottom:12px}
+  .attach-note{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--tech);background:var(--tech-soft);border:1px solid #cfe0ff;border-radius:9px;padding:9px 12px;margin-bottom:14px}
+  .attach-note .an-ic{font-size:14px}
   .fld > label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
   #empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;color:var(--muted)}
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:60;opacity:0;transition:.2s;box-shadow:var(--shadow-lg)}
@@ -567,6 +569,18 @@
   .rnd-grid.dropok,.cell-body.dropok,.leads-row.dropok{outline:2px dashed var(--tech);outline-offset:3px;border-radius:10px;background:var(--tech-soft)}
   .rnd-grid.dropno,.cell-body.dropno,.leads-row.dropno{outline:2px dashed #f87171;outline-offset:3px;border-radius:10px;background:#fef2f2}
   .card.dropfill,.mini.dropfill,.cres.dropfill{outline:2px solid var(--tech);outline-offset:2px}
+  /* Infobulle flottante expliquant la validité du dépôt */
+  #dropTip{position:fixed;z-index:120;pointer-events:none;display:none;max-width:240px;font-size:12px;font-weight:650;line-height:1.35;color:#fff;background:rgba(17,24,39,.94);padding:7px 11px;border-radius:9px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  #dropTip.show{display:block}
+  #dropTip.no{background:#b91c1c}
+  #dropTip.ok{background:#15803d}
+  /* Déplacement de blocs entiers (squad / cell) */
+  .blk-move{flex:0 0 auto;color:var(--faint);font-size:13px;line-height:1;cursor:grab;margin:1px 0 0 -2px;padding:0 2px;letter-spacing:-1px;display:none}
+  body.mode-affect .blk-move{display:inline-block}
+  body.mode-affect .blk-head[data-blockdrag]{cursor:grab}
+  .blk-dragging{opacity:.45}
+  .blk-tribe.bt-ok,.blk-dir.bt-ok{outline:2.5px dashed var(--tech);outline-offset:3px;background:var(--tech-soft)}
+  .blk-tribe.bt-no,.blk-dir.bt-no{outline:2.5px dashed #f87171;outline-offset:3px}
   body.mode-affect .add-slot{opacity:.5}
   /* Les affordances d'ajout n'apparaissent qu'en mode Édition */
   body:not(.mode-affect) .add-slot,
@@ -951,6 +965,7 @@
 
 <div id="viewport"><div id="canvas"></div></div>
 <div id="affectHint"><span class="dotpulse"></span>Mode Édition — glissez les ressources, déposez en bas pour retirer</div>
+<div id="dropTip"></div>
 <div id="dropDock">
   <div class="dock-zone pool-dock" data-dock="pool"><span class="dz-ic">📥</span><span class="dz-t">Remettre « à affecter »</span></div>
   <div class="dock-zone trash-dock" data-dock="trash"><span class="dz-ic">🗑️</span><span class="dz-t">Retirer de l'organigramme</span></div>
@@ -1331,6 +1346,13 @@ function moveSquad(sqId,target){
   if(target==='__dir__'){ state.squads.push(sq); }
   else { const nh=state.heads.find(h=>h.id===target); if(nh){ nh.squads.push(sq); collapsed.delete(nh.id); } else state.squads.push(sq); }
 }
+function moveCell(cellId,targetHeadId){
+  let cell=null;
+  state.heads.forEach(h=>{ const i=(h.cells||[]).findIndex(c=>c.id===cellId); if(i>=0){ cell=h.cells[i]; h.cells.splice(i,1); } });
+  if(!cell)return;
+  const nh=state.heads.find(h=>h.id===targetHeadId);
+  if(nh){ nh.cells=nh.cells||[]; nh.cells.push(cell); collapsed.delete(nh.id); }
+}
 function newHead(){
   return {id:uid(), desc:'',
     leads:[person('Head of Product','produit'), person('Engineering Manager','tech')],
@@ -1556,7 +1578,8 @@ function squadHTML(sq,flying){
   const body=isColl?'':`<div class="bucket-body">${leadsHTML(sq,'squad',sq.id)}${rnd}</div>`;
   const fold=`<button class="foldbtn sqfold ${isColl?'iscoll':''}" data-action="toggle" data-id="${sq.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${total}</span></button>`;
   return `<div class="bucket ${isColl?'iscoll':''} ${flying?'flying':''}">
-    <div class="blk-head" data-action="edit-squad" data-squad="${sq.id}">
+    <div class="blk-head" data-action="edit-squad" data-squad="${sq.id}" ${mode==='affect'?`draggable="true" data-blockdrag="squad:${sq.id}"`:''}>
+      <span class="blk-move" title="Glisser pour rattacher la squad à une autre tribu">⠿</span>
       <span class="blk-dot"></span>
       <div class="bh-txt"><span class="blk-title">${esc(sq.name)}</span>${desc}</div>
       <span class="count">${total}</span>
@@ -1588,7 +1611,8 @@ function cellHTML(c){
   const body=isColl?'':`<div class="cell-body" data-drop="cell" data-cell="${c.id}">${members}${add}</div>`;
   const fold=`<button class="foldbtn cellfold ${isColl?'iscoll':''}" data-action="toggle" data-id="${c.id}" title="${isColl?'Déplier':'Replier'}">${isColl?'+':'−'}<span class="fn">${c.members.length}</span></button>`;
   return `<div class="cell ${isColl?'iscoll':''}">
-    <div class="blk-head" data-action="edit-cell" data-cell="${c.id}">
+    <div class="blk-head" data-action="edit-cell" data-cell="${c.id}" ${mode==='affect'?`draggable="true" data-blockdrag="cell:${c.id}"`:''}>
+      <span class="blk-move" title="Glisser pour rattacher la cellule à une autre tribu">⠿</span>
       <span class="blk-dot"></span>
       <div class="bh-txt"><span class="blk-title">${esc(c.name)}</span></div>
       <span class="count">${c.members.length}</span>
@@ -1601,7 +1625,7 @@ function headHTML(h){
   const cells=h.cells||[];
   const childCount=h.squads.length+cells.length;
   const hasKids=childCount>0;
-  const tribe=`<div class="tribe blk-tribe">
+  const tribe=`<div class="tribe blk-tribe" data-blocktarget="head:${h.id}">
       <div class="blk-head" data-action="edit-tribe" data-head="${h.id}">
         <span class="blk-dot"></span>
         <div class="bh-txt"><span class="blk-title">Tribu${h.name?' · '+esc(h.name):''}</span>${h.desc?`<div class="blk-desc">${esc(h.desc)}</div>`:''}</div>
@@ -1649,7 +1673,7 @@ function render(){
       <button class="ntbtn cellbtn" data-action="add-cell" data-head="" title="Nouvelle Support Cell">＋ Cell</button>
     </div>`;
   const dirNode=`<div class="node-content node-direction">
-      <div class="tribe direction-tribe blk-dir">
+      <div class="tribe direction-tribe blk-dir" data-blocktarget="dir">
         <div class="blk-head" data-action="edit-dir">
           <span class="blk-dot"></span>
           <div class="bh-txt"><span class="blk-title">Direction</span>${d.desc?`<div class="blk-desc">${esc(d.desc)}</div>`:''}</div>
@@ -2589,17 +2613,51 @@ function dropTargetOf(e){
   return null;
 }
 function clearDropFx(){ document.querySelectorAll('.dropok,.dropfill,.dropno,.dock-zone.over').forEach(n=>n.classList.remove('dropok','dropfill','dropno','over')); }
-document.addEventListener('dragstart',e=>{ const el=e.target.closest('[data-drag]'); if(!el)return; dragPid=el.dataset.drag; e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain',dragPid);}catch(_){}; el.classList.add('dragging'); if(mode==='affect')document.body.classList.add('dragging-person'); });
-document.addEventListener('dragend',e=>{ const el=e.target.closest('[data-drag]'); if(el)el.classList.remove('dragging'); clearDropFx(); document.body.classList.remove('dragging-person'); dragPid=null; });
-document.addEventListener('dragover',e=>{ if(mode!=='affect'||!dragPid)return; const t=dropTargetOf(e); if(!t)return; e.preventDefault(); e.dataTransfer.dropEffect='move'; clearDropFx();
-  if(t.el&&t.el.classList.contains('dock-zone')){ t.el.classList.add('over'); return; }
-  if(t.type==='fill'){ t.el.classList.add('dropfill'); return; }
+function clearBlockFx(){ document.querySelectorAll('.bt-ok,.bt-no').forEach(n=>n.classList.remove('bt-ok','bt-no')); }
+/* ---- Déplacement de blocs entiers (squad / cell) entre tribus ---- */
+let dragBlock=null;
+const _dropTip=$('#dropTip');
+function showTip(txt,kind,e){ _dropTip.textContent=txt; _dropTip.className='show '+(kind||''); _dropTip.style.left=Math.min(e.clientX+14, window.innerWidth-250)+'px'; _dropTip.style.top=(e.clientY+18)+'px'; }
+function hideTip(){ _dropTip.className=''; }
+function headName(id){ const i=state.heads.findIndex(h=>h.id===id); if(i<0)return 'la tribu'; const h=state.heads[i]; return h.name?('Tribu '+h.name):('Tribu '+(i+1)); }
+function blockTargetOf(e){ const bt=e.target.closest('[data-blocktarget]'); if(!bt)return null; const v=bt.dataset.blocktarget; if(v==='dir')return {el:bt,head:'__dir__'}; if(v.indexOf('head:')===0)return {el:bt,head:v.slice(5)}; return null; }
+function blockMoveInfo(db,tgt){
+  if(db.type==='squad'){
+    const cur=findHeadOfSquad(db.id); const curId=cur?cur.id:'__dir__';
+    if(tgt.head===curId) return {ok:false, reason:'Squad déjà rattachée ici'};
+    return {ok:true, label: tgt.head==='__dir__'?'Rendre volante (Direction)':('Rattacher à '+headName(tgt.head))};
+  } else {
+    if(tgt.head==='__dir__') return {ok:false, reason:'Une Support Cell doit être rattachée à une tribu'};
+    const cur=findHeadOfCell(db.id); const curId=cur?cur.id:null;
+    if(tgt.head===curId) return {ok:false, reason:'Cellule déjà rattachée ici'};
+    return {ok:true, label:'Rattacher à '+headName(tgt.head)};
+  }
+}
+document.addEventListener('dragstart',e=>{
+  const bd=e.target.closest('[data-blockdrag]');
+  if(bd && mode==='affect'){ const s=bd.dataset.blockdrag.split(':'); dragBlock={type:s[0],id:s[1]}; e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain','block');}catch(_){}; bd.classList.add('blk-dragging'); document.body.classList.add('dragging-block'); return; }
+  const el=e.target.closest('[data-drag]'); if(!el)return; dragPid=el.dataset.drag; e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain',dragPid);}catch(_){}; el.classList.add('dragging'); if(mode==='affect')document.body.classList.add('dragging-person'); });
+document.addEventListener('dragend',e=>{ const el=e.target.closest('[data-drag]'); if(el)el.classList.remove('dragging'); document.querySelectorAll('.blk-dragging').forEach(n=>n.classList.remove('blk-dragging')); clearDropFx(); clearBlockFx(); hideTip(); document.body.classList.remove('dragging-person','dragging-block'); dragPid=null; dragBlock=null; });
+document.addEventListener('dragover',e=>{ if(mode!=='affect')return;
+  if(dragBlock){ clearBlockFx(); const tgt=blockTargetOf(e); if(!tgt){ hideTip(); return; } e.preventDefault(); const info=blockMoveInfo(dragBlock,tgt); tgt.el.classList.add(info.ok?'bt-ok':'bt-no'); e.dataTransfer.dropEffect=info.ok?'move':'none'; showTip(info.ok?('↪ '+info.label):('⛔ '+info.reason), info.ok?'ok':'no', e); return; }
+  if(!dragPid)return; const t=dropTargetOf(e); if(!t){ hideTip(); return; } e.preventDefault(); e.dataTransfer.dropEffect='move'; clearDropFx();
+  if(t.el&&t.el.classList.contains('dock-zone')){ t.el.classList.add('over'); hideTip(); return; }
+  if(t.type==='fill'){ t.el.classList.add('dropfill'); hideTip(); return; }
   const block=blockOfDropType(t);
-  if(block){ const src=pmap[dragPid]; const ok=!src||roleAllowedInBlock(src.role,block); t.el.classList.add(ok?'dropok':'dropno'); e.dataTransfer.dropEffect=ok?'move':'none'; }
+  if(block){ const src=pmap[dragPid]; const ok=!src||roleAllowedInBlock(src.role,block); t.el.classList.add(ok?'dropok':'dropno'); e.dataTransfer.dropEffect=ok?'move':'none';
+    if(!ok && src){ const bl=(BLOCK_TYPES.find(b=>b.key===block)||{}).label||block; showTip('⛔ « '+(src.role||'Ce rôle')+' » n\'est pas autorisé dans « '+bl+' »','no',e); } else hideTip();
+  } else hideTip();
 });
 document.addEventListener('drop',e=>{
-  if(mode!=='affect'||!dragPid)return;
-  const t=dropTargetOf(e); document.body.classList.remove('dragging-person'); if(!t){ dragPid=null; return; }
+  if(mode!=='affect')return;
+  // Dépôt d'un bloc entier
+  if(dragBlock){ e.preventDefault(); const tgt=blockTargetOf(e); const db=dragBlock; dragBlock=null; clearBlockFx(); hideTip(); document.body.classList.remove('dragging-block'); if(!tgt)return; const info=blockMoveInfo(db,tgt); if(!info.ok){ toast(info.reason); return; }
+    if(db.type==='squad'){ moveSquad(db.id,tgt.head); toast('Squad rattachée · '+(tgt.head==='__dir__'?'Direction (volante)':headName(tgt.head))); }
+    else { moveCell(db.id,tgt.head); toast('Cellule rattachée · '+headName(tgt.head)); }
+    commit(); return;
+  }
+  if(!dragPid)return;
+  const t=dropTargetOf(e); document.body.classList.remove('dragging-person'); hideTip(); if(!t){ dragPid=null; return; }
   e.preventDefault(); clearDropFx();
   const block=blockOfDropType(t);
   const src=pmap[dragPid];
@@ -2643,21 +2701,18 @@ document.addEventListener('drop',e=>{
 });
 
 /* ---------------- Créateur de squad ---------------- */
-let rndDraft=[];
+let rndDraft=[], squadTargetHead=null;
 function openSquadCreator(preHeadId){
   rndDraft=[];
   const isDir=preHeadId==='__dir__';
-  const opts=state.heads.map((h,i)=>`<option value="${h.id}" ${h.id===preHeadId?'selected':''}>${esc(headLabel(h,i))}</option>`).join('');
+  squadTargetHead=preHeadId; // rattachement connu depuis le bloc parent déclencheur
+  const hi=state.heads.findIndex(h=>h.id===preHeadId);
+  const parentLabel=isDir?'Squad volante · rattachée à la Direction':('Rattachée à '+(hi>=0?esc(headLabel(state.heads[hi],hi)):'la tribu'));
   $('#mBody').innerHTML=`
     <div class="section">Informations</div>
     <div class="fld"><label>Nom de la squad *</label><input id="c-name" placeholder="ex: Squad Checkout"></div>
     <div class="fld"><label>Description / mission</label><textarea class="f" id="c-desc" placeholder="Objectif, périmètre, produit couvert..."></textarea></div>
-    <div class="fld"><label>Rattachement *</label>
-      <select id="c-head">
-        <option value="__dir__" ${isDir?'selected':''}>Direction — squad volante (hors tribu)</option>
-        ${opts}
-        <option value="__new__">＋ Créer un nouveau binôme HoP / EM</option>
-      </select></div>
+    <div class="attach-note"><span class="an-ic">🔗</span>${parentLabel}</div>
     <div class="fld"><label>Leads de la squad</label>
       <div style="display:flex;flex-direction:column;gap:6px">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="c-pm" ${isDir?'':'checked'} style="width:auto"> Product Manager</label>
@@ -2685,7 +2740,7 @@ function openSquadCreator(preHeadId){
   $('#c-pm').onchange=updateLeadsVis; $('#c-lead').onchange=updateLeadsVis;
   updateLeadsVis();
   $('#mIco').textContent='S'; $('#mTitle').textContent='Nouvelle squad';
-  $('#mSub').textContent='Rattachable à une tribu ou directement à la Direction (squad volante)';
+  $('#mSub').textContent=isDir?'Squad volante rattachée à la Direction':'Rattachée à la tribu sélectionnée';
   $('#mCreate').textContent='Créer la squad'; $('#mCreate').onclick=createSquad;
   $('#modalOv').classList.add('open'); $('#modal').classList.add('open');
   setTimeout(()=>{const el=$('#c-name');if(el)el.focus();},60);
@@ -2757,7 +2812,7 @@ $('#mClose').onclick=closeModal; $('#mCancel').onclick=closeModal; $('#modalOv')
 function createSquad(){
   const name=$('#c-name').value.trim();
   if(!name){ $('#c-name').focus(); $('#c-name').style.borderColor='#dc2626'; return; }
-  const target=$('#c-head').value;
+  const target=squadTargetHead||'__dir__';
   const wantPm=$('#c-pm').checked, wantLead=$('#c-lead').checked;
   const sq=newSquad(name,$('#c-desc').value.trim(),false);
   if(wantPm){
