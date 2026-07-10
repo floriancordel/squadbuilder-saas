@@ -665,6 +665,7 @@
   .mr-email{font-size:13px;font-weight:600;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mr-actions{margin-left:auto;display:flex;gap:8px;flex:0 0 auto}
   .mr-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .mr-reset:not(:empty){margin-top:10px}
   .member-row.editing .perm-checks{margin:10px 0}
   .member-row .mr-actions .btn{padding:6px 12px}
   .pill.sm{font-size:10px;background:#eef2ff;color:#4338ca}
@@ -2244,7 +2245,7 @@ function memberRowHTML(m){
   }
   const tmpl=templateForPerms(perms);
   const chips=perms.length?perms.map(k=>`<span class="pill">${esc((PERMISSIONS.find(p=>p.key===k)||{}).label||k)}</span>`).join(''):'<span class="pill">Lecture seule</span>';
-  return `<div class="member-row" data-email="${esc(m.email)}"><div class="mr-top"><div class="mr-email">${esc(m.email)}</div><span class="pill sm">${esc(ROLE_LABELS[tmpl]||'Personnalisé')}</span><div class="mr-actions"><button class="lnk" data-medit>Modifier</button><button class="lnk-del" data-mrm>Retirer</button></div></div><div class="mr-chips">${chips}</div></div>`;
+  return `<div class="member-row" data-email="${esc(m.email)}"><div class="mr-top"><div class="mr-email">${esc(m.email)}</div><span class="pill sm">${esc(ROLE_LABELS[tmpl]||'Personnalisé')}</span><div class="mr-actions"><button class="lnk" data-medit>Modifier</button><button class="lnk" data-mreset>Réinit. mdp</button><button class="lnk-del" data-mrm>Retirer</button></div></div><div class="mr-chips">${chips}</div><div class="mr-reset" data-reset-box></div></div>`;
 }
 async function loadMembers(){
   const box=$('#au-list'); if(!box)return;
@@ -2256,6 +2257,7 @@ async function loadMembers(){
     box.querySelectorAll('[data-mcancel]').forEach(b=>b.onclick=()=>{ adminEditEmail=null; loadMembers(); });
     box.querySelectorAll('.member-row.editing .perm-check').forEach(l=>l.querySelector('input').addEventListener('change',e=>l.classList.toggle('on',e.target.checked)));
     box.querySelectorAll('[data-msave]').forEach(b=>b.onclick=async()=>{ const row=b.closest('.member-row'); const email=row.dataset.email; const perms=[...row.querySelectorAll('[data-perm]:checked')].map(i=>i.dataset.perm); try{ await adminInvoke('update',{email,role:templateForPerms(perms),permissions:perms}); adminEditEmail=null; toast('Droits mis à jour'); loadMembers(); }catch(e){ toast('Erreur : '+e.message); } });
+    box.querySelectorAll('[data-mreset]').forEach(b=>b.onclick=()=>{ const row=b.closest('.member-row'); const email=row.dataset.email; askConfirm({title:'Réinitialiser le mot de passe',message:`Générer un nouveau mot de passe pour <b>${esc(email)}</b> ? La personne devra le changer à sa prochaine connexion.`,confirmLabel:'Réinitialiser',danger:false}).then(async ok=>{ if(!ok)return; b.disabled=true; b.textContent='…'; try{ const data=await adminInvoke('reset',{email}); const box2=row.querySelector('[data-reset-box]'); box2.innerHTML=`<div class="cred-box"><div class="cred-title">🔑 Nouveau mot de passe — communique-le</div><div class="cred-row"><span>Email</span><code>${esc(email)}</code></div><div class="cred-row"><span>Mot de passe</span><code>${esc(data.password)}</code><button class="lnk" data-copy="${esc(data.password)}">Copier</button></div></div>`; box2.querySelector('[data-copy]').onclick=ev=>{ navigator.clipboard.writeText(ev.target.dataset.copy); toast('Mot de passe copié'); }; }catch(e){ toast('Erreur : '+e.message); } b.disabled=false; b.textContent='Réinit. mdp'; }); });
     box.querySelectorAll('[data-mrm]').forEach(b=>b.onclick=()=>{ const email=b.closest('.member-row').dataset.email; askConfirm({title:'Retirer l\'accès',message:`Retirer l'accès de <b>${esc(email)}</b> ?`,confirmLabel:'Retirer'}).then(async ok=>{ if(ok){ try{ await adminInvoke('remove',{email}); loadMembers(); }catch(e){ toast('Erreur : '+e.message); } } }); });
   }catch(e){
     box.innerHTML=`<div class="admin-note warn">Impossible de lister les membres — l'Edge Function n'est probablement pas encore déployée / à jour (voir « Activation »).<br><span style="opacity:.75;font-size:11px">${esc(e.message||String(e))}</span></div>`;

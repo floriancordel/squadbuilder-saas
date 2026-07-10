@@ -86,6 +86,20 @@ Deno.serve(async (req) => {
       return json({ ok: true, email, role, permissions });
     }
 
+    if (action === "reset") {
+      // Régénérer le mot de passe d'un compte existant + forcer le changement à la prochaine connexion
+      const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const u = list?.users?.find((x: { email?: string }) => (x.email || "").toLowerCase() === email);
+      if (!u) return json({ error: "Aucun compte pour cet email" }, 404);
+      const password = genPassword();
+      const { error: uErr } = await admin.auth.admin.updateUserById(u.id, {
+        password,
+        user_metadata: { ...(u.user_metadata || {}), must_change_password: true },
+      });
+      if (uErr) return json({ error: uErr.message }, 400);
+      return json({ ok: true, email, password });
+    }
+
     // action === "create"
     const password = body.password || genPassword();
     const { error: cErr } = await admin.auth.admin.createUser({
