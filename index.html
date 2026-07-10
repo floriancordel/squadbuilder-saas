@@ -539,6 +539,13 @@
   .stats{cursor:pointer;border-radius:8px;padding:3px 8px;transition:.12s}
   .stats:hover{background:#f2f4f7}
   .hbtn{font-size:12.5px;font-weight:600}
+  .save-state{font-size:11px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex:0 0 auto}
+  .save-state:empty{display:none}
+  .save-state.saved{color:#15803d} .save-state.saved::before{content:'✓'}
+  .save-state.error{color:#dc2626} .save-state.error::before{content:'⚠'}
+  .save-state.saving::before,.save-state.pending::before{content:'●';color:var(--faint);font-size:8px}
+  body.view-mode .save-state{display:none}
+  @media (max-width:960px){.save-state{display:none}}
   @media (max-width:820px){.hbtn{display:none}}
 
   /* ---------- Grande modale (Dashboard / Référentiel) ---------- */
@@ -776,7 +783,10 @@
   .fiche-badge.tech{background:var(--tech-soft);color:var(--tech)}
   .fiche-badge.produit{background:var(--produit-soft);color:var(--produit)}
   .fiche-cat{font-size:11.5px;color:var(--muted)}
+  .fiche-save{margin-left:auto;border:1px solid var(--tech);background:var(--tech);color:#fff;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:700;cursor:pointer;align-items:center;gap:5px;box-shadow:0 1px 3px rgba(37,99,235,.28)}
+  .fiche-save:hover{filter:brightness(1.06)}
   .fiche-del{margin-left:auto;border:1px solid var(--border);background:#fff;color:#dc2626;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer}
+  .fiche.dirty{box-shadow:inset 0 0 0 2px rgba(37,99,235,.14);border-radius:12px}
   .fiche-del:hover{background:#fef2f2;border-color:#fecaca}
   .fiche-name{width:100%;border:1px solid transparent;border-radius:9px;font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);padding:6px 8px;margin:0 -8px 14px;background:transparent}
   .fiche-name:hover{background:#f9fafb}
@@ -837,6 +847,7 @@
     <button data-mode="affect" title="Éditer et affecter par glisser-déposer"><span class="ic">✎</span>Édition</button>
   </div>
   <div class="h-right">
+    <span class="save-state" id="saveState"></span>
     <button class="btn ghost hbtn" id="printBtn2" title="Imprimer / exporter en PDF">🖨 Imprimer</button>
     <button class="btn ghost hbtn" id="shareBtn" title="Générer un lien de partage en lecture seule">🔗 Partager</button>
     <div class="hsep"></div>
@@ -967,6 +978,7 @@
   <p id="cdMsg"></p>
   <div class="cd-foot">
     <button class="btn" id="cdCancel">Annuler</button>
+    <button class="btn" id="cdMid" style="display:none"></button>
     <button class="btn" id="cdOk">Confirmer</button>
   </div>
 </div>
@@ -1060,18 +1072,29 @@ async function getMyOrg() {
   return (created && created[0]) || null;
 }
 
+function setSaveState(s){
+  const el=$('#saveState'); if(!el)return;
+  const map={pending:'Modifs en attente…',saving:'Enregistrement…',saved:'Enregistré',error:'Non enregistré — réessai…'};
+  el.textContent=map[s]||''; el.className='save-state '+(map[s]?s:'');
+}
 async function saveOrg() {
-  if (!currentOrg) return;
+  saveTimer=null;
+  if (!currentOrg) { setSaveState(''); return; }
+  setSaveState('saving');
   const { error } = await sb.from('organizations')
     .update({ data: state })
     .eq('id', currentOrg.id);
-  if (error) console.error('Erreur sauvegarde:', error);
+  if (error) { console.error('Erreur sauvegarde:', error); setSaveState('error'); clearTimeout(saveTimer); saveTimer=setTimeout(saveOrg,3000); }
+  else setSaveState('saved');
 }
-
 function debouncedSave() {
+  if(currentOrg) setSaveState('pending');
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveOrg, 800);
+  saveTimer = setTimeout(saveOrg, 700);
 }
+function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; saveOrg(); } }
+window.addEventListener('beforeunload', flushSave);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushSave(); });
 
 /* ---------------- Auth UI ---------------- */
 let isSignUp = false;
@@ -1827,7 +1850,7 @@ function wireSeg(id){ const el=document.getElementById(id); if(!el)return;
 function segVal(id){ return document.getElementById(id)?segState[id]:''; }
 function closeEditor(){ $('#overlay').classList.remove('open'); $('#editor').classList.remove('open'); edCtx=null; }
 $('#edClose').onclick=closeEditor; $('#overlay').onclick=closeEditor;
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#confirmDlg').classList.contains('open')){ resolveConfirm(false); return; } if($('#roleDlg').classList.contains('open')){ closeRoleDlg(); return; } closeEditor(); closeModal(); closeSheet(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#confirmDlg').classList.contains('open')){ $('#cdCancel').click(); return; } if($('#roleDlg').classList.contains('open')){ closeRoleDlg(); return; } closeEditor(); closeModal(); closeSheet(); } });
 
 /* ---------------- Zoom & déplacement ---------------- */
 let tx=0,ty=0,scale=1;
@@ -1895,6 +1918,7 @@ document.addEventListener('click',e=>{ if(!e.target.closest('.profile-wrap')) cl
 /* ================= Grande modale (Dashboard / Référentiel) ================= */
 let sheetView=null; // 'dash' | 'gloss'
 function openSheet(view){
+  if(sheetView==='gloss' && glossDirty && view!=='gloss'){ guardGloss(()=>openSheet(view)); return; }
   sheetView=view;
   $('#sheetOv').classList.add('open'); $('#sheet').classList.add('open');
   $('#sheetBody').classList.toggle('gloss-mode', view==='gloss');
@@ -1902,7 +1926,8 @@ function openSheet(view){
   else if(view==='admin'){ $('#sheetIco').textContent='🛡️'; $('#sheetTitle').textContent='Administration'; $('#sheetSub').textContent='Gérez les accès à SquadBuilder'; renderAdmin(); }
   else { $('#sheetIco').textContent='📖'; $('#sheetTitle').textContent='Référentiel des rôles'; $('#sheetSub').textContent='Gérez les métiers et leurs définitions'; renderGlossary(); }
 }
-function closeSheet(){ sheetView=null; $('#sheetOv').classList.remove('open'); $('#sheet').classList.remove('open'); }
+function doCloseSheet(){ sheetView=null; glossDraft=null; glossDirty=false; $('#sheetOv').classList.remove('open'); $('#sheet').classList.remove('open'); }
+function closeSheet(){ guardGloss(doCloseSheet); }
 $('#sheetClose').onclick=closeSheet; $('#sheetOv').onclick=closeSheet;
 $('#dashBtn').onclick=()=>openSheet('dash');
 $('#glossBtn').onclick=()=>openSheet('gloss');
@@ -1961,9 +1986,30 @@ function askConfirm(opts){
   });
 }
 function resolveConfirm(v){ $('#confirmOv').classList.remove('open'); $('#confirmDlg').classList.remove('open'); if(_cdResolve){ const r=_cdResolve; _cdResolve=null; r(v); } }
-$('#cdOk').onclick=()=>resolveConfirm(true);
-$('#cdCancel').onclick=()=>resolveConfirm(false);
+const _cdOkDefault=()=>resolveConfirm(true);
+const _cdCancelDefault=()=>resolveConfirm(false);
+$('#cdOk').onclick=_cdOkDefault;
+$('#cdCancel').onclick=_cdCancelDefault;
 $('#confirmOv').onclick=()=>resolveConfirm(false);
+
+// Dialogue à 3 choix pour quitter une fiche non enregistrée
+function askLeave(){
+  return new Promise(resolve=>{
+    _cdResolve=null;
+    const ov=$('#confirmOv'), dlg=$('#confirmDlg'), ok=$('#cdOk'), mid=$('#cdMid'), cancel=$('#cdCancel');
+    $('#cdIco').textContent='💾';
+    $('#cdTitle').textContent='Modifications non enregistrées';
+    $('#cdMsg').innerHTML='Cette fiche de rôle contient des changements non enregistrés.';
+    dlg.classList.add('info');
+    ok.textContent='Enregistrer'; ok.className='btn primary';
+    mid.textContent='Quitter sans enregistrer'; mid.className='btn'; mid.style.display='';
+    cancel.textContent='Annuler';
+    ov.classList.add('open'); dlg.classList.add('open');
+    const finish=v=>{ ov.classList.remove('open'); dlg.classList.remove('open'); mid.style.display='none'; ok.onclick=_cdOkDefault; cancel.onclick=_cdCancelDefault; resolve(v); };
+    ok.onclick=()=>finish('save'); mid.onclick=()=>finish('discard'); cancel.onclick=()=>finish('cancel');
+    setTimeout(()=>ok.focus(),20);
+  });
+}
 
 /* ---- Modale création de rôle ---- */
 let rdSide='tech';
@@ -2095,13 +2141,30 @@ function renderDashboard(){
 
 /* ---- Référentiel des rôles ---- */
 let glossSel=null, glossExpanded=null, glossEdit=false;
+let glossDraft=null, glossDirty=false; // édition en brouillon : on ne persiste qu'au clic « Enregistrer »
 function glossRoleById(id){ return (state.glossary||[]).find(g=>g.id===id)||null; }
+function startDraft(){ const g=glossSel?glossRoleById(glossSel):null; glossDraft=g?JSON.parse(JSON.stringify(g)):null; glossDirty=false; }
+function markDirty(){ glossDirty=true; updateFicheSave(); }
+function updateFicheSave(){ const b=$('#ficheSave'); if(b)b.style.display=glossDirty?'inline-flex':'none'; const f=document.querySelector('.fiche'); if(f)f.classList.toggle('dirty',glossDirty); }
+function commitDraft(){
+  if(!glossDraft)return;
+  const idx=(state.glossary||[]).findIndex(g=>g.id===glossDraft.id);
+  if(idx>=0) state.glossary[idx]=JSON.parse(JSON.stringify(glossDraft));
+  glossDirty=false; save(); rebuildRoleLists();
+}
+function discardDraft(){ glossDirty=false; startDraft(); }
+// Vérifie s'il y a des modifs non enregistrées avant de « quitter » la fiche courante.
+function guardGloss(proceed){
+  if(sheetView!=='gloss' || !glossDirty){ proceed(); return; }
+  askLeave().then(v=>{ if(v==='save'){ commitDraft(); proceed(); } else if(v==='discard'){ discardDraft(); proceed(); } });
+}
 function famLabel(key){ const f=FAMILIES.find(x=>x.key===key); return f?f.label:key; }
 function ensureGlossSel(){
   const gl=state.glossary||[];
   if(!glossExpanded) glossExpanded=new Set(FAMILIES.map(f=>f.key));
   if(!glossSel || !glossRoleById(glossSel)) glossSel = gl.length?gl.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'))[0].id:null;
   const g=glossSel?glossRoleById(glossSel):null; if(g)glossExpanded.add(g.family);
+  if(!glossDraft || glossDraft.id!==glossSel) startDraft();
 }
 function glossTreeHTML(){
   const gl=state.glossary||[];
@@ -2125,6 +2188,7 @@ function ficheHTML(g){
     <div class="fiche-head">
       <span class="fiche-badge ${g.side}">${g.side==='produit'?'Produit':'Tech'}</span>
       <span class="fiche-cat">${esc(famLabel(g.family))}</span>
+      <button class="fiche-save" id="ficheSave" data-gsave style="display:${glossDirty?'inline-flex':'none'}">💾 Enregistrer</button>
       <button class="fiche-del" data-gdel>🗑 Supprimer</button>
     </div>
     <input class="fiche-name" data-gf="name" value="${esc(g.name)}" placeholder="Nom du rôle">
@@ -2151,45 +2215,45 @@ function renderGlossary(){
         ${glossEdit?'<div class="gtree-hint">Glisse un rôle dans une autre famille de métier.</div>':''}
         <div class="gtree-body">${glossTreeHTML()}</div>
       </div>
-      <div class="gfiche" id="gfiche">${ficheHTML(glossRoleById(glossSel))}</div>
+      <div class="gfiche" id="gfiche">${ficheHTML(glossDraft)}</div>
     </div>`;
+  updateFicheSave();
 }
-function renderFiche(){ const el=$('#gfiche'); if(el)el.innerHTML=ficheHTML(glossRoleById(glossSel)); }
-function ficheRole(el){ const f=el.closest('.fiche'); return f?glossRoleById(f.dataset.id):null; }
+function renderFiche(){ const el=$('#gfiche'); if(el)el.innerHTML=ficheHTML(glossDraft); updateFicheSave(); }
 $('#sheetBody').addEventListener('click',e=>{
   if(sheetView!=='gloss')return;
   const ct=e.target.closest('[data-cat-toggle]'); if(ct){ const k=ct.dataset.catToggle; glossExpanded.has(k)?glossExpanded.delete(k):glossExpanded.add(k); ct.closest('.gt-cat').classList.toggle('open'); return; }
-  const rn=e.target.closest('[data-role]'); if(rn){ glossSel=rn.dataset.role; document.querySelectorAll('.gt-role.sel').forEach(x=>x.classList.remove('sel')); rn.classList.add('sel'); renderFiche(); return; }
+  const rn=e.target.closest('[data-role]'); if(rn){ const id=rn.dataset.role; if(id===glossSel)return; guardGloss(()=>{ glossSel=id; startDraft(); document.querySelectorAll('.gt-role.sel').forEach(x=>x.classList.remove('sel')); const now=document.querySelector('.gt-role[data-role="'+id+'"]'); if(now)now.classList.add('sel'); renderFiche(); }); return; }
   if(!can('roles.edit'))return; // édition du référentiel interdite
-  const eb=e.target.closest('#glossEditBtn'); if(eb){ glossEdit=!glossEdit; renderGlossary(); return; }
-  const add=e.target.closest('#glossAdd'); if(add){ openRoleDlg(); return; }
-  const del=e.target.closest('[data-gdel]'); if(del){ const g=ficheRole(del); if(g){ askConfirm({title:'Supprimer le rôle',message:`Le rôle « <b>${esc(g.name)}</b> » sera retiré du référentiel.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.glossary=state.glossary.filter(x=>x.id!==g.id); if(glossSel===g.id)glossSel=null; save(); rebuildRoleLists(); renderGlossary(); toast('Rôle supprimé'); } }); } return; }
-  const sideBtn=e.target.closest('[data-gs]'); if(sideBtn){ const g=ficheRole(sideBtn); if(g){ g.side=sideBtn.dataset.gs; save(); renderGlossary(); } return; }
-  const sd=e.target.closest('[data-skill-del]'); if(sd){ const g=ficheRole(sd); if(g){ g.skills.splice(+sd.dataset.skillDel,1); save(); renderFiche(); } return; }
-  const rd=e.target.closest('[data-resp-del]'); if(rd){ const g=ficheRole(rd); if(g){ g.responsibilities.splice(+rd.dataset.respDel,1); save(); renderFiche(); } return; }
-  const bc=e.target.closest('[data-block]'); if(bc){ const g=ficheRole(bc); if(g){ g.blocks=g.blocks||[]; const k=bc.dataset.block; const i=g.blocks.indexOf(k); if(i>=0)g.blocks.splice(i,1); else g.blocks.push(k); save(); bc.closest('.blk-check').classList.toggle('on',g.blocks.includes(k)); } return; }
+  const sv=e.target.closest('[data-gsave]'); if(sv){ commitDraft(); renderGlossary(); toast('Fiche enregistrée'); return; }
+  const eb=e.target.closest('#glossEditBtn'); if(eb){ guardGloss(()=>{ glossEdit=!glossEdit; renderGlossary(); }); return; }
+  const add=e.target.closest('#glossAdd'); if(add){ guardGloss(openRoleDlg); return; }
+  const del=e.target.closest('[data-gdel]'); if(del){ const g=glossDraft; if(g){ askConfirm({title:'Supprimer le rôle',message:`Le rôle « <b>${esc(g.name)}</b> » sera retiré du référentiel.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.glossary=state.glossary.filter(x=>x.id!==g.id); glossSel=null; glossDraft=null; glossDirty=false; save(); rebuildRoleLists(); renderGlossary(); toast('Rôle supprimé'); } }); } return; }
+  const sideBtn=e.target.closest('[data-gs]'); if(sideBtn){ if(glossDraft){ glossDraft.side=sideBtn.dataset.gs; markDirty(); renderFiche(); } return; }
+  const sd=e.target.closest('[data-skill-del]'); if(sd){ if(glossDraft){ glossDraft.skills.splice(+sd.dataset.skillDel,1); markDirty(); renderFiche(); } return; }
+  const rd=e.target.closest('[data-resp-del]'); if(rd){ if(glossDraft){ glossDraft.responsibilities.splice(+rd.dataset.respDel,1); markDirty(); renderFiche(); } return; }
+  const bc=e.target.closest('[data-block]'); if(bc){ if(glossDraft){ glossDraft.blocks=glossDraft.blocks||[]; const k=bc.dataset.block; const i=glossDraft.blocks.indexOf(k); if(i>=0)glossDraft.blocks.splice(i,1); else glossDraft.blocks.push(k); markDirty(); bc.closest('.blk-check').classList.toggle('on',glossDraft.blocks.includes(k)); } return; }
 });
 $('#sheetBody').addEventListener('keydown',e=>{
   if(sheetView!=='gloss'||!can('roles.edit'))return;
-  const addTo=(arrName,cls)=>{ e.preventDefault(); const v=e.target.value.trim(); if(!v)return; const g=ficheRole(e.target); if(!g)return; g[arrName]=g[arrName]||[]; g[arrName].push(v); save(); renderFiche(); const inp=document.querySelector('.'+cls); if(inp)inp.focus(); };
+  const addTo=(arrName,cls)=>{ e.preventDefault(); const v=e.target.value.trim(); if(!v)return; const g=glossDraft; if(!g)return; g[arrName]=g[arrName]||[]; g[arrName].push(v); markDirty(); renderFiche(); const inp=document.querySelector('.'+cls); if(inp)inp.focus(); };
   if(e.key==='Enter'&&e.target.classList.contains('skill-input')) addTo('skills','skill-input');
   else if(e.key==='Enter'&&e.target.classList.contains('resp-input')) addTo('responsibilities','resp-input');
 });
 $('#sheetBody').addEventListener('input',e=>{
   if(sheetView!=='gloss'||!can('roles.edit'))return;
   const f=e.target.closest('[data-gf]'); if(!f)return;
-  const g=ficheRole(f); if(!g)return;
+  const g=glossDraft; if(!g)return;
   const field=f.dataset.gf;
-  if(field==='family'){ g.family=f.value; save(); glossExpanded.add(f.value); renderGlossary(); return; }
-  g[field]=f.value; save();
-  if(field==='name'){ rebuildRoleLists(); const lbl=document.querySelector('.gt-role[data-role="'+g.id+'"] .gt-role-name'); if(lbl)lbl.textContent=f.value||'Sans nom'; }
+  g[field]=f.value; markDirty();
+  // Pas de re-render sur saisie texte (préserve le focus) ; l'arbre reflète le nom/famille après « Enregistrer ».
 });
 // Drag & drop des rôles entre familles (mode édition)
 let _dragRole=null;
 $('#sheetBody').addEventListener('dragstart',e=>{ if(!can('roles.edit'))return; const el=e.target.closest('[data-drag-role]'); if(!el)return; _dragRole=el.dataset.dragRole; e.dataTransfer.effectAllowed='move'; el.classList.add('gt-dragging'); });
 $('#sheetBody').addEventListener('dragend',e=>{ const el=e.target.closest('[data-drag-role]'); if(el)el.classList.remove('gt-dragging'); document.querySelectorAll('.gt-roles.famover').forEach(n=>n.classList.remove('famover')); _dragRole=null; });
 $('#sheetBody').addEventListener('dragover',e=>{ if(!_dragRole)return; const z=e.target.closest('[data-fam-drop]'); if(!z)return; e.preventDefault(); document.querySelectorAll('.gt-roles.famover').forEach(n=>{if(n!==z)n.classList.remove('famover');}); z.classList.add('famover'); });
-$('#sheetBody').addEventListener('drop',e=>{ if(!_dragRole)return; const z=e.target.closest('[data-fam-drop]'); if(!z)return; e.preventDefault(); const g=glossRoleById(_dragRole); const fam=z.dataset.famDrop; if(g&&g.family!==fam){ g.family=fam; glossSel=g.id; glossExpanded.add(fam); save(); toast('« '+g.name+' » déplacé vers '+famLabel(fam)); renderGlossary(); } _dragRole=null; });
+$('#sheetBody').addEventListener('drop',e=>{ if(!_dragRole)return; const z=e.target.closest('[data-fam-drop]'); if(!z)return; e.preventDefault(); const dragId=_dragRole, fam=z.dataset.famDrop; _dragRole=null; const g0=glossRoleById(dragId); if(!g0||g0.family===fam)return; guardGloss(()=>{ const g=glossRoleById(dragId); if(!g)return; g.family=fam; glossSel=g.id; startDraft(); glossExpanded.add(fam); save(); toast('« '+g.name+' » déplacé vers '+famLabel(fam)); renderGlossary(); }); });
 
 /* ================= Administration (utilisateurs & accès) ================= */
 async function adminInvoke(action, payload){
