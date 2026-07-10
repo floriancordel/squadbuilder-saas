@@ -1481,7 +1481,18 @@ function onLogout() {
 /* ---------------- Modèle ---------------- */
 const uid=()=>Math.random().toString(36).slice(2,9);
 // Statut = automatique (nom rempli → pourvu, vide → à pourvoir). TEMP = flag indépendant cumulable.
-function person(role,side,name='',loc='',status='',tempUntil=''){const temp=status==='TEMP';return{pid:uid(),role,side,name,loc,status:name?'Occupé':'Ouvert',temp,tempUntil:temp?tempUntil:'',alloc:100,allocMode:'full',reqId:''};}
+/* ---- Identité ETP : Prénom (Titlecase) + NOM (MAJ) + matricule (ID) ---- */
+function fmtFirst(s){ return (s||'').trim().toLowerCase().replace(/(^|[\s\-'’])([\p{L}])/gu,(m,sep,ch)=>sep+ch.toUpperCase()); }
+function fmtLast(s){ return (s||'').trim().toUpperCase(); }
+function idNorm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); }
+function splitFullName(full){ const t=(full||'').trim().split(/\s+/).filter(Boolean); if(!t.length) return {first:'',last:''}; if(t.length===1) return {first:fmtFirst(t[0]),last:''}; return {first:fmtFirst(t[0]),last:fmtLast(t.slice(1).join(' '))}; }
+function fullNameOf(p){ return [(p.firstName||''),(p.lastName||'')].filter(Boolean).join(' ').trim(); }
+function syncName(p){ p.name=fullNameOf(p); return p; }
+// Renseigne l'identité d'un poste depuis une chaîne « Prénom Nom » (découpe + formate)
+function setPersonName(p,full){ const s=splitFullName(full); p.firstName=s.first; p.lastName=s.last; syncName(p); p.status=p.name?'Occupé':'Ouvert'; return p; }
+// Clé d'identité : matricule si présent, sinon Prénom+NOM normalisés ; '' pour un poste ouvert
+function etpKey(p){ if(!p)return ''; const m=(p.matricule||'').trim(); if(m)return 'id:'+idNorm(m); const nk=idNorm(fullNameOf(p)); return nk?'nk:'+nk:''; }
+function person(role,side,name='',loc='',status='',tempUntil=''){const temp=status==='TEMP';const s=splitFullName(name);const nm=[s.first,s.last].filter(Boolean).join(' ').trim();return{pid:uid(),role,side,firstName:s.first,lastName:s.last,matricule:'',name:nm,loc,status:nm?'Occupé':'Ouvert',temp,tempUntil:temp?tempUntil:'',alloc:100,allocMode:'full',reqId:''};}
 function isOpen(p){ return !p.name; }
 function isTemp(p){ return p.temp===true||p.status==='TEMP'; }
 const OPEN_LABEL='À pourvoir';
@@ -1596,7 +1607,7 @@ function resource(role,name,loc,alloc,side){
   const p=person(role||'Ressource','tech',name||'',loc||'',(name?'Occupé':'Ouvert'));
   if(side)p.side=side; p.alloc=(alloc===''||alloc==null||isNaN(+alloc))?100:+alloc; return p;
 }
-function setP(p,name,loc){ p.name=name; p.loc=loc; p.status=name?'Occupé':'Ouvert'; return p; }
+function setP(p,name,loc){ setPersonName(p,name); p.loc=loc; return p; }
 function seed(){
   const h=newHead();
   h.desc='Acquisition, activation et rétention des utilisateurs.';
@@ -1642,7 +1653,12 @@ function migrate(){
     if(!Array.isArray(g.responsibilities))g.responsibilities=(m.r||[]).slice();
     if(g.jobProfile===undefined)g.jobProfile='';
   });
-  const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.reqId===undefined)p.reqId=''; if(p.temp===undefined)p.temp=(p.status==='TEMP'); if(p.status==='TEMP')p.status=p.name?'Occupé':'Ouvert'; if(!p.status)p.status=p.name?'Occupé':'Ouvert'; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
+  const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.reqId===undefined)p.reqId='';
+    // Identité ETP : découpe le champ « name » historique (1er mot = Prénom, reste = NOM)
+    if(p.firstName===undefined && p.lastName===undefined){ const s=splitFullName(p.name||''); p.firstName=s.first; p.lastName=s.last; }
+    if(p.firstName===undefined)p.firstName=''; if(p.lastName===undefined)p.lastName=''; if(p.matricule===undefined)p.matricule='';
+    p.name=fullNameOf(p);
+    if(p.temp===undefined)p.temp=(p.status==='TEMP'); if(p.status==='TEMP')p.status=p.name?'Occupé':'Ouvert'; if(!p.status)p.status=p.name?'Occupé':'Ouvert'; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
   // direction {product,tech} -> {leads:[]}
   const d=state.direction||{};
   if(!Array.isArray(d.leads)){ d.leads=[]; if(d.product)d.leads.push(d.product); if(d.tech)d.leads.push(d.tech); delete d.product; delete d.tech; }
@@ -1680,8 +1696,16 @@ function allPersons(){
   return out;
 }
 function allocOf(p){ return (p.alloc==null||isNaN(+p.alloc))?100:+p.alloc; }
-function computeAllocByName(){ const m={}; allPersons().forEach(p=>{ if(p.name){ const k=p.name.trim().toLowerCase(); m[k]=(m[k]||0)+allocOf(p); } }); _allocByName=m; }
-function totalAllocOf(p){ return p.name?(_allocByName[p.name.trim().toLowerCase()]||allocOf(p)):allocOf(p); }
+function computeAllocByName(){ const m={}; allPersons().forEach(p=>{ const k=etpKey(p); if(k){ m[k]=(m[k]||0)+allocOf(p); } }); _allocByName=m; }
+function totalAllocOf(p){ const k=etpKey(p); return k?(_allocByName[k]||allocOf(p)):allocOf(p); }
+// Nombre d'occurrences (instances) d'un même ETP dans l'organigramme
+function etpInstances(p){ const k=etpKey(p); if(!k)return 1; let n=0; allPersons().forEach(x=>{ if(etpKey(x)===k)n++; }); return n; }
+// Alerte (jamais bloquant) : sur-allocation (>100%) ou matricule partagé par 2 identités
+function warnEtp(p){ if(!p||!p.name)return;
+  const total=totalAllocOf(p);
+  if(total>100){ toast('⚠ '+p.name+' est staffé à '+total+'% au total (dépasse 100%)'); return; }
+  const m=(p.matricule||'').trim(); if(m){ const names=new Set(); allPersons().forEach(x=>{ if((x.matricule||'').trim().toLowerCase()===m.toLowerCase() && x.name) names.add(idNorm(fullNameOf(x))); }); if(names.size>1){ toast('⚠ Le matricule « '+m+' » est utilisé par plusieurs identités différentes'); } }
+}
 function locBadge(p){
   if(p.loc==='FR')return '<span class="badge fr">Hub · FR</span>';
   if(p.loc==='Maroc')return '<span class="badge coe">COE · Maroc</span>';
@@ -2099,8 +2123,12 @@ function openEditor(obj,kind){
         <div class="hint" style="margin-top:8px">Le statut est automatique : un poste <b>sans nom</b> est « ${OPEN_LABEL} », un poste <b>avec un nom</b> est pourvu. TEMP est indépendant et se cumule.</div>
       </div>`;
     $('#edBody').innerHTML=`
-      <div class="field"><label>Nom <span class="fopt">— renseigné = poste pourvu</span></label><input id="f-name" value="${esc(p.name)}" placeholder="Laisser vide = poste « ${OPEN_LABEL} »" autofocus></div>
-      <div class="field" id="reqid-wrap" style="display:${p.name?'none':'block'}"><label>N° de demande de recrutement <span class="fopt">— poste à pourvoir</span></label><input id="f-reqid" value="${esc(p.reqId||'')}" placeholder="ex. REQ-2026-014"></div>
+      <div class="row2">
+        <div class="field"><label>Prénom</label><input id="f-first" value="${esc(p.firstName||'')}" placeholder="Florian" autofocus></div>
+        <div class="field"><label>NOM</label><input id="f-last" value="${esc(p.lastName||'')}" placeholder="CORDEL"></div>
+      </div>
+      <div class="field"><label>ID / matricule <span class="fopt">— optionnel, distingue les homonymes</span></label><input id="f-matricule" value="${esc(p.matricule||'')}" placeholder="ex. EMP-01423"></div>
+      <div class="field" id="reqid-wrap" style="display:${(p.firstName||p.lastName)?'none':'block'}"><label>N° de demande de recrutement <span class="fopt">— poste à pourvoir</span></label><input id="f-reqid" value="${esc(p.reqId||'')}" placeholder="ex. REQ-2026-014"></div>
       ${roleField}
       ${sideField}
       ${allocField}
@@ -2112,7 +2140,11 @@ function openEditor(obj,kind){
       ${tempField}`;
     wireSeg('seg-side'); wireSeg('seg-loc'); wireSeg('seg-allocmode');
     // Un poste est soit pourvu (nom) soit ouvert (n° de demande) — jamais les deux
-    $('#f-name').oninput=e=>{ const filled=!!e.target.value.trim(); const w=$('#reqid-wrap'); if(w)w.style.display=filled?'none':'block'; };
+    // Auto-formatage : Prénom Titlecase, NOM MAJUSCULES (au blur, pour ne pas gêner la frappe)
+    const toggleReq=()=>{ const filled=!!(($('#f-first').value.trim())||($('#f-last').value.trim())); const w=$('#reqid-wrap'); if(w)w.style.display=filled?'none':'block'; };
+    $('#f-first').oninput=toggleReq; $('#f-last').oninput=toggleReq;
+    $('#f-first').onblur=e=>{ e.target.value=fmtFirst(e.target.value); };
+    $('#f-last').onblur=e=>{ e.target.value=fmtLast(e.target.value); };
     $('#f-temp').onchange=e=>{ $('#f-temp-wrap').style.display=e.target.checked?'block':'none'; };
     $('#seg-allocmode').querySelectorAll('button').forEach(b=>{ const orig=b.onclick; b.onclick=(e)=>{ if(orig)orig(e); const w=$('#alloc-wrap'); if(w)w.style.display=b.dataset.v==='part'?'block':'none'; }; });
     document.querySelectorAll('#seg-alloc button').forEach(b=>b.onclick=()=>{ $('#f-alloc').value=b.dataset.v; });
@@ -2121,7 +2153,8 @@ function openEditor(obj,kind){
     const delBtn=canDel?`<button class="btn" id="edDel" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button>`:'';
     $('#edFoot').innerHTML=`${delBtn}<button class="btn primary" id="edSave">Enregistrer</button>`;
     $('#edSave').onclick=()=>{
-      p.name=$('#f-name').value.trim();
+      p.firstName=fmtFirst($('#f-first').value); p.lastName=fmtLast($('#f-last').value); p.matricule=$('#f-matricule').value.trim();
+      syncName(p);
       // Logique stricte : un poste pourvu (nom renseigné) n'a pas de n° de demande
       p.reqId=p.name?'':($('#f-reqid')?$('#f-reqid').value.trim():(p.reqId||''));
       const custom=$('#f-role-custom')?.value.trim(); p.role=custom||$('#f-role').value.trim()||p.role;
@@ -2132,7 +2165,7 @@ function openEditor(obj,kind){
       p.status=p.name?'Occupé':'Ouvert';
       p.allocMode=segVal('seg-allocmode')||'full';
       if(p.allocMode==='part'){ const a=parseInt($('#f-alloc').value,10); p.alloc=isNaN(a)?100:Math.max(0,Math.min(300,a)); } else p.alloc=100;
-      commit(); closeEditor();
+      commit(); warnEtp(p); closeEditor();
     };
     if(canDel)$('#edDel').onclick=()=>{
       const doDel=()=>{ const l=locate(p.pid); if(l){ l.list.splice(l.index,1); } commit(); closeEditor(); };
@@ -2174,6 +2207,7 @@ function detailPersonHTML(p){
   const chips=[locChip(p),openChip(p),tempChip(p),allocChip(p)].filter(Boolean).join('');
   const total=p.name?totalAllocOf(p):0;
   const rows=[];
+  if(!open && (p.matricule||'').trim()) rows.push(['ID / matricule', esc(p.matricule)]);
   rows.push(['Filière', p.side==='produit'?'Produit':'Tech']);
   rows.push(['Localisation', p.loc==='FR'?'Hub · FR':p.loc==='Maroc'?'COE · Maroc':'—']);
   if(open){ rows.push(['N° de demande', p.reqId?('#'+esc(p.reqId)):'Non renseigné']); }
@@ -2268,14 +2302,14 @@ window.addEventListener('resize',()=>apply());
 /* ---------------- Focus / mise en évidence de catégories ---------------- */
 let hlMode=null, _hlNameDisp='';
 const HL_LABELS={open:'Postes à pourvoir',filled:'Postes pourvus',temp:'Missions TEMP',over:'Sur-alloués','side:produit':'Produit','side:tech':'Tech','loc:FR':'Hub · FR','loc:Maroc':'COE · Maroc'};
-function hlLabelOf(m){ if(!m)return 'Focus'; if(m.indexOf('name:')===0)return _hlNameDisp||'Recherche'; if(m.indexOf('fam:')===0)return famLabel(m.slice(4)); return HL_LABELS[m]||'Focus'; }
+function hlLabelOf(m){ if(!m)return 'Focus'; if(m.indexOf('etp:')===0)return _hlNameDisp||'Recherche'; if(m.indexOf('fam:')===0)return famLabel(m.slice(4)); return HL_LABELS[m]||'Focus'; }
 function hlMatch(p){ const m=hlMode; if(!m)return true;
   if(m==='open')return isOpen(p); if(m==='filled')return !!p.name; if(m==='temp')return isTemp(p);
   if(m==='over')return !!p.name && totalAllocOf(p)>100;
   if(m==='side:produit')return p.side==='produit'; if(m==='side:tech')return p.side==='tech';
   if(m==='loc:FR')return p.loc==='FR'; if(m==='loc:Maroc')return p.loc==='Maroc';
   if(m.indexOf('fam:')===0)return famOfRole(p.role)===m.slice(4);
-  if(m.indexOf('name:')===0)return (p.name||'').trim().toLowerCase()===m.slice(5);
+  if(m.indexOf('etp:')===0)return etpKey(p)===m.slice(4);
   return true;
 }
 function hlCount(m){ const save=hlMode; hlMode=m; let n=0; allPersons().forEach(p=>{ if(hlMatch(p))n++; }); hlMode=save; return n; }
@@ -2302,10 +2336,10 @@ function hsNorm(s){ return (s||'').toString().toLowerCase().normalize('NFD').rep
 function hsHighlight(text,q){ if(!q)return esc(text); const t=text||'',nt=hsNorm(t),nq=hsNorm(q); const i=nt.indexOf(nq); if(i<0)return esc(t); return esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length)); }
 function searchPersons(q){
   const map={};
-  allPersons().forEach(p=>{ if(!p.name)return; const k=p.name.trim().toLowerCase(); if(!map[k])map[k]={name:p.name,side:p.side,roles:new Set(),count:0}; map[k].roles.add(p.role||'—'); map[k].count++; });
-  let arr=Object.keys(map).map(k=>({key:k,name:map[k].name,side:map[k].side,roles:[...map[k].roles],count:map[k].count}));
+  allPersons().forEach(p=>{ const k=etpKey(p); if(!k||!p.name)return; if(!map[k])map[k]={key:k,name:p.name,matricule:p.matricule||'',side:p.side,roles:new Set(),count:0}; map[k].roles.add(p.role||'—'); map[k].count++; });
+  let arr=Object.values(map).map(m=>({key:m.key,name:m.name,matricule:m.matricule,side:m.side,roles:[...m.roles],count:m.count}));
   const nq=hsNorm(q);
-  if(nq) arr=arr.filter(x=>hsNorm(x.name).includes(nq)||x.roles.some(r=>hsNorm(r).includes(nq)));
+  if(nq) arr=arr.filter(x=>hsNorm(x.name).includes(nq)||hsNorm(x.matricule).includes(nq)||x.roles.some(r=>hsNorm(r).includes(nq)));
   arr.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
   return arr.slice(0,10);
 }
@@ -2317,18 +2351,18 @@ function renderSearchDrop(q){
   drop.classList.add('open');
 }
 function centerOnPerson(key){
-  const el=[...document.querySelectorAll('#canvas .card[data-pid],#canvas .mini[data-pid]')].find(e=>{ const p=pmap[e.dataset.pid]; return p&&p.name&&p.name.trim().toLowerCase()===key; });
+  const el=[...document.querySelectorAll('#canvas .card[data-pid],#canvas .mini[data-pid]')].find(e=>{ const p=pmap[e.dataset.pid]; return p&&etpKey(p)===key; });
   if(!el)return;
   const vp=viewport.getBoundingClientRect(), r=el.getBoundingClientRect();
   tx+=(vp.left+vp.width/2)-(r.left+r.width/2); ty+=(vp.top+vp.height/2)-(r.top+r.height/2); apply();
 }
 function pickSearch(x){
-  _hlNameDisp=x.name; hlMode='name:'+x.key; applyHighlight();
+  _hlNameDisp=x.name; hlMode='etp:'+x.key; applyHighlight();
   $('#hSearchInput').value=x.name; $('#hSearch').classList.add('has-val');
   $('#hSearchDrop').classList.remove('open');
   centerOnPerson(x.key);
 }
-function clearSearch(){ $('#hSearchInput').value=''; $('#hSearch').classList.remove('has-val'); $('#hSearchDrop').classList.remove('open'); if(hlMode&&hlMode.indexOf('name:')===0){ hlMode=null; _hlNameDisp=''; applyHighlight(); } }
+function clearSearch(){ $('#hSearchInput').value=''; $('#hSearch').classList.remove('has-val'); $('#hSearchDrop').classList.remove('open'); if(hlMode&&hlMode.indexOf('etp:')===0){ hlMode=null; _hlNameDisp=''; applyHighlight(); } }
 const hsInput=$('#hSearchInput');
 hsInput.addEventListener('input',()=>{ const v=hsInput.value; $('#hSearch').classList.toggle('has-val',!!v); renderSearchDrop(v); });
 hsInput.addEventListener('focus',()=>{ renderSearchDrop(hsInput.value); });
@@ -2832,10 +2866,10 @@ function poolPersonHTML(p){
    un « duplicata » virtuel du % restant, glissable pour affecter le reste. */
 function buildRemainders(){
   computeAllocByName();
-  const byName={};
-  allPersons().forEach(p=>{ if(p.name && p.allocMode==='part'){ const k=p.name.trim().toLowerCase(); if(!byName[k]) byName[k]=p; } });
+  const byKey={};
+  allPersons().forEach(p=>{ const k=etpKey(p); if(k && p.name && p.allocMode==='part'){ if(!byKey[k]) byKey[k]=p; } });
   const out=[];
-  Object.keys(byName).forEach(k=>{ const p=byName[k]; const total=_allocByName[k]||0; const rem=100-total; if(rem>0){ out.push({ pid:'rem_'+k.replace(/[^a-z0-9]/g,'_'), _rem:true, name:p.name, role:p.role, side:p.side, loc:p.loc, alloc:rem, allocMode:'part', status:'Occupé', temp:false, tempUntil:'' }); } });
+  Object.keys(byKey).forEach(k=>{ const p=byKey[k]; const total=_allocByName[k]||0; const rem=100-total; if(rem>0){ out.push({ pid:'rem_'+k.replace(/[^a-z0-9]/g,'_'), _rem:true, firstName:p.firstName, lastName:p.lastName, matricule:p.matricule, name:p.name, role:p.role, side:p.side, loc:p.loc, alloc:rem, allocMode:'part', status:'Occupé', temp:false, tempUntil:'' }); } });
   return out;
 }
 function remainderPersonHTML(r){
@@ -2920,14 +2954,18 @@ function rowToPerson(row){
   const prenom=pickField(row,['prenom','firstname','givenname']);
   const nom=pickField(row,['nom','lastname','surname','familyname']);
   let name=pickField(row,['name','nomcomplet','fullname','collaborateur','personne','identite']);
-  if(!name) name=[prenom,nom].filter(Boolean).join(' ').trim();
+  const matricule=pickField(row,['matricule','id','identifiant','employeeid','trigramme','uid','numero']);
   const role=pickField(row,['role','poste','fonction','job','jobtitle','title','metier','intitule','profil']);
   let loc=mapLoc(pickField(row,['hub','coe','site','lieu','localisation','location','ville','pays','country','bureau','entite']));
   const statusRaw=pickField(row,['statut','status','etat']);
   const tempRaw=pickField(row,['temp','temporaire','mission','tempsplein']);
   const tempUntil=pickField(row,['jusqua','tempuntil','findetemp','datefin','until']);
   const allocRaw=pickField(row,['allocation','alloc','tauxdalloc','pourcentage','pct','tempsdetravail','taux']);
-  const p=person(role||'Ressource',guessSide(role),name,loc,'',tempUntil);
+  const p=person(role||'Ressource',guessSide(role),'',loc,'',tempUntil);
+  // Identité : colonnes Prénom/Nom si présentes, sinon découpage du nom complet
+  if(prenom||nom){ p.firstName=fmtFirst(prenom); p.lastName=fmtLast(nom); }
+  else { const s=splitFullName(name); p.firstName=s.first; p.lastName=s.last; }
+  p.matricule=matricule; syncName(p); p.status=p.name?'Occupé':'Ouvert';
   if(/temp/i.test(statusRaw)||/oui|yes|true|temp|1/i.test(tempRaw)){ p.temp=true; p.tempUntil=tempUntil||''; }
   const a=parseInt(String(allocRaw).replace('%','').trim(),10);
   if(!isNaN(a)&&a>0){ p.alloc=Math.max(0,Math.min(300,a)); p.allocMode=a===100?'full':'part'; }
@@ -2936,12 +2974,12 @@ function rowToPerson(row){
 function downloadTemplate(){
   if(typeof XLSX==='undefined'){ toast('Lecteur Excel non chargé (réseau ?)'); return; }
   const rows=[
-    {'Prénom':'Alice','Nom':'Martin','Rôle':'Frontend Engineer','Localisation':'Hub FR','Allocation':100,'TEMP':'non'},
-    {'Prénom':'Yassine','Nom':'El Amrani','Rôle':'Backend Engineer','Localisation':'COE Maroc','Allocation':80,'TEMP':'oui'},
-    {'Prénom':'','Nom':'','Rôle':'Data Analyst','Localisation':'','Allocation':100,'TEMP':'non'}
+    {'Prénom':'Alice','Nom':'Martin','Matricule':'EMP-001','Rôle':'Frontend Engineer','Localisation':'Hub FR','Allocation':100,'TEMP':'non'},
+    {'Prénom':'Yassine','Nom':'El Amrani','Matricule':'EMP-002','Rôle':'Backend Engineer','Localisation':'COE Maroc','Allocation':80,'TEMP':'oui'},
+    {'Prénom':'','Nom':'','Matricule':'','Rôle':'Data Analyst','Localisation':'','Allocation':100,'TEMP':'non'}
   ];
-  const ws=XLSX.utils.json_to_sheet(rows,{header:['Prénom','Nom','Rôle','Localisation','Allocation','TEMP']});
-  ws['!cols']=[{wch:14},{wch:16},{wch:22},{wch:14},{wch:12},{wch:8}];
+  const ws=XLSX.utils.json_to_sheet(rows,{header:['Prénom','Nom','Matricule','Rôle','Localisation','Allocation','TEMP']});
+  ws['!cols']=[{wch:14},{wch:16},{wch:12},{wch:22},{wch:14},{wch:12},{wch:8}];
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Ressources');
   XLSX.writeFile(wb,'modele-squadbuilder.xlsx');
   toast('Modèle Excel téléchargé');
@@ -2950,16 +2988,16 @@ $('#templateBtn').onclick=downloadTemplate;
 function fullKey(name){ return (name||'').trim().toLowerCase().replace(/\s+/g,' '); }
 function importPeopleFromRows(rows){
   const parsed=rows.map(rowToPerson);
-  // Unicité sur nom+prénom : on ignore les profils déjà présents (orga OU vivier)
+  // Unicité sur l'identité ETP (matricule sinon Prénom+NOM) : on ignore les doublons (orga OU vivier)
   const existing=new Set();
-  allPersons().forEach(p=>{ if(p.name)existing.add(fullKey(p.name)); });
-  (state.pool||[]).forEach(p=>{ if(p.name)existing.add(fullKey(p.name)); });
+  allPersons().forEach(p=>{ const k=etpKey(p); if(k)existing.add(k); });
+  (state.pool||[]).forEach(p=>{ const k=etpKey(p); if(k)existing.add(k); });
   const added=[], dupes=[], empties=[]; const seen=new Set();
   parsed.forEach(p=>{
     const hasContent=p.name||(p.role&&p.role!=='Ressource');
     if(!hasContent){ empties.push(p); return; }
-    if(p.name){
-      const k=fullKey(p.name);
+    const k=etpKey(p);
+    if(k){
       if(existing.has(k)||seen.has(k)){ dupes.push(p); return; }
       seen.add(k);
     }
@@ -3078,15 +3116,16 @@ document.addEventListener('drop',e=>{
     dragPid=null;
     if(t.type==='pool'||t.type==='trash'){ return; }
     if(block && !roleAllowedInBlock(src.role,block)){ const bl=(BLOCK_TYPES.find(b=>b.key===block)||{}).label||block; toast('« '+(src.role||'Ce rôle')+' » n\'est pas autorisé dans « '+bl+' »'); return; }
-    if(t.type==='fill'){ const post=pmap[t.pid]; if(post){ post.name=src.name; post.loc=src.loc; post.alloc=src.alloc; post.allocMode='part'; post.status='Occupé'; } }
-    else { const np=reg(person(src.role,src.side,src.name,src.loc)); np.alloc=src.alloc; np.allocMode='part'; np.status='Occupé';
-      if(t.type==='leads'){ const c=containerByKind(t.lk,t.li); if(c){ c.leads=c.leads||[]; c.leads.push(np); } }
-      else if(t.type==='squad'){ const sq=findSquad(t.squad); if(sq){ np.side=(np.side==='produit'||np.side==='tech')?np.side:guessSide(np.role); sq.members.push(np); } }
-      else if(t.type==='cell'){ const c=findCell(t.cell); if(c){ c.members.push(np); } }
+    let affectedR=null;
+    if(t.type==='fill'){ const post=pmap[t.pid]; if(post){ post.firstName=src.firstName; post.lastName=src.lastName; post.matricule=src.matricule; syncName(post); post.loc=src.loc; post.alloc=src.alloc; post.allocMode='part'; post.status='Occupé'; post.reqId=''; affectedR=post; } }
+    else { const np=reg(person(src.role,src.side,src.name,src.loc)); np.firstName=src.firstName; np.lastName=src.lastName; np.matricule=src.matricule; syncName(np); np.alloc=src.alloc; np.allocMode='part'; np.status='Occupé';
+      if(t.type==='leads'){ const c=containerByKind(t.lk,t.li); if(c){ c.leads=c.leads||[]; c.leads.push(np); affectedR=np; } }
+      else if(t.type==='squad'){ const sq=findSquad(t.squad); if(sq){ np.side=(np.side==='produit'||np.side==='tech')?np.side:guessSide(np.role); sq.members.push(np); affectedR=np; } }
+      else if(t.type==='cell'){ const c=findCell(t.cell); if(c){ c.members.push(np); affectedR=np; } }
       else { return; }
     }
     toast(src.name+' — '+src.alloc+'% affectés');
-    commit(); return;
+    commit(); if(affectedR)warnEtp(affectedR); return;
   }
   if(block && src && !roleAllowedInBlock(src.role,block)){
     const bl=(BLOCK_TYPES.find(b=>b.key===block)||{}).label||block;
@@ -3094,22 +3133,23 @@ document.addEventListener('drop',e=>{
   }
   const p=detachPerson(dragPid); dragPid=null;
   if(!p)return;
+  let affected=null;
   if(t.type==='fill'){
     const post=pmap[t.pid];
-    if(post){ post.name=p.name; if(p.loc)post.loc=p.loc; post.temp=isTemp(p); post.tempUntil=post.temp?(p.tempUntil||''):''; post.status=p.name?'Occupé':'Ouvert'; }
+    if(post){ post.firstName=p.firstName; post.lastName=p.lastName; post.matricule=p.matricule; syncName(post); if(p.loc)post.loc=p.loc; post.temp=isTemp(p); post.tempUntil=post.temp?(p.tempUntil||''):''; post.status=post.name?'Occupé':'Ouvert'; if(post.name)post.reqId=''; affected=post; }
   } else if(t.type==='leads'){
-    const c=containerByKind(t.lk,t.li); if(c){ c.leads=c.leads||[]; p.status=p.name?'Occupé':'Ouvert'; c.leads.push(p); }
+    const c=containerByKind(t.lk,t.li); if(c){ c.leads=c.leads||[]; p.status=p.name?'Occupé':'Ouvert'; c.leads.push(p); affected=p; }
   } else if(t.type==='squad'){
-    const sq=findSquad(t.squad); if(sq){ p.side=(p.side==='produit'||p.side==='tech')?p.side:guessSide(p.role); p.status=p.name?'Occupé':'Ouvert'; sq.members.push(p); }
+    const sq=findSquad(t.squad); if(sq){ p.side=(p.side==='produit'||p.side==='tech')?p.side:guessSide(p.role); p.status=p.name?'Occupé':'Ouvert'; sq.members.push(p); affected=p; }
   } else if(t.type==='cell'){
-    const c=findCell(t.cell); if(c){ if(p.alloc==null)p.alloc=100; p.status=p.name?'Occupé':'Ouvert'; c.members.push(p); }
+    const c=findCell(t.cell); if(c){ if(p.alloc==null)p.alloc=100; p.status=p.name?'Occupé':'Ouvert'; c.members.push(p); affected=p; }
   } else if(t.type==='pool'){
     state.pool=state.pool||[]; state.pool.push(p);
     toast((p.name||'Ressource')+' remis « à affecter »');
   } else if(t.type==='trash'){
     toast((p.name||'Ressource')+' retiré de l\'organigramme');
   }
-  commit();
+  commit(); if(affected)warnEtp(affected);
 });
 
 /* ---------------- Créateur de squad ---------------- */
@@ -3229,12 +3269,12 @@ function createSquad(){
   const sq=newSquad(name,$('#c-desc').value.trim(),false);
   if(wantPm){
     const pm=person('Product Manager','produit');
-    pm.name=$('#c-pm-name').value.trim(); pm.loc=$('#c-pm-loc').dataset.v||''; pm.status=pm.name?'Occupé':'Ouvert';
+    setPersonName(pm,$('#c-pm-name').value.trim()); pm.loc=$('#c-pm-loc').dataset.v||'';
     sq.leads.push(pm);
   }
   if(wantLead){
     const tl=person('Tech Lead','tech');
-    tl.name=$('#c-lead-name').value.trim(); tl.loc=$('#c-lead-loc').dataset.v||''; tl.status=tl.name?'Occupé':'Ouvert';
+    setPersonName(tl,$('#c-lead-name').value.trim()); tl.loc=$('#c-lead-loc').dataset.v||'';
     sq.leads.push(tl);
   }
   rndDraft.forEach(m=>{ if(m.role.trim()||m.name.trim()){ const st=m.status||( m.name.trim()?'Occupé':'Ouvert'); sq.members.push(person(m.role.trim()||'Membre',m.side||'tech',m.name.trim(),m.loc||'',st,m.tempUntil||'')); }});
