@@ -88,7 +88,10 @@ Deno.serve(async (req) => {
 
     // action === "create"
     const password = body.password || genPassword();
-    const { error: cErr } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+    const { error: cErr } = await admin.auth.admin.createUser({
+      email, password, email_confirm: true,
+      user_metadata: { must_change_password: true },
+    });
     // Si le compte existe déjà, on continue quand même pour (ré)attribuer l'accès
     if (cErr && !/already been registered|already exists/i.test(cErr.message)) {
       return json({ error: cErr.message }, 400);

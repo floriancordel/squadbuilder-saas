@@ -574,6 +574,17 @@
   #roleDlg.open,#shareDlg.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
   #shareOv{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:110;opacity:0;pointer-events:none;transition:.16s}
   #shareOv.open{opacity:1;pointer-events:auto}
+  #pwdOv{position:fixed;inset:0;background:rgba(17,24,39,.62);z-index:120;opacity:0;pointer-events:none;transition:.16s}
+  #pwdOv.open{opacity:1;pointer-events:auto}
+  #pwdDlg{position:fixed;top:50%;left:50%;transform:translate(-50%,-46%) scale(.97);width:420px;max-width:94vw;background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);z-index:122;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:.18s cubic-bezier(.4,0,.2,1)}
+  #pwdDlg.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  #pwdDlg .rd-body{padding:18px 20px}
+  #pwdDlg .field{margin-bottom:13px}
+  #pwdDlg .field label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
+  #pwdDlg .field input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--ink)}
+  #pwdDlg .field input:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
+  .pw-err{font-size:12px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;display:none}
+  .pw-err.show{display:block}
   #importOv{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:110;opacity:0;pointer-events:none;transition:.16s}
   #importOv.open{opacity:1;pointer-events:auto}
   #importDlg{position:fixed;top:50%;left:50%;transform:translate(-50%,-46%) scale(.97);width:500px;max-width:94vw;max-height:82vh;background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);z-index:112;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:.18s cubic-bezier(.4,0,.2,1)}
@@ -995,6 +1006,17 @@
   <div class="rd-foot"><button class="btn primary" id="imp-ok" style="justify-content:center">Terminé</button></div>
 </div>
 
+<div id="pwdOv"></div>
+<div id="pwdDlg" role="dialog" aria-modal="true">
+  <div class="rd-head"><div class="rd-ic">🔒</div><div><h3>Choisis ton mot de passe</h3><div class="rd-sub">Première connexion — définis ton mot de passe personnel</div></div></div>
+  <div class="rd-body">
+    <div class="field"><label>Nouveau mot de passe</label><input id="pw-new" type="password" placeholder="Au moins 8 caractères" autocomplete="new-password"></div>
+    <div class="field"><label>Confirmer le mot de passe</label><input id="pw-confirm" type="password" placeholder="Retape le mot de passe" autocomplete="new-password"></div>
+    <div class="pw-err" id="pw-err"></div>
+  </div>
+  <div class="rd-foot"><button class="btn primary" id="pw-save" style="flex:1;justify-content:center">Enregistrer et continuer</button></div>
+</div>
+
 <input type="file" id="fileInput" accept=".json" style="display:none">
 <input type="file" id="peopleInput" accept=".xlsx,.xls,.csv" style="display:none">
 <datalist id="roleList"></datalist>
@@ -1156,9 +1178,30 @@ async function fetchMembership(orgId, email){
     const m=data&&data[0]; return {role:(m&&m.role)||'owner', perms:(m&&m.permissions)||null}; }
   catch(_){ return {role:'owner',perms:null}; }
 }
+function forcePasswordChange(){
+  return new Promise(resolve=>{
+    $('#pw-new').value=''; $('#pw-confirm').value=''; $('#pw-err').classList.remove('show');
+    $('#pwdOv').classList.add('open'); $('#pwdDlg').classList.add('open');
+    setTimeout(()=>$('#pw-new').focus(),60);
+    const showErr=m=>{ const e=$('#pw-err'); e.textContent=m; e.classList.add('show'); };
+    $('#pw-save').onclick=async()=>{
+      const a=$('#pw-new').value, b=$('#pw-confirm').value;
+      if(a.length<8){ showErr('Le mot de passe doit faire au moins 8 caractères.'); return; }
+      if(a!==b){ showErr('Les deux mots de passe ne correspondent pas.'); return; }
+      const btn=$('#pw-save'); btn.disabled=true; btn.textContent='Enregistrement…';
+      const { error } = await sb.auth.updateUser({ password:a, data:{ must_change_password:false } });
+      btn.disabled=false; btn.textContent='Enregistrer et continuer';
+      if(error){ showErr(error.message||'Erreur lors du changement de mot de passe.'); return; }
+      $('#pwdOv').classList.remove('open'); $('#pwdDlg').classList.remove('open');
+      toast('Mot de passe mis à jour'); resolve();
+    };
+    $('#pw-confirm').onkeydown=e=>{ if(e.key==='Enter')$('#pw-save').click(); };
+  });
+}
 async function onLogin(user) {
   $('#loginScreen').classList.add('hidden');
   $('#userBar').style.display = 'flex';
+  if(user.user_metadata && user.user_metadata.must_change_password){ await forcePasswordChange(); }
   currentOrg = await getMyOrg();
   if (currentOrg && currentOrg.data && currentOrg.data.direction) {
     state = currentOrg.data;
