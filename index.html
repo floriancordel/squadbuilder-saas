@@ -204,6 +204,9 @@
        pour ne pas confondre avec le statut « à pourvoir » ambré) ---------- */
   .card.isover,.mini.isover,.cres.isover{border-color:#f87171}
   .cres .alloc.over{background:#fee2e2;color:#b91c1c}
+  /* Pastille d'alerte sur-allocation (haut-droite de chaque carte) */
+  .over-badge{position:absolute;top:5px;right:5px;width:16px;height:16px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:1;display:flex;align-items:center;justify-content:center;z-index:4;box-shadow:0 1px 3px rgba(220,38,38,.55);cursor:help}
+  .card.isover .role,.mini.isover .m-role,.cres.isover .cr-role{padding-right:16px}
 
   /* ---------- Rangée de leads dynamique + ajout de rôle ---------- */
   .leads-row{display:flex;gap:16px;justify-content:center;flex-wrap:nowrap;align-items:stretch}
@@ -536,6 +539,13 @@
   .pool-group .pg-title .pg-n{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--tech);background:var(--tech-soft);border-radius:20px;padding:1px 8px}
   .pool-group .pg-body{padding:8px}
   .pool-group.coll .pg-body{display:none}
+  /* Groupe « Affectation partielle » (temps restants) */
+  .pool-group.rem-group{border-color:#c7d2fe;background:#f5f6ff}
+  .pool-group.rem-group .pg-title{background:#e9ecff;color:#3730a3}
+  .pool-group.rem-group .pg-title:hover{background:#dfe3ff}
+  .pool-group.rem-group .pg-title .pg-n{color:#4338ca;background:#e0e7ff}
+  .pcard.rem{border-left-color:#4338ca;background:linear-gradient(180deg,#f7f8ff,#fff);cursor:grab}
+  .pcard.rem .pc-name{color:var(--ink)}
   .pcard{border:1px solid var(--border);border-left:3px solid var(--tech);border-radius:9px;padding:7px 9px 7px 8px;margin-bottom:6px;background:#fff;cursor:grab;box-shadow:var(--shadow);transition:.12s;user-select:none;display:flex;align-items:center;gap:8px}
   .pcard:last-child{margin-bottom:0}
   .pcard.produit{border-left-color:var(--produit)}
@@ -1500,11 +1510,14 @@ function allocChip(p){ // % affiché si partiel ou surchargé
 }
 // Rangée de chips : on filtre les vides pour un alignement à gauche cohérent
 function chipsRow(p,cls){ const parts=[locChip(p),openChip(p),tempChip(p),allocChip(p)].filter(Boolean); return `<div class="${cls}">${parts.join('')}</div>`; }
+// Pastille d'alerte de sur-allocation, en haut à droite de CHAQUE occurrence de la personne
+function overBadge(p){ if(!(p.name && totalAllocOf(p)>100)) return ''; return `<span class="over-badge" title="${esc(p.name)} : ${totalAllocOf(p)}% cumulés — dépasse 100% (${OVER_TXT})">!</span>`; }
+const OVER_TXT='cumul de temps partiels';
 function pClasses(p){ return `${p.side} ${isOpen(p)?'isopen':''} ${isTemp(p)?'istemp':''} ${p.name&&totalAllocOf(p)>100?'isover':''}`; }
 function cardHTML(p){
   reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
   return `<div class="card ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
-    <div class="accent"></div>
+    <div class="accent"></div>${overBadge(p)}
     <div class="role"><span class="lead-mark">◆</span>${esc(p.role)}</div>
     <div class="name ${open?'open':''}">${esc(name)}</div>
     ${chipsRow(p,'foot')}
@@ -1513,7 +1526,7 @@ function cardHTML(p){
 function miniHTML(p){
   reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
-    <div class="accent"></div>
+    <div class="accent"></div>${overBadge(p)}
     <div class="m-role">${esc(p.role)}</div>
     <div class="m-name ${open?'open':''}">${esc(name)}</div>
     ${chipsRow(p,'foot')}
@@ -1562,7 +1575,7 @@ function addToolsHTML(ctxHead,showTribu,always){
 function resourceMiniHTML(p){
   reg(p); const open=isOpen(p); const name=open?OPEN_LABEL:p.name;
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
-    <div class="accent"></div>
+    <div class="accent"></div>${overBadge(p)}
     <div class="m-role">${esc(p.role)}</div>
     <div class="m-name ${open?'open':''}">${esc(name)}</div>
     ${chipsRow(p,'foot')}
@@ -2412,12 +2425,37 @@ function poolPersonHTML(p){
     <span class="pc-edit" aria-hidden="true">✎</span>
   </div>`;
 }
+/* Temps restants : pour chaque personne à temps partiel dont le cumul < 100%,
+   un « duplicata » virtuel du % restant, glissable pour affecter le reste. */
+function buildRemainders(){
+  computeAllocByName();
+  const byName={};
+  allPersons().forEach(p=>{ if(p.name && p.allocMode==='part'){ const k=p.name.trim().toLowerCase(); if(!byName[k]) byName[k]=p; } });
+  const out=[];
+  Object.keys(byName).forEach(k=>{ const p=byName[k]; const total=_allocByName[k]||0; const rem=100-total; if(rem>0){ out.push({ pid:'rem_'+k.replace(/[^a-z0-9]/g,'_'), _rem:true, name:p.name, role:p.role, side:p.side, loc:p.loc, alloc:rem, allocMode:'part', status:'Occupé', temp:false, tempUntil:'' }); } });
+  return out;
+}
+function remainderPersonHTML(r){
+  reg(r);
+  return `<div class="pcard rem ${r.side}" draggable="true" data-drag="${r.pid}" title="Temps restant de ${esc(r.name)} — glisser pour affecter les ${r.alloc}% disponibles">
+    <span class="pc-grip">⠿</span>
+    <div class="pc-main">
+      <div class="pc-name">${esc(r.name)}</div>
+      <div class="pc-role">${esc(r.role||'—')}</div>
+      <div class="pc-foot"><span class="chip alloc">${r.alloc}% dispo</span></div>
+    </div>
+  </div>`;
+}
 function renderPool(){
   const body=$('#poolBody'); if(!body) return;
   const pool=state.pool||[];
   $('#poolCount').textContent=pool.length;
   const dz=`<div class="pool-drop" id="poolDrop"><span class="pd-ic">📥</span><b>Déposez un fichier Excel ou CSV</b><br>ou cliquez pour parcourir<br><span style="font-size:11px;opacity:.75">Modèle dispo via « ⬇️ Modèle »</span></div>`;
-  if(!pool.length){ body.innerHTML=dz+`<div class="pool-empty">Le vivier est vide.<br>Importez un fichier ou ajoutez des personnes.</div>`; wirePoolDrop(); return; }
+  // Groupe « Affectation partielle » (temps restants), au sommet du vivier
+  let rems=buildRemainders();
+  if(poolSide!=='all') rems=rems.filter(r=>r.side===poolSide);
+  const remColl=poolCollapsed.has('__rem__');
+  const remHTML=rems.length?`<div class="pool-group rem-group ${remColl?'coll':''}"><div class="pg-title rem" data-pg="__rem__"><span class="pg-chev">▼</span>⏳ Affectation partielle<span class="pg-n">${rems.length}</span></div><div class="pg-body">${rems.map(remainderPersonHTML).join('')}</div></div>`:'';
   const f=poolFilter.trim().toLowerCase();
   let filtered=pool;
   if(poolSide!=='all') filtered=filtered.filter(p=>p.side===poolSide);
@@ -2425,11 +2463,12 @@ function renderPool(){
   const groups={};
   filtered.forEach(p=>{ const k=p.role||'Sans rôle'; (groups[k]=groups[k]||[]).push(p); });
   const keys=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'fr'));
-  const inner=keys.length?keys.map(k=>{ const coll=poolCollapsed.has(k); return `<div class="pool-group ${coll?'coll':''}"><div class="pg-title" data-pg="${esc(k)}"><span class="pg-chev">▼</span>${esc(k)}<span class="pg-n">${groups[k].length}</span></div><div class="pg-body">${groups[k].map(poolPersonHTML).join('')}</div></div>`; }).join(''):`<div class="pool-empty">Aucun résultat.</div>`;
-  body.innerHTML=dz+inner;
+  const inner=keys.length?keys.map(k=>{ const coll=poolCollapsed.has(k); return `<div class="pool-group ${coll?'coll':''}"><div class="pg-title" data-pg="${esc(k)}"><span class="pg-chev">▼</span>${esc(k)}<span class="pg-n">${groups[k].length}</span></div><div class="pg-body">${groups[k].map(poolPersonHTML).join('')}</div></div>`; }).join(''):(pool.length?`<div class="pool-empty">Aucun résultat.</div>`:'');
+  const empty=(!pool.length&&!rems.length)?`<div class="pool-empty">Le vivier est vide.<br>Importez un fichier ou ajoutez des personnes.</div>`:'';
+  body.innerHTML=dz+remHTML+inner+empty;
   wirePoolDrop();
 }
-$('#poolBody').addEventListener('click',e=>{ const t=e.target.closest('[data-pg]'); if(t){ const k=t.dataset.pg; poolCollapsed.has(k)?poolCollapsed.delete(k):poolCollapsed.add(k); renderPool(); return; } const pc=e.target.closest('.pcard'); if(pc){ const p=pmap[pc.dataset.drag]; if(p) openEditor(p,'person'); } });
+$('#poolBody').addEventListener('click',e=>{ const t=e.target.closest('[data-pg]'); if(t){ const k=t.dataset.pg; poolCollapsed.has(k)?poolCollapsed.delete(k):poolCollapsed.add(k); renderPool(); return; } const pc=e.target.closest('.pcard'); if(pc&&!pc.classList.contains('rem')){ const p=pmap[pc.dataset.drag]; if(p) openEditor(p,'person'); } });
 $('#poolFilters').addEventListener('click',e=>{ const b=e.target.closest('[data-pf]'); if(!b)return; poolSide=b.dataset.pf; $('#poolFilters').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.pf===poolSide)); renderPool(); });
 $('#templateBtn2').onclick=()=>downloadTemplate();
 function wirePoolDrop(){
@@ -2564,6 +2603,21 @@ document.addEventListener('drop',e=>{
   e.preventDefault(); clearDropFx();
   const block=blockOfDropType(t);
   const src=pmap[dragPid];
+  // Jeton « temps restant » : on ne détache rien, on crée une nouvelle affectation partielle
+  if(src && src._rem){
+    dragPid=null;
+    if(t.type==='pool'||t.type==='trash'){ return; }
+    if(block && !roleAllowedInBlock(src.role,block)){ const bl=(BLOCK_TYPES.find(b=>b.key===block)||{}).label||block; toast('« '+(src.role||'Ce rôle')+' » n\'est pas autorisé dans « '+bl+' »'); return; }
+    if(t.type==='fill'){ const post=pmap[t.pid]; if(post){ post.name=src.name; post.loc=src.loc; post.alloc=src.alloc; post.allocMode='part'; post.status='Occupé'; } }
+    else { const np=reg(person(src.role,src.side,src.name,src.loc)); np.alloc=src.alloc; np.allocMode='part'; np.status='Occupé';
+      if(t.type==='leads'){ const c=containerByKind(t.lk,t.li); if(c){ c.leads=c.leads||[]; c.leads.push(np); } }
+      else if(t.type==='squad'){ const sq=findSquad(t.squad); if(sq){ np.side=(np.side==='produit'||np.side==='tech')?np.side:guessSide(np.role); sq.members.push(np); } }
+      else if(t.type==='cell'){ const c=findCell(t.cell); if(c){ c.members.push(np); } }
+      else { return; }
+    }
+    toast(src.name+' — '+src.alloc+'% affectés');
+    commit(); return;
+  }
   if(block && src && !roleAllowedInBlock(src.role,block)){
     const bl=(BLOCK_TYPES.find(b=>b.key===block)||{}).label||block;
     toast('« '+(src.role||'Ce rôle')+' » n\'est pas autorisé dans « '+bl+' »'); dragPid=null; return;
