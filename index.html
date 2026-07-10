@@ -29,7 +29,7 @@
   button{font-family:inherit}
 
   /* ---------- Barre du haut ---------- */
-  header{display:flex;align-items:center;gap:14px;padding:9px 16px;background:var(--panel);border-bottom:1px solid var(--border);z-index:30;flex-wrap:wrap}
+  header{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:14px;padding:9px 16px;background:var(--panel);border-bottom:1px solid var(--border);z-index:30}
   .brand{display:flex;align-items:center;gap:9px}
   .brand .logo{width:26px;height:26px;border-radius:7px;overflow:hidden;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--produit),var(--tech));color:#fff;font-weight:800;font-size:14px}
   .brand .logo svg,.bm-head .logo svg{width:100%;height:100%;display:block;border-radius:inherit}
@@ -146,7 +146,7 @@
   .cres .alloc{font-size:10px;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:20px;padding:1px 6px;flex:0 0 auto}
   .cres .cr-role{font-size:10px;color:var(--muted);line-height:1.25;margin-top:1px}
   .cres .cr-loc{font-size:9.5px;color:var(--faint);display:flex;align-items:center;gap:3px;margin-top:3px}
-  .cres.isopen{border-style:dashed;border-color:var(--open-bd);background:var(--open-bg)}
+  .cres.isopen{border-style:dashed;border-color:#cbd5e1;background:#fcfcfd}
   .add-res{border:1px dashed var(--line);border-radius:8px;padding:6px;text-align:center;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;background:#fcfdff}
   .add-res:hover{border-color:#64748b;color:#475569;background:#f1f5f9}
   .act.cellbtn:hover{background:#64748b;border-color:#64748b}
@@ -184,8 +184,7 @@
   .card.produit .role{color:var(--produit)}
   .card.tech .role{color:var(--tech)}
   .card .role .lead-mark{font-size:8px;vertical-align:1px;margin-right:3px;opacity:.85}
-  .card.isopen,.mini.isopen{border-style:dashed;border-color:var(--open-bd);background:var(--open-bg)}
-  .card.isopen .role{color:var(--open)}
+  .card.isopen,.mini.isopen{border-style:dashed;border-color:#cbd5e1;background:#fcfcfd}
   .badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
   .badge.fr{background:var(--fr-bg);color:var(--fr-ink)}
   .badge.coe{background:var(--coe-bg);color:var(--coe-ink)}
@@ -452,9 +451,28 @@
 
   /* ---------- Header modernisé ---------- */
   header{gap:12px;flex-wrap:nowrap;min-height:52px;z-index:39}
-  .h-left{display:flex;align-items:center;gap:10px;flex:0 1 auto;min-width:0}
-  .h-right{display:flex;align-items:center;gap:10px;flex:0 0 auto}
-  .modesw{flex:0 0 auto;margin:0 auto}
+  .h-left{display:flex;align-items:center;gap:10px;min-width:0;justify-self:start;overflow:visible}
+  .h-right{display:flex;align-items:center;gap:10px;min-width:0;justify-self:end}
+  .modesw{flex:0 0 auto;justify-self:center}
+  /* Recherche d'une personne (header) */
+  .hsearch{position:relative;display:flex;align-items:center;gap:6px;background:#f2f4f7;border:1px solid var(--border);border-radius:9px;padding:5px 8px;flex:0 1 210px;min-width:78px}
+  .hsearch:focus-within{background:#fff;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
+  .hsearch .hs-ic{font-size:12px;opacity:.55;flex:0 0 auto}
+  .hsearch input{border:0;background:transparent;outline:none;font-size:12.5px;color:var(--ink);width:100%;min-width:0}
+  .hsearch .hs-clear{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;display:none;flex:0 0 auto;padding:0 2px}
+  .hsearch.has-val .hs-clear{display:block}
+  .hs-drop{position:absolute;top:calc(100% + 6px);left:0;min-width:260px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow-lg);padding:6px;z-index:60;max-height:340px;overflow:auto;display:none}
+  .hs-drop.open{display:block}
+  .hs-item{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;cursor:pointer}
+  .hs-item:hover,.hs-item.active{background:var(--tech-soft)}
+  .hs-item .hsi-dot{width:8px;height:8px;border-radius:3px;flex:0 0 auto}
+  .hs-item .hsi-main{min-width:0;flex:1}
+  .hs-item .hsi-name{font-size:12.5px;font-weight:650;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hs-item .hsi-sub{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hs-item .hsi-count{font-size:9.5px;font-weight:700;color:var(--tech);background:var(--tech-soft);border-radius:20px;padding:1px 6px;flex:0 0 auto}
+  .hs-item mark{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
+  .hs-empty{padding:12px;font-size:12px;color:var(--muted);text-align:center}
+  @media(max-width:820px){ .hsearch,.hsep-search{display:none} }
   /* Zoom flottant en bas à gauche */
   #zoomDock{position:fixed;left:16px;bottom:16px;z-index:36;display:flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:3px;box-shadow:var(--shadow-lg)}
   #zoomDock button{border:0;background:transparent;width:30px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--ink);line-height:1}
@@ -537,7 +555,7 @@
   .stats .st.alert{background:#fef2f2;border-color:#fecaca} .stats .st.alert b{color:#dc2626}
   .stats:hover .st{border-color:var(--line)}
   @media (max-width:1200px){.stats .st.opt{display:none}}
-  @media (max-width:900px){.stats{display:none}}
+  @media (max-width:1160px){.stats,.hsep-stats{display:none}}
 
   /* ---------- Zone profil ---------- */
   .profile-wrap{position:relative;flex:0 0 auto}
@@ -568,7 +586,7 @@
   body.mode-affect #viewport{width:calc(100% - 340px)}
   /* Immersion mode affectation : fond teinté à points + zones de drop visibles */
   body.mode-affect #viewport{background:radial-gradient(circle at 1px 1px, rgba(37,99,235,.10) 1.4px, transparent 0) 0 0/24px 24px, linear-gradient(180deg,#eaf1fe,#eef4fb)}
-  #affectHint{position:fixed;left:20px;bottom:20px;z-index:39;display:none;align-items:center;gap:9px;background:var(--tech);color:#fff;font-size:12.5px;font-weight:600;padding:9px 14px;border-radius:22px;box-shadow:var(--shadow-lg)}
+  #affectHint{position:fixed;left:calc(50% - 170px);transform:translateX(-50%);bottom:18px;z-index:35;display:none;align-items:center;gap:9px;background:var(--tech);color:#fff;font-size:12.5px;font-weight:600;padding:9px 14px;border-radius:22px;box-shadow:var(--shadow-lg)}
   body.mode-affect #affectHint{display:flex}
   #affectHint .dotpulse{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 0 rgba(255,255,255,.7);animation:pulse 1.6s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}70%{box-shadow:0 0 0 7px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
@@ -582,7 +600,7 @@
   .trash-dock{border-color:#fca5a5;color:#dc2626}
   .trash-dock.over{background:#fef2f2;border-style:solid;transform:translateY(-4px)}
   body.mode-affect .rnd-grid,body.mode-affect .cell-body{outline:1.5px dashed #b7cdf5;outline-offset:2px;border-radius:10px;transition:.12s}
-  body.mode-affect .card.isopen,body.mode-affect .mini.isopen{box-shadow:0 0 0 1.5px var(--open-bd)}
+  body.mode-affect .card.isopen,body.mode-affect .mini.isopen{box-shadow:0 0 0 1.5px #e2e8f0}
   body.mode-affect .bucket,body.mode-affect .cell,body.mode-affect .tribe{transition:box-shadow .15s}
   .pool-head{padding:15px 16px 12px;border-bottom:1px solid var(--border)}
   .pool-head .pt{display:flex;align-items:center;gap:8px}
@@ -988,8 +1006,15 @@
   <div class="h-left">
     <button class="iconbtn burger" id="burgerBtn" title="Menu" aria-label="Menu"><span></span><span></span><span></span></button>
     <div class="brand"><div class="logo" data-brandmark>S</div><h1>SquadBuilder</h1></div>
-    <div class="hsep"></div>
+    <div class="hsep hsep-stats"></div>
     <div class="stats" id="stats" title="Ouvrir le dashboard analytics"></div>
+    <div class="hsep hsep-search"></div>
+    <div class="hsearch" id="hSearch">
+      <span class="hs-ic">🔍</span>
+      <input id="hSearchInput" type="text" placeholder="Rechercher une personne…" autocomplete="off" spellcheck="false">
+      <button class="hs-clear" id="hSearchClear" title="Effacer">×</button>
+      <div class="hs-drop" id="hSearchDrop"></div>
+    </div>
   </div>
   <div class="modesw" id="modeSwitch">
     <button data-mode="edit" class="on" title="Consulter l'organigramme"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></span>Lecture</button>
@@ -1085,7 +1110,7 @@
 </div>
 
 <div id="viewport"><div id="canvas"></div></div>
-<div id="affectHint"><span class="dotpulse"></span>Mode Édition — glissez les ressources, déposez en bas pour retirer</div>
+<div id="affectHint"><span class="dotpulse"></span>Glissez pour affecter · déposez en bas pour retirer</div>
 <div id="dropTip"></div>
 <div id="dropDock">
   <div class="dock-zone pool-dock" data-dock="pool"><span class="dz-ic">📥</span><span class="dz-t">Remettre « à affecter »</span></div>
@@ -2220,15 +2245,16 @@ $('#zIn').onclick=()=>zoomBtn(1.2); $('#zOut').onclick=()=>zoomBtn(1/1.2); $('#z
 window.addEventListener('resize',()=>apply());
 
 /* ---------------- Focus / mise en évidence de catégories ---------------- */
-let hlMode=null;
+let hlMode=null, _hlNameDisp='';
 const HL_LABELS={open:'Postes à pourvoir',filled:'Postes pourvus',temp:'Missions TEMP',over:'Sur-alloués','side:produit':'Produit','side:tech':'Tech','loc:FR':'Hub · FR','loc:Maroc':'COE · Maroc'};
-function hlLabelOf(m){ if(!m)return 'Focus'; if(m.indexOf('fam:')===0)return famLabel(m.slice(4)); return HL_LABELS[m]||'Focus'; }
+function hlLabelOf(m){ if(!m)return 'Focus'; if(m.indexOf('name:')===0)return _hlNameDisp||'Recherche'; if(m.indexOf('fam:')===0)return famLabel(m.slice(4)); return HL_LABELS[m]||'Focus'; }
 function hlMatch(p){ const m=hlMode; if(!m)return true;
   if(m==='open')return isOpen(p); if(m==='filled')return !!p.name; if(m==='temp')return isTemp(p);
   if(m==='over')return !!p.name && totalAllocOf(p)>100;
   if(m==='side:produit')return p.side==='produit'; if(m==='side:tech')return p.side==='tech';
   if(m==='loc:FR')return p.loc==='FR'; if(m==='loc:Maroc')return p.loc==='Maroc';
   if(m.indexOf('fam:')===0)return famOfRole(p.role)===m.slice(4);
+  if(m.indexOf('name:')===0)return (p.name||'').trim().toLowerCase()===m.slice(5);
   return true;
 }
 function hlCount(m){ const save=hlMode; hlMode=m; let n=0; allPersons().forEach(p=>{ if(hlMatch(p))n++; }); hlMode=save; return n; }
@@ -2246,9 +2272,57 @@ function fillHlFamilies(){ const w=$('#hlFams'); if(!w)return; w.innerHTML=FAMIL
 function updateHlCounts(){ document.querySelectorAll('#hlPanel .hl-opt').forEach(b=>{ const n=hlCount(b.dataset.hl); let tag=b.querySelector('.hl-n'); if(!tag){ tag=document.createElement('span'); tag.className='hl-n'; b.appendChild(tag); } tag.textContent=n; }); }
 fillHlFamilies();
 $('#hlToggle').onclick=()=>{ const d=$('#hlDock'); const open=!d.classList.contains('open'); d.classList.toggle('open',open); if(open)updateHlCounts(); };
-$('#hlClear').onclick=()=>{ hlMode=null; applyHighlight(); };
+$('#hlClear').onclick=()=>{ hlMode=null; _hlNameDisp=''; const si=$('#hSearchInput'); if(si){ si.value=''; $('#hSearch').classList.remove('has-val'); } applyHighlight(); };
 $('#hlPanel').addEventListener('click',e=>{ const b=e.target.closest('.hl-opt'); if(!b)return; hlMode=(hlMode===b.dataset.hl)?null:b.dataset.hl; applyHighlight(); });
 document.addEventListener('click',e=>{ const d=$('#hlDock'); if(d&&d.classList.contains('open')&&!e.target.closest('#hlDock')) d.classList.remove('open'); });
+
+/* ---------------- Recherche d'une personne (header) ---------------- */
+function hsNorm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function hsHighlight(text,q){ if(!q)return esc(text); const t=text||'',nt=hsNorm(t),nq=hsNorm(q); const i=nt.indexOf(nq); if(i<0)return esc(t); return esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length)); }
+function searchPersons(q){
+  const map={};
+  allPersons().forEach(p=>{ if(!p.name)return; const k=p.name.trim().toLowerCase(); if(!map[k])map[k]={name:p.name,side:p.side,roles:new Set(),count:0}; map[k].roles.add(p.role||'—'); map[k].count++; });
+  let arr=Object.keys(map).map(k=>({key:k,name:map[k].name,side:map[k].side,roles:[...map[k].roles],count:map[k].count}));
+  const nq=hsNorm(q);
+  if(nq) arr=arr.filter(x=>hsNorm(x.name).includes(nq)||x.roles.some(r=>hsNorm(r).includes(nq)));
+  arr.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  return arr.slice(0,10);
+}
+let hsIdx=-1, hsList=[];
+function renderSearchDrop(q){
+  const drop=$('#hSearchDrop'); hsList=searchPersons(q); hsIdx=-1;
+  if(!hsList.length){ drop.innerHTML=`<div class="hs-empty">${q?'Aucune personne trouvée':'Tapez un nom…'}</div>`; drop.classList.add('open'); return; }
+  drop.innerHTML=hsList.map((x,i)=>`<div class="hs-item" data-i="${i}"><span class="hsi-dot" style="background:${x.side==='produit'?'var(--produit)':'var(--tech)'}"></span><div class="hsi-main"><div class="hsi-name">${hsHighlight(x.name,q)}</div><div class="hsi-sub">${esc(x.roles.join(' · '))}</div></div>${x.count>1?`<span class="hsi-count">×${x.count}</span>`:''}</div>`).join('');
+  drop.classList.add('open');
+}
+function centerOnPerson(key){
+  const el=[...document.querySelectorAll('#canvas .card[data-pid],#canvas .mini[data-pid]')].find(e=>{ const p=pmap[e.dataset.pid]; return p&&p.name&&p.name.trim().toLowerCase()===key; });
+  if(!el)return;
+  const vp=viewport.getBoundingClientRect(), r=el.getBoundingClientRect();
+  tx+=(vp.left+vp.width/2)-(r.left+r.width/2); ty+=(vp.top+vp.height/2)-(r.top+r.height/2); apply();
+}
+function pickSearch(x){
+  _hlNameDisp=x.name; hlMode='name:'+x.key; applyHighlight();
+  $('#hSearchInput').value=x.name; $('#hSearch').classList.add('has-val');
+  $('#hSearchDrop').classList.remove('open');
+  centerOnPerson(x.key);
+}
+function clearSearch(){ $('#hSearchInput').value=''; $('#hSearch').classList.remove('has-val'); $('#hSearchDrop').classList.remove('open'); if(hlMode&&hlMode.indexOf('name:')===0){ hlMode=null; _hlNameDisp=''; applyHighlight(); } }
+const hsInput=$('#hSearchInput');
+hsInput.addEventListener('input',()=>{ const v=hsInput.value; $('#hSearch').classList.toggle('has-val',!!v); renderSearchDrop(v); });
+hsInput.addEventListener('focus',()=>{ renderSearchDrop(hsInput.value); });
+hsInput.addEventListener('keydown',e=>{
+  const items=[...document.querySelectorAll('#hSearchDrop .hs-item')];
+  if(e.key==='ArrowDown'){ e.preventDefault(); hsIdx=Math.min(hsList.length-1,hsIdx+1); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); hsIdx=Math.max(0,hsIdx-1); }
+  else if(e.key==='Enter'){ e.preventDefault(); const x=hsList[hsIdx>=0?hsIdx:0]; if(x)pickSearch(x); return; }
+  else if(e.key==='Escape'){ hsInput.blur(); $('#hSearchDrop').classList.remove('open'); return; }
+  else return;
+  items.forEach((it,i)=>it.classList.toggle('active',i===hsIdx)); if(items[hsIdx])items[hsIdx].scrollIntoView({block:'nearest'});
+});
+$('#hSearchDrop').addEventListener('mousedown',e=>{ const it=e.target.closest('.hs-item'); if(!it)return; e.preventDefault(); const x=hsList[+it.dataset.i]; if(x)pickSearch(x); });
+$('#hSearchClear').onclick=clearSearch;
+document.addEventListener('click',e=>{ if(!e.target.closest('#hSearch')) $('#hSearchDrop').classList.remove('open'); });
 
 /* ---------------- Toolbar ---------------- */
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200); }
