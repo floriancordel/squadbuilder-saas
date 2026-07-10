@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SquadBuilder — Org Produit / R&D</title>
+<link rel="icon" id="favicon" href="data:,">
+<link rel="apple-touch-icon" id="faviconApple" href="data:,">
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -29,7 +31,8 @@
   /* ---------- Barre du haut ---------- */
   header{display:flex;align-items:center;gap:14px;padding:9px 16px;background:var(--panel);border-bottom:1px solid var(--border);z-index:30;flex-wrap:wrap}
   .brand{display:flex;align-items:center;gap:9px}
-  .brand .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--produit),var(--tech));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
+  .brand .logo{width:26px;height:26px;border-radius:7px;overflow:hidden;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--produit),var(--tech));color:#fff;font-weight:800;font-size:14px}
+  .brand .logo svg,.bm-head .logo svg{width:100%;height:100%;display:block;border-radius:inherit}
   .brand h1{font-size:15px;font-weight:700;margin:0;letter-spacing:-.02em}
   .stats{display:flex;gap:12px;font-size:12px;color:var(--muted)}
   .stats b{color:var(--ink);font-weight:700}
@@ -354,22 +357,43 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* ---------- Écran de login ---------- */
-  #loginScreen{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center}
+  #loginScreen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#08183a}
   #loginScreen.hidden{display:none}
-  .login-card{background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);padding:36px 32px;width:380px;max-width:92vw}
-  .login-card .logo-big{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--produit),var(--tech));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:24px;margin:0 auto 12px}
-  .login-card h2{text-align:center;font-size:20px;font-weight:700;margin:0 0 4px}
-  .login-card .sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:24px}
-  .login-card .field{margin-bottom:14px}
-  .login-card .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
-  .login-card .field input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--ink)}
-  .login-card .field input:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
-  .login-card .login-btn{width:100%;padding:11px;border:none;border-radius:9px;background:var(--ink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px}
-  .login-card .login-btn:hover{background:#111827}
-  .login-card .toggle-link{text-align:center;margin-top:14px;font-size:12.5px;color:var(--muted)}
-  .login-card .toggle-link a{color:var(--tech);cursor:pointer;font-weight:600;text-decoration:none}
+  /* Fond « soie bleue » animé, recréé en CSS (inspiration brand Cegid) */
+  .lg-bg{position:absolute;inset:-25%;z-index:0;filter:blur(34px) saturate(1.15);
+    background:
+      radial-gradient(38% 46% at 22% 28%, #57a4ff 0%, transparent 60%),
+      radial-gradient(42% 52% at 82% 22%, #1e63e6 0%, transparent 60%),
+      radial-gradient(48% 58% at 62% 82%, #2f7bf6 0%, transparent 58%),
+      radial-gradient(40% 50% at 12% 82%, #7cc0ff 0%, transparent 55%),
+      radial-gradient(46% 54% at 92% 78%, #1948c9 0%, transparent 58%),
+      linear-gradient(155deg,#0a1f4d 0%,#0c2c72 55%,#0a2354 100%);
+    animation:lgFloat 20s ease-in-out infinite alternate}
+  .lg-bg::after{content:'';position:absolute;inset:0;background:
+      radial-gradient(60% 40% at 30% 15%, rgba(255,255,255,.14), transparent 60%),
+      radial-gradient(50% 40% at 75% 90%, rgba(120,190,255,.18), transparent 60%);
+    mix-blend-mode:screen;animation:lgFloat2 26s ease-in-out infinite alternate}
+  @keyframes lgFloat{0%{transform:translate(0,0) scale(1.06) rotate(0deg)}50%{transform:translate(-3%,2.5%) scale(1.14) rotate(-2deg)}100%{transform:translate(2.5%,-2%) scale(1.08) rotate(1.5deg)}}
+  @keyframes lgFloat2{0%{transform:translate(0,0) scale(1.1)}100%{transform:translate(4%,-3%) scale(1.2)}}
+  .lg-grain{position:absolute;inset:0;z-index:0;opacity:.05;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .login-card{position:relative;z-index:1;background:rgba(255,255,255,.95);backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);border:1px solid rgba(255,255,255,.65);border-radius:22px;box-shadow:0 34px 90px -22px rgba(4,18,58,.6),0 2px 10px rgba(0,0,0,.08);padding:40px 36px 34px;width:404px;max-width:92vw;animation:cardIn .5s cubic-bezier(.16,.8,.3,1)}
+  @keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+  .login-card .login-logo{width:68px;height:68px;margin:0 auto 18px;filter:drop-shadow(0 10px 22px rgba(18,55,155,.4))}
+  .login-card .login-logo svg{width:100%;height:100%;display:block;border-radius:19px}
+  .login-card h2{text-align:center;font-size:23px;font-weight:800;letter-spacing:-.03em;margin:0 0 5px;color:var(--ink)}
+  .login-card .sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:26px;line-height:1.45}
+  .login-card .field{margin-bottom:15px}
+  .login-card .field label{display:block;font-size:11.5px;font-weight:650;color:var(--muted);margin-bottom:6px;letter-spacing:.01em}
+  .login-card .field input{width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--ink);background:#fbfcfe;transition:.15s}
+  .login-card .field input:focus{outline:none;border-color:var(--tech);background:#fff;box-shadow:0 0 0 3px var(--tech-soft)}
+  .login-card .login-btn{width:100%;padding:12px;border:none;border-radius:11px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-size:14.5px;font-weight:700;letter-spacing:.01em;cursor:pointer;margin-top:8px;box-shadow:0 8px 20px -6px rgba(37,99,235,.55);transition:.15s}
+  .login-card .login-btn:hover{filter:brightness(1.07);box-shadow:0 10px 24px -6px rgba(37,99,235,.62);transform:translateY(-1px)}
+  .login-card .login-btn:active{transform:none}
+  .login-card .toggle-link{text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted)}
+  .login-card .toggle-link a{color:var(--tech);cursor:pointer;font-weight:650;text-decoration:none}
   .login-card .toggle-link a:hover{text-decoration:underline}
-  .login-card .login-error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:12px;display:none}
+  .login-card .login-error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:12px;padding:9px 11px;border-radius:9px;margin-bottom:13px;display:none}
   .user-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
   .user-bar .user-email{font-weight:600;color:var(--ink)}
   .user-bar .logout-btn{border:1px solid var(--border);background:#fff;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;color:var(--muted);font-weight:600}
@@ -523,6 +547,8 @@
   .pcard:active{cursor:grabbing}
   .pcard.dragging{opacity:.4}
   .pcard .pc-grip{color:var(--faint);font-size:12px;line-height:1;flex:0 0 auto;letter-spacing:-1px}
+  .pcard .pc-edit{flex:0 0 auto;color:var(--faint);font-size:13px;opacity:0;transition:.12s;padding-left:2px}
+  .pcard:hover .pc-edit{opacity:.65}
   .pcard .pc-main{min-width:0;flex:1}
   .pcard .pc-name{font-size:12.5px;font-weight:650;color:var(--ink);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pcard .pc-role{font-size:10.5px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -783,10 +809,10 @@
   .fiche-badge.tech{background:var(--tech-soft);color:var(--tech)}
   .fiche-badge.produit{background:var(--produit-soft);color:var(--produit)}
   .fiche-cat{font-size:11.5px;color:var(--muted)}
-  .fiche-save{margin-left:auto;border:1px solid var(--tech);background:var(--tech);color:#fff;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:700;cursor:pointer;align-items:center;gap:5px;box-shadow:0 1px 3px rgba(37,99,235,.28)}
-  .fiche-save:hover{filter:brightness(1.06)}
-  .fiche-del{margin-left:auto;border:1px solid var(--border);background:#fff;color:#dc2626;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer}
-  .fiche.dirty{box-shadow:inset 0 0 0 2px rgba(37,99,235,.14);border-radius:12px}
+  .fiche-save{margin-left:auto;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--tech);background:var(--tech);color:#fff;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(37,99,235,.28);transition:background .15s,border-color .15s,color .15s,opacity .15s}
+  .fiche-save:hover:not(:disabled){filter:brightness(1.06)}
+  .fiche-save:disabled{background:#eef1f6;border-color:var(--border);color:var(--faint);box-shadow:none;cursor:default}
+  .fiche-del{border:1px solid var(--border);background:#fff;color:#dc2626;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer}
   .fiche-del:hover{background:#fef2f2;border-color:#fecaca}
   .fiche-name{width:100%;border:1px solid transparent;border-radius:9px;font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);padding:6px 8px;margin:0 -8px 14px;background:transparent}
   .fiche-name:hover{background:#f9fafb}
@@ -838,7 +864,7 @@
 <header>
   <div class="h-left">
     <button class="iconbtn burger" id="burgerBtn" title="Menu" aria-label="Menu"><span></span><span></span><span></span></button>
-    <div class="brand"><div class="logo">S</div><h1>SquadBuilder<span class="beta">BETA</span></h1></div>
+    <div class="brand"><div class="logo" data-brandmark>S</div><h1>SquadBuilder<span class="beta">BETA</span></h1></div>
     <div class="hsep"></div>
     <div class="stats" id="stats" title="Ouvrir le dashboard analytics"></div>
   </div>
@@ -877,7 +903,7 @@
 
 <div id="burgerOv"></div>
 <aside id="burgerMenu">
-  <div class="bm-head"><div class="logo">S</div><span class="bm-title">SquadBuilder</span><button class="close" id="bmClose">×</button></div>
+  <div class="bm-head"><div class="logo" data-brandmark>S</div><span class="bm-title">SquadBuilder</span><button class="close" id="bmClose">×</button></div>
   <div class="bm-body">
     <div class="bm-sec">Navigation</div>
     <button class="bm-item" id="dashBtn"><span class="mi">📊</span>Dashboard analytics</button>
@@ -895,8 +921,10 @@
 </aside>
 
 <div id="loginScreen">
+  <div class="lg-bg"></div>
+  <div class="lg-grain"></div>
   <div class="login-card">
-    <div class="logo-big">S</div>
+    <div class="login-logo" data-brandmark></div>
     <h2>SquadBuilder</h2>
     <div class="sub">Connectez-vous pour accéder à votre organigramme</div>
     <div class="login-error" id="loginError"></div>
@@ -1758,7 +1786,7 @@ function openEditor(obj,kind){
     const kindLabel={'dir-lead':'Direction','tribe-lead':'Lead de tribu','squad-lead':'Lead de squad','member':'Membre R&D','cell':'Ressource transverse','pool':'Vivier'}[loc0?loc0.kind:'']||'Poste';
     $('#edKind').textContent=kindLabel;
     const block=blockOfLocateKind(loc0?loc0.kind:'member');
-    let roleNames=rolesForBlock(block).map(g=>g.name);
+    let roleNames=(loc0&&loc0.kind==='pool')?(state.glossary||[]).map(g=>g.name):rolesForBlock(block).map(g=>g.name);
     roleNames=[...new Set(roleNames)].sort((a,b)=>a.localeCompare(b,'fr'));
     const gdef=glossFor(p.role);
     const roleField=`<div class="field"><label>Rôle / poste</label>
@@ -1918,7 +1946,7 @@ document.addEventListener('click',e=>{ if(!e.target.closest('.profile-wrap')) cl
 /* ================= Grande modale (Dashboard / Référentiel) ================= */
 let sheetView=null; // 'dash' | 'gloss'
 function openSheet(view){
-  if(sheetView==='gloss' && glossDirty && view!=='gloss'){ guardGloss(()=>openSheet(view)); return; }
+  if(sheetView==='gloss' && glossIsDirty() && view!=='gloss'){ guardGloss(()=>openSheet(view)); return; }
   sheetView=view;
   $('#sheetOv').classList.add('open'); $('#sheet').classList.add('open');
   $('#sheetBody').classList.toggle('gloss-mode', view==='gloss');
@@ -1926,7 +1954,7 @@ function openSheet(view){
   else if(view==='admin'){ $('#sheetIco').textContent='🛡️'; $('#sheetTitle').textContent='Administration'; $('#sheetSub').textContent='Gérez les accès à SquadBuilder'; renderAdmin(); }
   else { $('#sheetIco').textContent='📖'; $('#sheetTitle').textContent='Référentiel des rôles'; $('#sheetSub').textContent='Gérez les métiers et leurs définitions'; renderGlossary(); }
 }
-function doCloseSheet(){ sheetView=null; glossDraft=null; glossDirty=false; $('#sheetOv').classList.remove('open'); $('#sheet').classList.remove('open'); }
+function doCloseSheet(){ sheetView=null; glossDraft=null; $('#sheetOv').classList.remove('open'); $('#sheet').classList.remove('open'); }
 function closeSheet(){ guardGloss(doCloseSheet); }
 $('#sheetClose').onclick=closeSheet; $('#sheetOv').onclick=closeSheet;
 $('#dashBtn').onclick=()=>openSheet('dash');
@@ -2141,21 +2169,23 @@ function renderDashboard(){
 
 /* ---- Référentiel des rôles ---- */
 let glossSel=null, glossExpanded=null, glossEdit=false;
-let glossDraft=null, glossDirty=false; // édition en brouillon : on ne persiste qu'au clic « Enregistrer »
+let glossDraft=null; // édition en brouillon : on ne persiste qu'au clic « Enregistrer »
 function glossRoleById(id){ return (state.glossary||[]).find(g=>g.id===id)||null; }
-function startDraft(){ const g=glossSel?glossRoleById(glossSel):null; glossDraft=g?JSON.parse(JSON.stringify(g)):null; glossDirty=false; }
-function markDirty(){ glossDirty=true; updateFicheSave(); }
-function updateFicheSave(){ const b=$('#ficheSave'); if(b)b.style.display=glossDirty?'inline-flex':'none'; const f=document.querySelector('.fiche'); if(f)f.classList.toggle('dirty',glossDirty); }
+function startDraft(){ const g=glossSel?glossRoleById(glossSel):null; glossDraft=g?JSON.parse(JSON.stringify(g)):null; updateFicheSave(); }
+// Dirty = le brouillon diffère réellement du rôle enregistré (évite les faux positifs).
+function glossIsDirty(){ if(!glossDraft)return false; const live=glossRoleById(glossDraft.id); if(!live)return false; return JSON.stringify(glossDraft)!==JSON.stringify(live); }
+function markDirty(){ updateFicheSave(); }
+function updateFicheSave(){ const b=$('#ficheSave'); if(b)b.disabled=!glossIsDirty(); }
 function commitDraft(){
   if(!glossDraft)return;
   const idx=(state.glossary||[]).findIndex(g=>g.id===glossDraft.id);
   if(idx>=0) state.glossary[idx]=JSON.parse(JSON.stringify(glossDraft));
-  glossDirty=false; save(); rebuildRoleLists();
+  save(); rebuildRoleLists(); updateFicheSave();
 }
-function discardDraft(){ glossDirty=false; startDraft(); }
+function discardDraft(){ startDraft(); }
 // Vérifie s'il y a des modifs non enregistrées avant de « quitter » la fiche courante.
 function guardGloss(proceed){
-  if(sheetView!=='gloss' || !glossDirty){ proceed(); return; }
+  if(sheetView!=='gloss' || !glossIsDirty()){ proceed(); return; }
   askLeave().then(v=>{ if(v==='save'){ commitDraft(); proceed(); } else if(v==='discard'){ discardDraft(); proceed(); } });
 }
 function famLabel(key){ const f=FAMILIES.find(x=>x.key===key); return f?f.label:key; }
@@ -2188,7 +2218,7 @@ function ficheHTML(g){
     <div class="fiche-head">
       <span class="fiche-badge ${g.side}">${g.side==='produit'?'Produit':'Tech'}</span>
       <span class="fiche-cat">${esc(famLabel(g.family))}</span>
-      <button class="fiche-save" id="ficheSave" data-gsave style="display:${glossDirty?'inline-flex':'none'}">💾 Enregistrer</button>
+      <button class="fiche-save" id="ficheSave" data-gsave ${glossIsDirty()?'':'disabled'}>💾 Enregistrer</button>
       <button class="fiche-del" data-gdel>🗑 Supprimer</button>
     </div>
     <input class="fiche-name" data-gf="name" value="${esc(g.name)}" placeholder="Nom du rôle">
@@ -2228,7 +2258,7 @@ $('#sheetBody').addEventListener('click',e=>{
   const sv=e.target.closest('[data-gsave]'); if(sv){ commitDraft(); renderGlossary(); toast('Fiche enregistrée'); return; }
   const eb=e.target.closest('#glossEditBtn'); if(eb){ guardGloss(()=>{ glossEdit=!glossEdit; renderGlossary(); }); return; }
   const add=e.target.closest('#glossAdd'); if(add){ guardGloss(openRoleDlg); return; }
-  const del=e.target.closest('[data-gdel]'); if(del){ const g=glossDraft; if(g){ askConfirm({title:'Supprimer le rôle',message:`Le rôle « <b>${esc(g.name)}</b> » sera retiré du référentiel.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.glossary=state.glossary.filter(x=>x.id!==g.id); glossSel=null; glossDraft=null; glossDirty=false; save(); rebuildRoleLists(); renderGlossary(); toast('Rôle supprimé'); } }); } return; }
+  const del=e.target.closest('[data-gdel]'); if(del){ const g=glossDraft; if(g){ askConfirm({title:'Supprimer le rôle',message:`Le rôle « <b>${esc(g.name)}</b> » sera retiré du référentiel.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.glossary=state.glossary.filter(x=>x.id!==g.id); glossSel=null; glossDraft=null; save(); rebuildRoleLists(); renderGlossary(); toast('Rôle supprimé'); } }); } return; }
   const sideBtn=e.target.closest('[data-gs]'); if(sideBtn){ if(glossDraft){ glossDraft.side=sideBtn.dataset.gs; markDirty(); renderFiche(); } return; }
   const sd=e.target.closest('[data-skill-del]'); if(sd){ if(glossDraft){ glossDraft.skills.splice(+sd.dataset.skillDel,1); markDirty(); renderFiche(); } return; }
   const rd=e.target.closest('[data-resp-del]'); if(rd){ if(glossDraft){ glossDraft.responsibilities.splice(+rd.dataset.respDel,1); markDirty(); renderFiche(); } return; }
@@ -2368,13 +2398,14 @@ $('#modeSwitch').addEventListener('click',e=>{ const b=e.target.closest('button'
 function poolPersonHTML(p){
   reg(p);
   const parts=[locChip(p),tempChip(p),(p.allocMode==='part'?`<span class="chip alloc">${allocOf(p)}%</span>`:'')].filter(Boolean);
-  return `<div class="pcard ${p.side} ${isTemp(p)?'istemp':''}" draggable="true" data-drag="${p.pid}">
+  return `<div class="pcard ${p.side} ${isTemp(p)?'istemp':''}" draggable="true" data-drag="${p.pid}" title="Cliquer pour modifier · glisser pour affecter">
     <span class="pc-grip">⠿</span>
     <div class="pc-main">
       <div class="pc-name">${esc(p.name||'Sans nom')}</div>
       <div class="pc-role">${esc(p.role||'—')}</div>
       ${parts.length?`<div class="pc-foot">${parts.join('')}</div>`:''}
     </div>
+    <span class="pc-edit" aria-hidden="true">✎</span>
   </div>`;
 }
 function renderPool(){
@@ -2394,7 +2425,7 @@ function renderPool(){
   body.innerHTML=dz+inner;
   wirePoolDrop();
 }
-$('#poolBody').addEventListener('click',e=>{ const t=e.target.closest('[data-pg]'); if(t){ const k=t.dataset.pg; poolCollapsed.has(k)?poolCollapsed.delete(k):poolCollapsed.add(k); renderPool(); } });
+$('#poolBody').addEventListener('click',e=>{ const t=e.target.closest('[data-pg]'); if(t){ const k=t.dataset.pg; poolCollapsed.has(k)?poolCollapsed.delete(k):poolCollapsed.add(k); renderPool(); return; } const pc=e.target.closest('.pcard'); if(pc){ const p=pmap[pc.dataset.drag]; if(p) openEditor(p,'person'); } });
 $('#poolFilters').addEventListener('click',e=>{ const b=e.target.closest('[data-pf]'); if(!b)return; poolSide=b.dataset.pf; $('#poolFilters').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.pf===poolSide)); renderPool(); });
 $('#templateBtn2').onclick=()=>downloadTemplate();
 function wirePoolDrop(){
@@ -2779,6 +2810,18 @@ if (_viewMatch) {
     else { $('#loginScreen').classList.remove('hidden'); }
   })();
 }
+</script>
+<script>
+/* Marque SquadBuilder — tuile app-icon à ondes (inspiration brand Cegid), réutilisée pour les logos + favicon */
+(function(){
+  var bars=[[18.5,22,'#86C4FF'],[28,38,'#4E9DFF'],[37.5,52,'#2E7BF0'],[47,30,'#5AA9FF'],[56.5,56,'#1E5FD8'],[66,34,'#3E8AF5'],[75.5,24,'#7CC0FF']];
+  var rects=bars.map(function(b){var x=b[0],h=b[1],y=(100-h)/2;return '<rect x="'+x+'" y="'+y+'" width="6" height="'+h+'" rx="3" fill="'+b[2]+'"/>';}).join('');
+  var svg='<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><defs><linearGradient id="bmBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a97f7"/><stop offset="1" stop-color="#12379b"/></linearGradient></defs><rect width="100" height="100" rx="24" fill="url(#bmBg)"/><rect x="14" y="14" width="72" height="72" rx="16" fill="#fff"/>'+rects+'</svg>';
+  document.querySelectorAll('[data-brandmark]').forEach(function(el){ el.innerHTML=svg; el.style.background='none'; el.style.color='transparent'; });
+  var href='data:image/svg+xml,'+encodeURIComponent(svg);
+  var f=document.getElementById('favicon'); if(f)f.href=href;
+  var fa=document.getElementById('faviconApple'); if(fa)fa.href=href;
+})();
 </script>
 </body>
 </html>
