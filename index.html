@@ -53,6 +53,19 @@
 
   /* ---------- Zone principale ---------- */
   #viewport{flex:1;position:relative;overflow:hidden;cursor:grab;background:radial-gradient(circle at 1px 1px, rgba(71,85,105,.09) 1.3px, transparent 0) 0 0/22px 22px, linear-gradient(180deg,#eceff5,#e5e9f1)}
+  /* ---- Collaboration temps réel : curseurs distants + présence ---- */
+  #cursorLayer{position:absolute;inset:0;pointer-events:none;z-index:36;overflow:hidden}
+  #cursorLayer .rc{position:absolute;top:0;left:0;will-change:transform;transition:transform .08s linear;display:flex;align-items:flex-start;gap:3px}
+  #cursorLayer .rc svg{flex:0 0 auto;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+  #cursorLayer .rc .rc-lbl{margin-top:10px;font-size:11px;font-weight:700;color:#fff;padding:2px 7px;border-radius:9px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.25);transform:translateX(-2px)}
+  #presenceBar{display:flex;align-items:center;gap:-6px}
+  #presenceBar:empty{display:none}
+  #presenceBar .pav{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;border:2px solid var(--panel);margin-left:-7px;cursor:default;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+  #presenceBar .pav:first-child{margin-left:0}
+  #presenceBar .pav.more{background:#94a3b8}
+  /* Badge « en cours d'édition par un collègue » sur une carte */
+  #canvas .card.co-editing,#canvas .mini.co-editing{box-shadow:0 0 0 2px var(--co-color,#2563eb),0 6px 18px rgba(0,0,0,.12)!important;position:relative}
+  #canvas .co-editing .co-tag{position:absolute;top:-9px;right:-6px;z-index:5;width:18px;height:18px;border-radius:50%;background:var(--co-color,#2563eb);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff}
   #viewport.grabbing{cursor:grabbing}
   #canvas{position:absolute;top:0;left:0;transform-origin:0 0;padding:40px}
 
@@ -1024,6 +1037,7 @@
     <span class="save-state" id="saveState"></span>
     <button class="btn ghost hbtn" id="printBtn2" title="Imprimer / exporter en PDF">🖨 Imprimer</button>
     <button class="btn ghost hbtn" id="shareBtn" title="Générer un lien de partage en lecture seule">🔗 Partager</button>
+    <div id="presenceBar" title="Collaborateurs en ligne"></div>
     <div class="hsep"></div>
     <div class="profile-wrap" id="userBar" style="display:none">
       <button class="profile-btn" id="profileBtn">
@@ -1109,7 +1123,7 @@
   </div>
 </div>
 
-<div id="viewport"><div id="canvas"></div></div>
+<div id="viewport"><div id="canvas"></div><div id="cursorLayer"></div></div>
 <div id="affectHint"><span class="dotpulse"></span>Glissez pour affecter · déposez en bas pour retirer</div>
 <div id="dropTip"></div>
 <div id="dropDock">
@@ -1280,19 +1294,43 @@ const dragAttr=pid=>mode==='affect'?`draggable="true" data-drag="${pid}"`:'';
 
 /* ---------------- Supabase ---------------- */
 const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-let currentOrg = null; // { id, name, data, owner_email }
+let currentOrg = null; // { id, name, data, owner_email, rev }
 let saveTimer = null;
+
+/* ---------------- Collaboration temps réel (état) ---------------- */
+let rtChannel=null, myUid=null, myName='', myInitials='?', myColor='#2563eb';
+const myTab = Math.random().toString(36).slice(2,8);         // identifiant d'onglet (self-filter + clé curseur)
+let baseRev = 0;                                             // rev du dernier state confirmé en base
+let lastSyncedSnapshot = null;                               // deepClone du state au dernier save confirmé
+let applyingRemote = false;                                  // garde anti-boucle pendant l'application d'un état distant
+let reconcileTimer = null, saveRetries = 0, revSupported = true;
+let editingId = null;                                        // entité ouverte dans un éditeur (diffusée en présence)
+const remoteCursors = new Map();                             // clé uid:tab -> {el, cx, cy, lastSeen}
+const remotePresence = new Map();                            // uid -> {name, color, editingId}
+function collabActive(){ return !!(currentOrg && !isDemo && !_viewMatch); }
+function deepClone(o){ return o==null?o:JSON.parse(JSON.stringify(o)); }
+// Sérialisation CANONIQUE (clés triées) — insensible au réordonnancement jsonb de Postgres
+function canon(v){
+  if(v===null||typeof v!=='object') return JSON.stringify(v);
+  if(Array.isArray(v)) return '['+v.map(canon).join(',')+']';
+  return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canon(v[k])).join(',')+'}';
+}
+const RT_PALETTE=['#2563eb','#16a34a','#db2777','#ea580c','#7c3aed','#0891b2','#ca8a04','#dc2626','#4f46e5','#0d9488'];
+function colorFor(id){ let h=0; const s=String(id||''); for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0; return RT_PALETTE[h%RT_PALETTE.length]; }
+function initialsOf(email){ const n=(email||'').split('@')[0]||'?'; return (n.replace(/[^a-zA-Z0-9]/g,'')||'?').slice(0,2).toUpperCase(); }
 
 async function getMyOrg() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return null;
   const email = user.email.toLowerCase();
-  const { data: orgs } = await sb.from('organizations').select('*').limit(1);
+  // Choix DÉTERMINISTE et partagé : la plus ancienne org visible (tous les membres convergent
+  // vers la même ligne → même room temps réel + même ligne pour le compare-and-swap).
+  const { data: orgs } = await sb.from('organizations').select('*').order('created_at',{ascending:true});
   if (orgs && orgs.length > 0) return orgs[0];
   const { error } = await sb.from('organizations')
     .insert({ name: 'Mon organisation', data: seed(), owner_email: email });
   if (error) { console.error('Erreur création org:', error); return null; }
-  const { data: created } = await sb.from('organizations').select('*').limit(1);
+  const { data: created } = await sb.from('organizations').select('*').order('created_at',{ascending:true}).limit(1);
   return (created && created[0]) || null;
 }
 
@@ -1304,20 +1342,42 @@ function setSaveState(s){
 async function saveOrg() {
   saveTimer=null;
   if (!currentOrg) { setSaveState(''); return; }
+  if (applyingRemote) { debouncedSave(); return; }        // ne pas perdre le timer pendant un resync
   setSaveState('saving');
-  const { error } = await sb.from('organizations')
-    .update({ data: state })
-    .eq('id', currentOrg.id);
-  if (error) { console.error('Erreur sauvegarde:', error); setSaveState('error'); clearTimeout(saveTimer); saveTimer=setTimeout(saveOrg,3000); }
-  else setSaveState('saved');
+  const snapshot = deepClone(state);
+  if (revSupported) {
+    // Compare-and-swap : Postgres arbitre l'ordre des écritures (fin du last-write-wins destructif)
+    const { data, error } = await sb.from('organizations')
+      .update({ data: snapshot, rev: baseRev+1 })
+      .eq('id', currentOrg.id).eq('rev', baseRev).select('rev');
+    if (error) {
+      if (error.code==='PGRST204' || error.code==='42703' || /'?rev'? column|column .*rev/i.test(error.message||'')) {
+        revSupported=false; return saveOrg();             // colonne rev absente → mode compat
+      }
+      console.error('Erreur sauvegarde:', error); setSaveState('error'); scheduleRetry(); return;
+    }
+    if (!data || data.length===0) {                        // personne d'autre a écrit entre-temps
+      await pullAndReconcile('cas-conflict');
+      setSaveState('pending'); debouncedSave(); return;
+    }
+    baseRev = data[0].rev; currentOrg.rev = baseRev; lastSyncedSnapshot = snapshot; saveRetries=0;
+    setSaveState('saved'); rtBroadcastSaved();
+  } else {
+    // Mode compat (avant migration `rev`) : update simple + signal de resync (merge par id reste actif)
+    const { error } = await sb.from('organizations').update({ data: snapshot }).eq('id', currentOrg.id);
+    if (error) { console.error('Erreur sauvegarde:', error); setSaveState('error'); clearTimeout(saveTimer); saveTimer=setTimeout(saveOrg,3000); return; }
+    lastSyncedSnapshot = snapshot; setSaveState('saved'); rtBroadcastSaved();
+  }
 }
+function scheduleRetry(){ if(saveRetries++>6){ setSaveState('error'); return; } clearTimeout(saveTimer); saveTimer=setTimeout(saveOrg, 1500+Math.random()*1500); }
+function rtBroadcastSaved(){ if(rtChannel){ try{ rtChannel.send({type:'broadcast',event:'saved',payload:{by:myTab,name:myName,rev:baseRev}}); }catch(_){} } }
 function debouncedSave() {
   if(currentOrg) setSaveState('pending');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveOrg, 700);
 }
-function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; saveOrg(); } }
-window.addEventListener('beforeunload', flushSave);
+function flushSave(){ if(applyingRemote)return; if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; saveOrg(); } }
+window.addEventListener('beforeunload', ()=>{ flushSave(); leaveRoom(); });
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushSave(); });
 
 /* ---------------- Auth UI ---------------- */
@@ -1451,20 +1511,26 @@ async function onLogin(user) {
   $('#userBar').style.display = 'flex';
   if(user.user_metadata && user.user_metadata.must_change_password){ await forcePasswordChange(); }
   currentOrg = await getMyOrg();
+  // Identité collab (avant tout save/broadcast)
+  myUid = user.id; myName = (user.email||'').split('@')[0]||'—'; myInitials = initialsOf(user.email); myColor = colorFor(user.id);
   if (currentOrg && currentOrg.data && currentOrg.data.direction) {
     state = currentOrg.data;
     migrate();
+    baseRev = currentOrg.rev||0; lastSyncedSnapshot = deepClone(state);   // init AVANT tout save (fix critique CAS)
   } else {
     state = seed();
+    baseRev = (currentOrg&&currentOrg.rev)||0; lastSyncedSnapshot = deepClone(state);
     if (currentOrg) await saveOrg();
   }
   const m = currentOrg ? await fetchMembership(currentOrg.id, user.email) : {role:'owner',perms:null};
   fillProfile(user.email, m.role, m.perms);
   firstFit = true;
   render();
+  joinRoom();
 }
 
 function onLogout() {
+  leaveRoom();
   currentOrg = null;
   state = null;
   clearTimeout(saveTimer);
@@ -1479,7 +1545,7 @@ function onLogout() {
 }
 
 /* ---------------- Modèle ---------------- */
-const uid=()=>Math.random().toString(36).slice(2,9);
+const uid=()=>myTab.slice(0,3)+Math.random().toString(36).slice(2,7);
 // Statut = automatique (nom rempli → pourvu, vide → à pourvoir). TEMP = flag indépendant cumulable.
 /* ---- Identité ETP : Prénom (Titlecase) + NOM (MAJ) + matricule (ID) ---- */
 function fmtFirst(s){ return (s||'').trim().toLowerCase().replace(/(^|[\s\-'’])([\p{L}])/gu,(m,sep,ch)=>sep+ch.toUpperCase()); }
@@ -1905,6 +1971,7 @@ function render(){
   if(typeof applyHighlight==='function') applyHighlight();
   fitIfNeeded();
   relayoutCells();
+  if(typeof decorateEditing==='function') decorateEditing();
 }
 function updateStats(){
   const all=allPersons(); let squads=0, temps=0;
@@ -2022,7 +2089,8 @@ function statsGridHTML(obj,kind){
 }
 let edCtx=null;
 function openEditor(obj,kind){
-  edCtx={obj,kind}; const ov=$('#overlay'), ed=$('#editor');
+  edCtx={obj,kind}; if(typeof setEditing==='function') setEditing(kind==='person'?obj.pid:(obj.id||'__dir__'));
+  const ov=$('#overlay'), ed=$('#editor');
   if(kind==='squad'){
     $('#edKind').textContent='Squad';
     const curHead=findHeadOfSquad(obj.id);
@@ -2187,7 +2255,7 @@ function wireSeg(id){ const el=document.getElementById(id); if(!el)return;
   });
 }
 function segVal(id){ return document.getElementById(id)?segState[id]:''; }
-function closeEditor(){ $('#overlay').classList.remove('open'); $('#editor').classList.remove('open'); edCtx=null; }
+function closeEditor(){ $('#overlay').classList.remove('open'); $('#editor').classList.remove('open'); edCtx=null; if(typeof clearEditing==='function') clearEditing(); }
 $('#edClose').onclick=closeEditor; $('#overlay').onclick=closeEditor;
 
 /* ---------------- Panneau de détail (mode Lecture) ---------------- */
@@ -2257,7 +2325,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#confirmDlg
 
 /* ---------------- Zoom & déplacement ---------------- */
 let tx=0,ty=0,scale=1;
-function apply(){ canvas.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`; $('#zLvl').textContent=Math.round(scale*100)+'%'; }
+function apply(){ canvas.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`; $('#zLvl').textContent=Math.round(scale*100)+'%'; repositionCursors(); }
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 let firstFit=true;
 function fitIfNeeded(){ if(firstFit){ firstFit=false; fitView(); } else apply(); }
@@ -2295,6 +2363,18 @@ let panning=false,psx,psy;
 viewport.addEventListener('mousedown',e=>{ if(e.target.closest('[data-action]'))return; panning=true; psx=e.clientX-tx; psy=e.clientY-ty; viewport.classList.add('grabbing'); });
 window.addEventListener('mousemove',e=>{ if(!panning)return; tx=e.clientX-psx; ty=e.clientY-psy; apply(); });
 window.addEventListener('mouseup',()=>{ panning=false; viewport.classList.remove('grabbing'); });
+// Diffusion de MON curseur (throttlé rAF + plancher 40ms), en coordonnées canvas-local
+let _curRaf=0,_curLast=0,_curGoneSent=true;
+window.addEventListener('mousemove',e=>{
+  if(!rtChannel||_curRaf)return;
+  _curRaf=requestAnimationFrame(()=>{ _curRaf=0; const now=Date.now(); if(now-_curLast<40)return; _curLast=now;
+    const r=viewport.getBoundingClientRect(); const vx=e.clientX-r.left, vy=e.clientY-r.top;
+    if(vx<0||vy<0||vx>r.width||vy>r.height){ if(!_curGoneSent){ _curGoneSent=true; try{rtChannel.send({type:'broadcast',event:'cursor',payload:{tab:myTab,gone:true}});}catch(_){}} return; }
+    _curGoneSent=false;
+    const cx=(vx-tx)/scale, cy=(vy-ty)/scale;
+    try{ rtChannel.send({type:'broadcast',event:'cursor',payload:{tab:myTab,uid:myUid,name:myName,color:myColor,cx,cy}}); }catch(_){}
+  });
+});
 function zoomBtn(f){ const vw=viewport.clientWidth/2, vh=viewport.clientHeight/2, ns=clamp(scale*f,0.25,2.5); tx=vw-(vw-tx)*(ns/scale); ty=vh-(vh-ty)*(ns/scale); scale=ns; apply(); }
 $('#zIn').onclick=()=>zoomBtn(1.2); $('#zOut').onclick=()=>zoomBtn(1/1.2); $('#zFit').onclick=fitView;
 window.addEventListener('resize',()=>apply());
@@ -2497,6 +2577,7 @@ function askLeave(){
 /* ---- Modale création de rôle ---- */
 let rdSide='tech';
 function openRoleDlg(){
+  if(typeof setEditing==='function') setEditing('__modal__');
   rdSide='tech';
   $('#rd-name').value=''; $('#rd-desc').value='';
   const sel=glossSel&&glossRoleById(glossSel);
@@ -2508,7 +2589,7 @@ function openRoleDlg(){
   $('#roleDlgOv').classList.add('open'); $('#roleDlg').classList.add('open');
   setTimeout(()=>$('#rd-name').focus(),40);
 }
-function closeRoleDlg(){ $('#roleDlgOv').classList.remove('open'); $('#roleDlg').classList.remove('open'); }
+function closeRoleDlg(){ $('#roleDlgOv').classList.remove('open'); $('#roleDlg').classList.remove('open'); if(typeof clearEditing==='function') clearEditing(); }
 $('#rd-side').querySelectorAll('button').forEach(b=>b.onclick=()=>{ rdSide=b.dataset.v; $('#rd-side').querySelectorAll('button').forEach(x=>x.className=(x.dataset.v===rdSide?'on '+(rdSide==='produit'?'produit':'tech'):'')); });
 $('#rd-blocks').addEventListener('click',e=>{ const l=e.target.closest('.blk-check'); if(!l)return; setTimeout(()=>{ l.classList.toggle('on',l.querySelector('input').checked); },0); });
 $('#rdClose').onclick=closeRoleDlg; $('#roleDlgOv').onclick=closeRoleDlg; $('#rd-cancel').onclick=closeRoleDlg;
@@ -3155,6 +3236,7 @@ document.addEventListener('drop',e=>{
 /* ---------------- Créateur de squad ---------------- */
 let rndDraft=[], squadTargetHead=null;
 function openSquadCreator(preHeadId){
+  if(typeof setEditing==='function') setEditing('__modal__');
   rndDraft=[];
   const isDir=preHeadId==='__dir__';
   squadTargetHead=preHeadId; // rattachement connu depuis le bloc parent déclencheur
@@ -3259,7 +3341,7 @@ function renderRnd(){
     }; }); });
   wrap.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ rndDraft.splice(+b.dataset.del,1); renderRnd(); });
 }
-function closeModal(){ $('#modalOv').classList.remove('open'); $('#modal').classList.remove('open'); }
+function closeModal(){ $('#modalOv').classList.remove('open'); $('#modal').classList.remove('open'); if(typeof clearEditing==='function') clearEditing(); }
 $('#mClose').onclick=closeModal; $('#mCancel').onclick=closeModal; $('#modalOv').onclick=closeModal;
 function createSquad(){
   const name=$('#c-name').value.trim();
@@ -3287,6 +3369,7 @@ function createSquad(){
 /* ---------------- Créateur de Support Cell ---------------- */
 let cellDraft=[], cellHeadId=null;
 function openCellCreator(headId){
+  if(typeof setEditing==='function') setEditing('__modal__');
   cellHeadId=headId; cellDraft=[{role:'',side:'tech',name:'',loc:'',alloc:'100'}];
   const roleOpts=TRANSVERSE_ROLES.map(r=>`<option value="${r}">`).join('');
   const tribeOpts=state.heads.map((h,i)=>`<option value="${h.id}" ${h.id===headId?'selected':''}>${esc(headLabel(h,i))}</option>`).join('');
@@ -3349,6 +3432,139 @@ async function enterViewMode(enc){
   catch(e){ console.error(e); state=blank(); toast('Lien de partage invalide'); }
   firstFit=true; render();
 }
+/* ================= Collaboration temps réel (Realtime) ================= */
+let lastSavedBy='', pendingReconcile=null;
+function joinRoom(){
+  if(!collabActive()) return;
+  leaveRoom();
+  rtChannel = sb.channel('org:'+currentOrg.id, { config:{ presence:{ key:myUid }, broadcast:{ self:false } } });
+  rtChannel
+    .on('presence', { event:'sync' }, ()=>syncPresence())
+    .on('broadcast', { event:'cursor' }, ({payload})=>onRemoteCursor(payload))
+    .on('broadcast', { event:'saved' }, ({payload})=>onRemoteSaved(payload))
+    .subscribe(status=>{ if(status==='SUBSCRIBED'){ rtTrack(); pullAndReconcile('resubscribe'); } });
+}
+function rtTrack(){ if(rtChannel){ try{ rtChannel.track({ uid:myUid, tab:myTab, name:myName, initials:myInitials, color:myColor, editingId }); }catch(_){} } }
+function leaveRoom(){
+  if(rtChannel){ try{ rtChannel.untrack(); }catch(_){}; try{ sb.removeChannel(rtChannel); }catch(_){}; rtChannel=null; }
+  remoteCursors.forEach(c=>c.el&&c.el.remove()); remoteCursors.clear(); remotePresence.clear();
+  const pb=$('#presenceBar'); if(pb)pb.innerHTML=''; const cl=$('#cursorLayer'); if(cl)cl.innerHTML='';
+}
+function setEditing(id){ editingId=id||null; rtTrack(); }
+function clearEditing(){ editingId=null; rtTrack(); if(pendingReconcile){ const r=pendingReconcile; pendingReconcile=null; pullAndReconcile(r); } }
+
+/* ---- Présence + avatars ---- */
+function syncPresence(){
+  if(!rtChannel) return;
+  const st=rtChannel.presenceState(); remotePresence.clear();
+  Object.keys(st).forEach(key=>{ const metas=st[key]; if(!metas||!metas.length)return; const m=metas[0]; if(m.uid===myUid)return;
+    remotePresence.set(m.uid,{ name:m.name, initials:m.initials, color:m.color, editingIds:new Set(metas.map(x=>x.editingId).filter(Boolean)) }); });
+  renderPresence(); decorateEditing();
+}
+function renderPresence(){
+  const pb=$('#presenceBar'); if(!pb)return;
+  const list=[...remotePresence.values()]; const shown=list.slice(0,5);
+  pb.innerHTML=shown.map(u=>`<span class="pav" style="background:${u.color}" title="${esc(u.name||'')}">${esc(u.initials||'?')}</span>`).join('')
+    +(list.length>5?`<span class="pav more" title="${list.length-5} de plus">+${list.length-5}</span>`:'');
+}
+function decorateEditing(){
+  document.querySelectorAll('#canvas .co-editing').forEach(el=>{ el.classList.remove('co-editing'); el.style.removeProperty('--co-color'); const t=el.querySelector('.co-tag'); if(t)t.remove(); });
+  remotePresence.forEach(u=>{ (u.editingIds||new Set()).forEach(eid=>{ const el=document.querySelector('#canvas .card[data-pid="'+eid+'"],#canvas .mini[data-pid="'+eid+'"]'); if(el){ el.classList.add('co-editing'); el.style.setProperty('--co-color',u.color); if(!el.querySelector('.co-tag')){ const tag=document.createElement('span'); tag.className='co-tag'; tag.style.background=u.color; tag.textContent=(u.initials||'?').slice(0,1); el.appendChild(tag); } } }); });
+}
+
+/* ---- Curseurs distants ---- */
+function cursorSVG(color){ return `<svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 2 L4 19 L9 14.5 L12.2 21.5 L15 20.3 L11.9 13.6 L18.5 13.6 Z" fill="${color}" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>`; }
+function placeCursor(c){ if(!c.el)return; c.el.style.transform='translate('+(c.cx*scale+tx)+'px,'+(c.cy*scale+ty)+'px)'; }
+function repositionCursors(){ remoteCursors.forEach(placeCursor); }
+function onRemoteCursor(p){
+  if(!p||p.tab===myTab) return; const layer=$('#cursorLayer'); if(!layer)return; const key=p.tab;
+  if(p.gone){ const c=remoteCursors.get(key); if(c){ c.el&&c.el.remove(); remoteCursors.delete(key); } return; }
+  let c=remoteCursors.get(key);
+  if(!c){ const el=document.createElement('div'); el.className='rc'; el.innerHTML=cursorSVG(p.color||'#2563eb')+`<span class="rc-lbl" style="background:${p.color||'#2563eb'}">${esc(p.name||'')}</span>`; layer.appendChild(el); c={el}; remoteCursors.set(key,c); }
+  c.cx=p.cx; c.cy=p.cy; c.lastSeen=Date.now(); placeCursor(c);
+}
+setInterval(()=>{ const now=Date.now(); remoteCursors.forEach((c,k)=>{ if(now-(c.lastSeen||0)>4000){ c.el&&c.el.remove(); remoteCursors.delete(k); } }); },1000);
+
+/* ---- Signal de sauvegarde distante + réconciliation par identifiants ---- */
+function onRemoteSaved(p){ if(!p||p.by===myTab) return; lastSavedBy=p.name||''; scheduleReconcile(); }
+function scheduleReconcile(){ clearTimeout(reconcileTimer); reconcileTimer=setTimeout(()=>pullAndReconcile('saved'),300); }
+async function pullAndReconcile(reason){
+  if(!currentOrg || applyingRemote) return;
+  if(editingId){ pendingReconcile=reason; return; }         // un éditeur est ouvert → on diffère (ne pas arracher le formulaire)
+  try{
+    const sel = revSupported ? 'data,rev' : 'data';
+    const { data, error } = await sb.from('organizations').select(sel).eq('id',currentOrg.id).single();
+    if(error||!data){ if(error&&(error.code==='PGRST204'||/rev/.test(error.message||''))) revSupported=false; return; }
+    const remote=data.data; if(!remote||!remote.direction) return;
+    applyingRemote=true;
+    const dirty=diffEntities(state, lastSyncedSnapshot);     // ids que J'AI touchés et pas encore confirmés
+    const base=deepClone(remote);                            // autorité STRUCTURELLE (reparent sans dup/perte)
+    dirty.forEach(id=>reassert(base,id,state));              // ré-impose MA version par-dessus le distant
+    state=base; currentOrg.data=state;
+    if(revSupported && typeof data.rev==='number') baseRev=data.rev;
+    if(!dirty.size) lastSyncedSnapshot=deepClone(state);          // rien en attente → le distant devient MA base confirmée
+    purgeCollapsed(); render();
+    if(dirty.size){ setSaveState('pending'); debouncedSave(); }  // persister MON travail non confirmé ; sinon rien
+  }catch(e){ console.error('reconcile', e); }
+  finally{ applyingRemote=false; }
+  if(reason!=='cas-conflict' && lastSavedBy) toast('Board mis à jour par '+lastSavedBy);
+}
+
+/* ---- Diff & réassertion par entité (id stable : pid / id) ---- */
+function forEachEntity(s, cb){
+  if(!s) return; const d=s.direction||{};
+  (d.leads||[]).forEach(p=>cb(p,{id:p.pid,kind:'person',parentId:'__dir__',listKind:'dir-leads'}));
+  (d.cells||[]).forEach(c=>{ cb(c,{id:c.id,kind:'cell',parentId:'__dir__',listKind:'cells'}); (c.members||[]).forEach(p=>cb(p,{id:p.pid,kind:'person',parentId:c.id,listKind:'cell-members'})); });
+  (s.heads||[]).forEach(h=>{ cb(h,{id:h.id,kind:'head',parentId:'__root__',listKind:'heads'});
+    (h.leads||[]).forEach(p=>cb(p,{id:p.pid,kind:'person',parentId:h.id,listKind:'head-leads'}));
+    (h.squads||[]).forEach(sq=>{ cb(sq,{id:sq.id,kind:'squad',parentId:h.id,listKind:'squads'}); (sq.leads||[]).forEach(p=>cb(p,{id:p.pid,kind:'person',parentId:sq.id,listKind:'squad-leads'})); (sq.members||[]).forEach(p=>cb(p,{id:p.pid,kind:'person',parentId:sq.id,listKind:'squad-members'})); });
+    (h.cells||[]).forEach(c=>{ cb(c,{id:c.id,kind:'cell',parentId:h.id,listKind:'cells'}); (c.members||[]).forEach(p=>cb(p,{id:p.pid,kind:'person',parentId:c.id,listKind:'cell-members'})); });
+  });
+  (s.squads||[]).forEach(sq=>{ cb(sq,{id:sq.id,kind:'squad',parentId:'__dir__',listKind:'flysquad'}); (sq.leads||[]).forEach(p=>cb(p,{id:p.pid,kind:'person',parentId:sq.id,listKind:'squad-leads'})); (sq.members||[]).forEach(p=>cb(p,{id:p.pid,kind:'person',parentId:sq.id,listKind:'squad-members'})); });
+  (s.pool||[]).forEach(p=>cb(p,{id:p.pid,kind:'person',parentId:'__pool__',listKind:'pool'}));
+  (s.glossary||[]).forEach(r=>cb(r,{id:r.id,kind:'role',parentId:'__glossary__',listKind:'glossary'}));
+}
+function _sig(obj,meta){ const sh={}; Object.keys(obj).forEach(k=>{ if(k==='leads'||k==='members'||k==='squads'||k==='cells')return; sh[k]=obj[k]; }); sh._p=meta.parentId; sh._lk=meta.listKind; return canon(sh); }
+function diffEntities(local, ref){
+  const mL=new Map(), mR=new Map();
+  forEachEntity(local,(o,m)=>mL.set(m.id,_sig(o,m)));
+  forEachEntity(ref,(o,m)=>mR.set(m.id,_sig(o,m)));
+  const dirty=new Set();
+  mL.forEach((sig,id)=>{ if(mR.get(id)!==sig) dirty.add(id); });
+  mR.forEach((_,id)=>{ if(!mL.has(id)) dirty.add(id); });
+  return dirty;
+}
+function findEntity(s,id){ let f=null; forEachEntity(s,(o,m)=>{ if(m.id===id && !f) f={obj:o,meta:m}; }); return f; }
+function removeEntityEverywhere(s,id){
+  const rm=list=>{ if(!list)return; for(let i=list.length-1;i>=0;i--){ const e=list[i]; if(e&&(e.pid===id||e.id===id)) list.splice(i,1); } };
+  const d=s.direction||{}; rm(d.leads); (d.cells||[]).forEach(c=>rm(c.members)); rm(d.cells);
+  (s.heads||[]).forEach(h=>{ rm(h.leads); (h.squads||[]).forEach(sq=>{rm(sq.leads);rm(sq.members);}); rm(h.squads); (h.cells||[]).forEach(c=>rm(c.members)); rm(h.cells); });
+  rm(s.heads); (s.squads||[]).forEach(sq=>{rm(sq.leads);rm(sq.members);}); rm(s.squads); rm(s.pool); rm(s.glossary);
+}
+function insertEntity(base, obj, meta){
+  const d=base.direction||(base.direction={leads:[],cells:[]});
+  const findHead=id=>(base.heads||[]).find(h=>h.id===id);
+  const findSq=id=>{ for(const h of (base.heads||[])) for(const sq of (h.squads||[])) if(sq.id===id) return sq; for(const sq of (base.squads||[])) if(sq.id===id) return sq; return null; };
+  const findCl=id=>{ for(const c of (d.cells||[])) if(c.id===id) return c; for(const h of (base.heads||[])) for(const c of (h.cells||[])) if(c.id===id) return c; return null; };
+  const push=(arrOwner,key,fallback)=>{ const a=arrOwner?(arrOwner[key]||(arrOwner[key]=[])):fallback; a.push(obj); };
+  switch(meta.listKind){
+    case 'pool': (base.pool||(base.pool=[])).push(obj); break;
+    case 'glossary': (base.glossary||(base.glossary=[])).push(obj); break;
+    case 'heads': (base.heads||(base.heads=[])).push(obj); break;
+    case 'flysquad': (base.squads||(base.squads=[])).push(obj); break;
+    case 'squads': { const h=findHead(meta.parentId); push(h,'squads',(base.squads||(base.squads=[]))); break; }
+    case 'cells': { if(meta.parentId==='__dir__'){ (d.cells||(d.cells=[])).push(obj); } else { const h=findHead(meta.parentId); push(h,'cells',(d.cells||(d.cells=[]))); } break; }
+    case 'dir-leads': (d.leads||(d.leads=[])).push(obj); break;
+    case 'head-leads': { const h=findHead(meta.parentId); push(h,'leads',(base.pool||(base.pool=[]))); break; }
+    case 'squad-leads': { const sq=findSq(meta.parentId); push(sq,'leads',(base.pool||(base.pool=[]))); break; }
+    case 'squad-members': { const sq=findSq(meta.parentId); push(sq,'members',(base.pool||(base.pool=[]))); break; }
+    case 'cell-members': { const c=findCl(meta.parentId); push(c,'members',(base.pool||(base.pool=[]))); break; }
+    default: (base.pool||(base.pool=[])).push(obj);
+  }
+}
+function reassert(base, id, local){ const fe=findEntity(local,id); removeEntityEverywhere(base,id); if(fe) insertEntity(base, deepClone(fe.obj), fe.meta); }
+function purgeCollapsed(){ const ids=new Set(['DIR']); forEachEntity(state,(o,m)=>{ if(m.kind==='head'||m.kind==='squad'||m.kind==='cell') ids.add(m.id); }); [...collapsed].forEach(id=>{ if(!ids.has(id)) collapsed.delete(id); }); }
+
 const _viewMatch=location.hash.match(/[#&]view=(.+)$/);
 const isDemo = !_viewMatch && (window.self !== window.top
   || new URLSearchParams(location.search).has('demo')
