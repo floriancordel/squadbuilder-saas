@@ -54,6 +54,9 @@
   /* ---------- Zone principale ---------- */
   #viewport{flex:1;position:relative;overflow:hidden;cursor:grab;background:radial-gradient(circle at 1px 1px, rgba(71,85,105,.09) 1.3px, transparent 0) 0 0/22px 22px, linear-gradient(180deg,#eceff5,#e5e9f1)}
   /* ---- Collaboration temps réel : curseurs distants + présence ---- */
+  #viewport.space{cursor:grab}
+  .lasso-rect{position:absolute;z-index:35;border:1.5px solid var(--tech);background:rgba(37,99,235,.10);border-radius:3px;pointer-events:none}
+  #canvas .sel-node{outline:2px solid var(--tech)!important;outline-offset:2px;box-shadow:0 0 0 4px var(--tech-soft)}
   #cursorLayer{position:absolute;inset:0;pointer-events:none;z-index:36;overflow:hidden}
   #cursorLayer .rc{position:absolute;top:0;left:0;will-change:transform;transition:transform .08s linear;display:flex;align-items:flex-start;gap:3px}
   #cursorLayer .rc svg{flex:0 0 auto;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
@@ -435,10 +438,14 @@
   .home-body{flex:1;display:flex;overflow:hidden}
   .home-folders{flex:0 0 250px;border-right:1px solid var(--border);background:var(--panel);padding:16px;overflow:auto}
   .hf-tree{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
-  .hf-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap;overflow:hidden}
+  .hf-item{position:relative;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap;overflow:hidden}
   .hf-item:hover{background:#f2f4f7}
   .hf-item.on{background:var(--tech-soft);color:var(--tech);font-weight:650}
+  .hf-item.drop-hover{background:var(--tech-soft);box-shadow:inset 0 0 0 1.5px var(--tech)}
   .hf-item .hf-ic{flex:0 0 auto}
+  .hf-item .hf-name{flex:1;overflow:hidden;text-overflow:ellipsis}
+  .hf-item .hf-menu{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font-size:15px;cursor:pointer;padding:0 3px;border-radius:5px;opacity:0}
+  .hf-item:hover .hf-menu{opacity:.8} .hf-item .hf-menu:hover{background:#e5e7eb;color:var(--ink)}
   .hf-add{width:100%;border:1px dashed var(--line);background:#fff;border-radius:8px;padding:7px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
   .hf-add:hover{border-color:var(--tech);color:var(--tech)}
   .home-main{flex:1;overflow:auto;padding:24px 32px}
@@ -457,6 +464,31 @@
   .pj-pop button{border:0;background:transparent;text-align:left;padding:8px 11px;border-radius:7px;font-size:13px;color:var(--ink);cursor:pointer}
   .pj-pop button:hover{background:#f2f4f7} .pj-pop button.danger{color:#dc2626} .pj-pop button.danger:hover{background:#fef2f2}
   body.view-mode .proj-chip,body.view-mode #homeScreen{display:none!important}
+  /* Dialog Partage & accès */
+  #accessOv{position:fixed;inset:0;background:rgba(17,24,39,.4);z-index:96;opacity:0;pointer-events:none;transition:.16s}
+  #accessOv.open{opacity:1;pointer-events:auto}
+  #accessDlg{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(.98);width:480px;max-width:94vw;max-height:88vh;background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg);z-index:97;opacity:0;pointer-events:none;transition:.18s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+  #accessDlg.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  .ac-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border)}
+  .ac-head .ac-ic{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--produit),var(--tech));display:flex;align-items:center;justify-content:center;font-size:15px}
+  .ac-head h3{margin:0;font-size:16px;font-weight:700} .ac-head .ac-sub{font-size:12px;color:var(--muted)}
+  .ac-head .close{margin-left:auto;border:0;background:#f2f4f7;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--muted)}
+  .ac-body{padding:16px 20px 20px;overflow:auto}
+  .ac-invite{display:flex;gap:8px}
+  .ac-invite input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-size:13.5px}
+  .ac-invite select{border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px}
+  .ac-list{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+  .ac-row{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:9px;padding:8px 11px}
+  .ac-who{display:flex;align-items:center;gap:9px;min-width:0;flex:1}
+  .ac-av{width:26px;height:26px;border-radius:50%;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .ac-mail{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ac-set{border:1px solid var(--border);border-radius:7px;padding:5px 7px;font-size:12px}
+  .ac-lvl.own{font-size:11px;font-weight:700;color:#4338ca;background:#eef2ff;border-radius:20px;padding:3px 10px}
+  .ac-rm{border:1px solid var(--border);background:#fff;color:#dc2626;width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:15px;flex:0 0 auto}
+  .ac-rm:hover{background:#fef2f2;border-color:#fecaca}
+  .ac-note{font-size:11.5px;color:var(--faint);line-height:1.5;margin-top:14px}
+  .admin-note.ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#047857;font-size:12px;padding:8px 11px;border-radius:8px;margin-top:10px}
+  .admin-note.ok code{background:#fff;border:1px solid #a7f3d0;border-radius:5px;padding:1px 6px;font-weight:700}
   #loginScreen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#08183a}
   #loginScreen.hidden{display:none}
   /* Fond « soie bleue » animé, recréé en CSS (inspiration brand Cegid) */
@@ -1126,6 +1158,11 @@
 <aside id="burgerMenu">
   <div class="bm-head"><div class="logo" data-brandmark>S</div><span class="bm-title">SquadBuilder</span><button class="close" id="bmClose">×</button></div>
   <div class="bm-body">
+    <div class="bm-sec">Projet</div>
+    <button class="bm-item" id="homeBtn"><span class="mi">🗂️</span>Tous mes projets</button>
+    <button class="bm-item" id="shareProjBtn"><span class="mi">👥</span>Partage & accès</button>
+    <button class="bm-item" id="importProjBtn"><span class="mi">⬇︎</span>Importer un projet (comme tribu)</button>
+
     <div class="bm-sec">Vues</div>
     <button class="bm-item" id="dashBtn"><span class="mi">📊</span>Dashboard analytics</button>
     <button class="bm-item" id="glossBtn"><span class="mi">📖</span>Référentiel des rôles</button>
@@ -1260,6 +1297,21 @@
     <button class="btn" id="cdCancel">Annuler</button>
     <button class="btn" id="cdMid" style="display:none"></button>
     <button class="btn" id="cdOk">Confirmer</button>
+  </div>
+</div>
+
+<div id="accessOv"></div>
+<div id="accessDlg" role="dialog" aria-modal="true">
+  <div class="ac-head"><div class="ac-ic">👥</div><div><h3>Partage & accès</h3><div class="ac-sub" id="acSub">—</div></div><button class="close" id="acClose">×</button></div>
+  <div class="ac-body">
+    <div class="ac-invite">
+      <input type="email" id="acEmail" placeholder="email@entreprise.com">
+      <select id="acLevel"><option value="viewer">Lecture</option><option value="editor" selected>Écriture</option></select>
+      <button class="btn primary" id="acAdd">Inviter</button>
+    </div>
+    <div id="acResult"></div>
+    <div class="ac-list" id="acList"><div class="dash-empty">Chargement…</div></div>
+    <div class="ac-note">L'invité reçoit un accès au projet. Pour un email sans compte, un mot de passe temporaire est généré (à lui transmettre). Le propriétaire ne peut pas être retiré.</div>
   </div>
 </div>
 
@@ -1679,10 +1731,10 @@ function folderTreeHTML(){
   const fs=(userPrefs&&userPrefs.folders)||[];
   const byParent={}; fs.forEach(f=>{ (byParent[f.parentId||'']=byParent[f.parentId||'']||[]).push(f); });
   const branch=(pid,depth)=>{ const arr=(byParent[pid||'']||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'fr'));
-    return arr.map(f=>`<div class="hf-item ${_homeFolder===f.id?'on':''}" data-folder="${f.id}" style="padding-left:${12+depth*14}px"><span class="hf-ic">📁</span><span class="hf-name">${esc(f.name)}</span></div>`+branch(f.id,depth+1)).join(''); };
+    return arr.map(f=>`<div class="hf-item ${_homeFolder===f.id?'on':''}" data-folder="${f.id}" data-drop-folder="${f.id}" style="padding-left:${12+depth*14}px"><span class="hf-ic">📁</span><span class="hf-name">${esc(f.name)}</span><button class="hf-menu" data-folmenu="${f.id}" title="Actions">⋯</button></div>`+branch(f.id,depth+1)).join(''); };
   return `<div class="hf-item ${_homeFolder===null?'on':''}" data-folder="__all__"><span class="hf-ic">🗂️</span>Tous les projets</div>`+
     branch('',0)+
-    `<div class="hf-item ${_homeFolder==='__none__'?'on':''}" data-folder="__none__"><span class="hf-ic">📂</span>Non classés</div>`;
+    `<div class="hf-item ${_homeFolder==='__none__'?'on':''}" data-folder="__none__" data-drop-folder="__none__"><span class="hf-ic">📂</span>Non classés</div>`;
 }
 function renderHome(orgs){
   _homeOrgs=orgs;
@@ -1691,7 +1743,7 @@ function renderHome(orgs){
   if(_homeFolder==='__none__') list=orgs.filter(o=>!place[o.id]);
   else if(_homeFolder&&_homeFolder!=='__all__'&&_homeFolder!==null) list=orgs.filter(o=>place[o.id]===_homeFolder);
   const badge=r=>r==='owner'?'<span class="pj-badge own">Propriétaire</span>':(r==='viewer'?'<span class="pj-badge ro">Lecture</span>':'<span class="pj-badge rw">Écriture</span>');
-  const cards=list.map(o=>`<div class="pj-card" data-open="${o.id}">
+  const cards=list.map(o=>`<div class="pj-card" data-open="${o.id}" draggable="true" data-drag-proj="${o.id}" title="Glisser vers un dossier pour classer">
       <div class="pj-thumb">${esc((o.name||'P').slice(0,1).toUpperCase())}</div>
       <div class="pj-body"><div class="pj-name">${esc(o.name||'Sans nom')}</div>${badge(o.myRole)}</div>
       <button class="pj-menu" data-menu="${o.id}" title="Actions">⋯</button>
@@ -1705,13 +1757,43 @@ function renderHome(orgs){
     <section class="home-main"><div class="pj-grid">${cards}</div></section>`;
 }
 $('#homeScreen')&&$('#homeScreen').addEventListener('click',async e=>{
-  const open=e.target.closest('[data-open]'); const menu=e.target.closest('[data-menu]'); const fol=e.target.closest('[data-folder]');
+  const folMenu=e.target.closest('[data-folmenu]'); const menu=e.target.closest('[data-menu]');
+  const open=e.target.closest('[data-open]'); const fol=e.target.closest('[data-folder]');
+  if(folMenu){ e.stopPropagation(); folderMenu(folMenu.dataset.folmenu, folMenu); return; }
   if(menu){ e.stopPropagation(); projectMenu(menu.dataset.menu, menu); return; }
   if(open){ switchOrg(open.dataset.open); return; }
   if(fol){ _homeFolder = fol.dataset.folder==='__all__'?null:fol.dataset.folder; renderHome(_homeOrgs); return; }
   if(e.target.id==='pjCreate'||e.target.id==='pjCreate2'){ createProject(); return; }
   if(e.target.id==='pjAddFolder'){ addFolder(); return; }
 });
+// Glisser un projet vers un dossier pour le classer
+if($('#homeScreen')){
+  let _dragProj=null;
+  $('#homeScreen').addEventListener('dragstart',e=>{ const c=e.target.closest('[data-drag-proj]'); if(!c)return; _dragProj=c.dataset.dragProj; e.dataTransfer.effectAllowed='move'; c.style.opacity='.5'; });
+  $('#homeScreen').addEventListener('dragend',e=>{ const c=e.target.closest('[data-drag-proj]'); if(c)c.style.opacity=''; document.querySelectorAll('.hf-item.drop-hover').forEach(n=>n.classList.remove('drop-hover')); _dragProj=null; });
+  $('#homeScreen').addEventListener('dragover',e=>{ if(!_dragProj)return; const z=e.target.closest('[data-drop-folder]'); if(!z)return; e.preventDefault(); document.querySelectorAll('.hf-item.drop-hover').forEach(n=>{if(n!==z)n.classList.remove('drop-hover');}); z.classList.add('drop-hover'); });
+  $('#homeScreen').addEventListener('drop',e=>{ if(!_dragProj)return; const z=e.target.closest('[data-drop-folder]'); if(!z)return; e.preventDefault();
+    const fid=z.dataset.dropFolder; userPrefs.placement=userPrefs.placement||{};
+    if(fid==='__none__') delete userPrefs.placement[_dragProj]; else userPrefs.placement[_dragProj]=fid;
+    savePrefs(); _dragProj=null; renderHome(_homeOrgs); toast('Projet classé');
+  });
+}
+function folderMenu(fid, anchor){
+  const f=(userPrefs.folders||[]).find(x=>x.id===fid);
+  const items=[['Renommer',()=>{ const n=(prompt('Renommer le dossier :',f?f.name:'')||'').trim(); if(n){ f.name=n; savePrefs(); renderHome(_homeOrgs); } }],
+    ['Supprimer',()=>{ // réattribue les sous-dossiers au parent, déclasse les projets
+      const par=f?f.parentId||'':''; (userPrefs.folders||[]).forEach(c=>{ if(c.parentId===fid)c.parentId=par; });
+      Object.keys(userPrefs.placement||{}).forEach(k=>{ if(userPrefs.placement[k]===fid)delete userPrefs.placement[k]; });
+      userPrefs.folders=(userPrefs.folders||[]).filter(x=>x.id!==fid); if(_homeFolder===fid)_homeFolder=null;
+      savePrefs(); renderHome(_homeOrgs); }]];
+  const m=document.createElement('div'); m.className='pj-pop';
+  m.innerHTML=items.map((it,i)=>`<button data-i="${i}" class="${it[0]==='Supprimer'?'danger':''}">${it[0]}</button>`).join('');
+  const r=anchor.getBoundingClientRect(); m.style.top=(r.bottom+4)+'px'; m.style.left=(Math.min(r.left,window.innerWidth-180))+'px';
+  document.body.appendChild(m);
+  const close=()=>{ m.remove(); document.removeEventListener('click',close); };
+  m.addEventListener('click',ev=>{ const b=ev.target.closest('[data-i]'); if(b)items[+b.dataset.i][1](); close(); });
+  setTimeout(()=>document.addEventListener('click',close),0);
+}
 async function createProject(){
   const name=(prompt('Nom du nouveau projet :','Nouveau projet')||'').trim(); if(!name)return;
   const { data, error } = await sb.from('organizations').insert({ name, data: blank(), owner_email: myEmail }).select('*').single();
@@ -1760,7 +1842,59 @@ function addFolder(){
   userPrefs.folders=userPrefs.folders||[]; userPrefs.folders.push({id:uid(),name,parentId:_homeFolder&&_homeFolder!=='__none__'?_homeFolder:''});
   savePrefs(); renderHome(_homeOrgs);
 }
-function openAccessDlg(id){ toast('Partage / accès — disponible en phase suivante'); } // P3
+let _accessOrg=null;
+function acLevelOf(role){ return (role==='viewer')?'viewer':'editor'; }   // owner/admin/editor/contributor → Écriture
+function acLevelLabel(role){ return role==='owner'?'Propriétaire':(role==='viewer'?'Lecture':'Écriture'); }
+async function openAccessDlg(id){
+  const src=_homeOrgs.find(o=>o.id===id)||(currentOrg&&currentOrg.id===id?currentOrg:null);
+  _accessOrg={ id, name: src?src.name:'Projet' };
+  $('#acSub').textContent=_accessOrg.name;
+  $('#acEmail').value=''; $('#acResult').innerHTML=''; $('#acList').innerHTML='<div class="dash-empty">Chargement…</div>';
+  $('#accessOv').classList.add('open'); $('#accessDlg').classList.add('open');
+  loadAccess();
+}
+function closeAccessDlg(){ $('#accessOv').classList.remove('open'); $('#accessDlg').classList.remove('open'); _accessOrg=null; }
+async function loadAccess(){
+  const box=$('#acList'); if(!_accessOrg)return;
+  try{
+    const r=await adminInvoke('list',{org_id:_accessOrg.id});
+    const members=(r&&r.members)||[];
+    box.innerHTML = members.length ? members.map(m=>{
+      const lvl=acLevelLabel(m.role); const owner=m.role==='owner';
+      return `<div class="ac-row"><div class="ac-who"><span class="ac-av" style="background:${colorFor(m.email)}">${esc(initialsOf(m.email))}</span><span class="ac-mail">${esc(m.email)}</span></div>
+        ${owner?`<span class="ac-lvl own">Propriétaire</span>`
+          :`<select class="ac-set" data-email="${esc(m.email)}"><option value="viewer" ${m.role==='viewer'?'selected':''}>Lecture</option><option value="editor" ${m.role!=='viewer'?'selected':''}>Écriture</option></select>
+            <button class="ac-rm" data-rm="${esc(m.email)}" title="Retirer">×</button>`}
+      </div>`; }).join('') : '<div class="dash-empty">Aucun membre.</div>';
+  }catch(e){ box.innerHTML=`<div class="admin-note warn">Impossible de charger les accès.<br><span style="opacity:.7;font-size:11px">${esc(e.message||String(e))}</span></div>`; }
+}
+$('#acClose')&&($('#acClose').onclick=closeAccessDlg);
+$('#accessOv')&&($('#accessOv').onclick=closeAccessDlg);
+$('#acAdd')&&($('#acAdd').onclick=async()=>{
+  const email=$('#acEmail').value.trim().toLowerCase(); if(!email||!_accessOrg)return;
+  const level=$('#acLevel').value; const perms=level==='editor'?['org.edit','roles.edit']:[];
+  const btn=$('#acAdd'); btn.disabled=true; btn.textContent='…';
+  try{ const r=await adminInvoke('create',{org_id:_accessOrg.id,email,role:level,permissions:perms});
+    $('#acEmail').value='';
+    $('#acResult').innerHTML = r&&r.password ? `<div class="admin-note ok">Compte créé pour <b>${esc(email)}</b> · mot de passe temporaire : <code>${esc(r.password)}</code> (à transmettre)</div>` : `<div class="admin-note ok">« ${esc(email)} » a désormais accès (${level==='editor'?'Écriture':'Lecture'}).</div>`;
+    loadAccess();
+  }catch(e){ $('#acResult').innerHTML=`<div class="admin-note warn">${esc(e.message||String(e))}</div>`; }
+  btn.disabled=false; btn.textContent='Inviter';
+});
+$('#acList')&&$('#acList').addEventListener('change',async e=>{
+  const sel=e.target.closest('.ac-set'); if(!sel||!_accessOrg)return;
+  const email=sel.dataset.email, level=sel.value, perms=level==='editor'?['org.edit','roles.edit']:[];
+  try{ await adminInvoke('update',{org_id:_accessOrg.id,email,role:level,permissions:perms}); toast('Droit mis à jour'); }
+  catch(err){ toast('Modification impossible'); loadAccess(); }
+});
+$('#acList')&&$('#acList').addEventListener('click',async e=>{
+  const rm=e.target.closest('[data-rm]'); if(!rm||!_accessOrg)return;
+  const email=rm.dataset.rm;
+  askConfirm({title:'Retirer l\'accès',message:`Retirer l'accès de « <b>${esc(email)}</b> » à ce projet ?`,confirmLabel:'Retirer'}).then(async ok=>{
+    if(!ok)return;
+    try{ await adminInvoke('remove',{org_id:_accessOrg.id,email}); loadAccess(); }catch(err){ toast('Retrait impossible'); }
+  });
+});
 $('#brandHome')&&($('#brandHome').onclick=()=>{ if(collabActive())goHome(); });
 $('#projChip')&&($('#projChip').onclick=()=>{ if(collabActive())goHome(); });
 
@@ -2209,6 +2343,7 @@ function render(){
   fitIfNeeded();
   relayoutCells();
   if(typeof decorateEditing==='function') decorateEditing();
+  if(typeof paintSelection==='function') paintSelection();
 }
 function updateStats(){
   const all=allPersons(); let squads=0, temps=0;
@@ -2558,7 +2693,7 @@ function closeDetail(){ $('#detailPanel').classList.remove('open'); detailCtx=nu
 $('#dpClose').onclick=closeDetail;
 $('#dpEdit').onclick=()=>{ if(!detailCtx)return; const {obj,kind}=detailCtx; closeDetail(); setMode('affect'); openEditor(obj,kind); };
 
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#confirmDlg').classList.contains('open')){ $('#cdCancel').click(); return; } if($('#roleDlg').classList.contains('open')){ closeRoleDlg(); return; } closeEditor(); closeDetail(); closeModal(); closeSheet(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#confirmDlg').classList.contains('open')){ $('#cdCancel').click(); return; } if($('#accessDlg').classList.contains('open')){ closeAccessDlg(); return; } if($('#roleDlg').classList.contains('open')){ closeRoleDlg(); return; } closeEditor(); closeDetail(); closeModal(); closeSheet(); } });
 
 /* ---------------- Zoom & déplacement ---------------- */
 let tx=0,ty=0,scale=1;
@@ -2597,9 +2732,123 @@ viewport.addEventListener('wheel',e=>{ e.preventDefault();
   }
 },{passive:false});
 let panning=false,psx,psy;
-viewport.addEventListener('mousedown',e=>{ if(e.target.closest('[data-action]'))return; panning=true; psx=e.clientX-tx; psy=e.clientY-ty; viewport.classList.add('grabbing'); });
-window.addEventListener('mousemove',e=>{ if(!panning)return; tx=e.clientX-psx; ty=e.clientY-psy; apply(); });
-window.addEventListener('mouseup',()=>{ panning=false; viewport.classList.remove('grabbing'); });
+/* ---- Sélection lasso (par défaut) · pan via Espace+glisser ou clic-milieu ---- */
+let spaceHeld=false, lasso=null;   // lasso = {x0,y0,el}
+function inTypingField(el){ return el && (el.closest('input,textarea,select,[contenteditable="true"],#sheetBody')); }
+window.addEventListener('keydown',e=>{ if(e.code==='Space'&&!inTypingField(e.target)&&!spaceHeld){ spaceHeld=true; viewport.classList.add('space'); } });
+window.addEventListener('keyup',e=>{ if(e.code==='Space'){ spaceHeld=false; viewport.classList.remove('space'); } });
+viewport.addEventListener('mousedown',e=>{
+  if(e.target.closest('[data-action],[data-drag],[data-blockdrag],[data-blocktarget]')) return;   // édition/DnD natif préservés
+  if(spaceHeld || e.button===1){ panning=true; psx=e.clientX-tx; psy=e.clientY-ty; viewport.classList.add('grabbing'); return; }
+  if(e.button!==0) return;
+  startLasso(e);
+});
+window.addEventListener('mousemove',e=>{
+  if(panning){ tx=e.clientX-psx; ty=e.clientY-psy; apply(); return; }
+  if(lasso) moveLasso(e);
+});
+window.addEventListener('mouseup',e=>{ if(panning){ panning=false; viewport.classList.remove('grabbing'); } if(lasso) endLasso(e); });
+function startLasso(e){ const r=viewport.getBoundingClientRect(); const el=document.createElement('div'); el.className='lasso-rect'; el.style.left=(e.clientX-r.left)+'px'; el.style.top=(e.clientY-r.top)+'px'; viewport.appendChild(el); lasso={x0:e.clientX,y0:e.clientY,el,vr:r}; if(!(e.shiftKey||e.metaKey||e.ctrlKey)){ selection.clear(); paintSelection(); } }
+function moveLasso(e){ const {x0,y0,el,vr}=lasso; const x=Math.min(x0,e.clientX),y=Math.min(y0,e.clientY),w=Math.abs(e.clientX-x0),h=Math.abs(e.clientY-y0); el.style.left=(x-vr.left)+'px'; el.style.top=(y-vr.top)+'px'; el.style.width=w+'px'; el.style.height=h+'px'; }
+function endLasso(e){
+  const {x0,y0,el}=lasso; const rect={left:Math.min(x0,e.clientX),top:Math.min(y0,e.clientY),right:Math.max(x0,e.clientX),bottom:Math.max(y0,e.clientY)};
+  el.remove(); lasso=null;
+  const moved=Math.abs(e.clientX-x0)>4||Math.abs(e.clientY-y0)>4;
+  if(!moved){ if(!(e.shiftKey||e.metaKey||e.ctrlKey)){ selection.clear(); paintSelection(); } return; }
+  const nodes=document.querySelectorAll('#canvas .card[data-pid],#canvas .mini[data-pid],#canvas .bucket[data-squad],#canvas .cell[data-cell],#canvas .blk-tribe[data-blocktarget]');
+  nodes.forEach(n=>{ const b=n.getBoundingClientRect(); if(b.left>=rect.left&&b.top>=rect.top&&b.right<=rect.right&&b.bottom<=rect.bottom){ const id=n.dataset.pid||n.dataset.squad||n.dataset.cell||(n.dataset.blocktarget||'').replace('head:',''); if(id&&id!=='dir') selection.add(id); } });
+  dedupSelection(); paintSelection();
+  if(selection.size) toast(selection.size+' élément'+(selection.size>1?'s':'')+' sélectionné'+(selection.size>1?'s':'')+' · Cmd/Ctrl+C');
+}
+// Retire les descendants dont un ancêtre est déjà sélectionné (évite les doublons au copier)
+function dedupSelection(){
+  const ancestorSelected=id=>{ const fe=findEntity(state,id); if(!fe)return false; let pid=fe.meta.parentId;
+    while(pid && pid!=='__dir__'&&pid!=='__root__'&&pid!=='__pool__'&&pid!=='__glossary__'){ if(selection.has(pid))return true; const pfe=findEntity(state,pid); pid=pfe?pfe.meta.parentId:null; } return false; };
+  [...selection].forEach(id=>{ if(ancestorSelected(id)) selection.delete(id); });
+}
+function paintSelection(){ document.querySelectorAll('#canvas .sel-node').forEach(n=>n.classList.remove('sel-node'));
+  selection.forEach(id=>{ const n=document.querySelector('#canvas [data-pid="'+id+'"],#canvas [data-squad="'+id+'"],#canvas [data-cell="'+id+'"],#canvas [data-blocktarget="head:'+id+'"]'); if(n)n.classList.add('sel-node'); }); }
+
+/* ---- Presse-papier (modèle) + import « nouvelle tribu » + anti-collision d'ids ---- */
+let _clip=null, _undoState=null;
+function collectRoleNames(obj,set){ const addP=a=>(a||[]).forEach(p=>{ if(p.role)set.add(p.role); }); if(obj.pid){ if(obj.role)set.add(obj.role); return; } addP(obj.leads); addP(obj.members); (obj.squads||[]).forEach(sq=>{addP(sq.leads);addP(sq.members);}); (obj.cells||[]).forEach(c=>addP(c.members)); }
+function copySelection(){
+  if(!selection.size){ return; }
+  const entities=[], names=new Set();
+  selection.forEach(id=>{ const fe=findEntity(state,id); if(!fe)return; const obj=deepClone(fe.obj); entities.push({listKind:fe.meta.listKind,obj}); collectRoleNames(obj,names); });
+  const glossary=(state.glossary||[]).filter(r=>names.has(r.name)).map(deepClone);
+  const payload={v:1,srcOrg:currentOrg?currentOrg.id:null,srcName:currentOrg?currentOrg.name:'',entities,glossary};
+  _clip=payload; try{ navigator.clipboard&&navigator.clipboard.writeText('__sqb_clip:'+JSON.stringify(payload)); }catch(_){}
+  toast(entities.length+' bloc'+(entities.length>1?'s':'')+' copié'+(entities.length>1?'s':'')+' · Cmd/Ctrl+V pour coller');
+}
+async function pasteClip(){
+  if(currentOrg && !can('org.edit')){ toast('Lecture seule'); return; }
+  let payload=_clip;
+  if(!payload){ try{ const t=await navigator.clipboard.readText(); if(t&&t.indexOf('__sqb_clip:')===0) payload=JSON.parse(t.slice(11)); }catch(_){} }
+  if(!payload||!payload.entities||!payload.entities.length){ toast('Presse-papier vide'); return; }
+  importEntities(payload.entities, payload.glossary||[], payload.srcName||'Import');
+}
+function collectUsedIds(s){ const set=new Set(); forEachEntity(s,(o,m)=>set.add(m.id)); return set; }
+function regenIds(head, used){
+  const fresh=()=>{ let c; do{ c=uid(); }while(used.has(c)); used.add(c); return c; };
+  const walkP=a=>(a||[]).forEach(p=>{ p.pid=fresh(); });
+  if(head.id!==undefined) head.id=fresh();
+  walkP(head.leads);
+  (head.squads||[]).forEach(sq=>{ sq.id=fresh(); walkP(sq.leads); walkP(sq.members); });
+  (head.cells||[]).forEach(c=>{ c.id=fresh(); walkP(c.members); });
+}
+function importEntities(entities, glossary, name){
+  _undoState=deepClone(state);
+  const used=collectUsedIds(state);
+  const h=newHead(); h.name=(name||'Import').slice(0,60); h.desc=''; h.leads=[]; h.squads=[]; h.cells=[];
+  entities.forEach(en=>{ const o=deepClone(en.obj);
+    if(en.listKind==='heads'){ (o.leads||[]).forEach(p=>h.leads.push(p)); (o.squads||[]).forEach(sq=>h.squads.push(sq)); (o.cells||[]).forEach(c=>h.cells.push(c)); }
+    else if(en.listKind==='squads'||en.listKind==='flysquad'){ h.squads.push(o); }
+    else if(en.listKind==='cells'){ h.cells.push(o); }
+    else { (h.leads.length<8 ? h.leads : (state.pool||(state.pool=[]))).push(o); }   // personnes isolées → leads (surplus→vivier)
+  });
+  regenIds(h, used);
+  let added=0; (glossary||[]).forEach(r=>{ if(!glossFor(r.name)){ const nr=deepClone(r); nr.id=uid(); state.glossary.push(nr); added++; } });
+  if(added) rebuildRoleLists();
+  state.heads.push(h); collapsed.add(h.id); firstFit=true;
+  commit();
+  toast('Importé comme nouvelle tribu « '+esc(h.name)+' » · Cmd/Ctrl+Z pour annuler');
+}
+function doUndo(){ if(!_undoState){ toast('Rien à annuler'); return; } state=_undoState; _undoState=null; firstFit=true; commit(); toast('Annulé'); }
+function entitiesFromState(s){ const e=[];
+  ((s.direction&&s.direction.leads)||[]).forEach(p=>e.push({listKind:'person',obj:p}));
+  ((s.direction&&s.direction.cells)||[]).forEach(c=>e.push({listKind:'cells',obj:c}));
+  (s.heads||[]).forEach(h=>e.push({listKind:'heads',obj:h}));
+  (s.squads||[]).forEach(sq=>e.push({listKind:'flysquad',obj:sq}));
+  (s.pool||[]).forEach(p=>e.push({listKind:'person',obj:p}));
+  return e;
+}
+async function importProjectAsTribu(orgId){
+  const { data } = await sb.from('organizations').select('name,data').eq('id',orgId).single();
+  if(!data||!data.data||!data.data.direction){ toast('Projet illisible'); return; }
+  const src=deepClone(data.data);
+  const keep=state; state=src; try{ migrate(); }catch(_){}; const mig=state; state=keep;   // migre la source sans toucher au projet courant
+  importEntities(entitiesFromState(mig), (mig.glossary||[]).map(deepClone), 'Import · '+(data.name||'projet'));
+}
+async function openImportPicker(){
+  if(!currentOrg){ return; }
+  const orgs=(await listMyOrgs()).filter(o=>o.id!==currentOrg.id);
+  if(!orgs.length){ toast('Aucun autre projet à importer'); return; }
+  const m=document.createElement('div'); m.className='pj-pop';
+  m.innerHTML='<div style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--faint)">Importer comme tribu :</div>'+orgs.map(o=>`<button data-imp="${o.id}">${esc(o.name||'Sans nom')}</button>`).join('');
+  m.style.top='56px'; m.style.left='16px'; document.body.appendChild(m);
+  const close=()=>{ m.remove(); document.removeEventListener('click',close); };
+  m.addEventListener('click',ev=>{ const b=ev.target.closest('[data-imp]'); if(b){ importProjectAsTribu(b.dataset.imp); } close(); });
+  setTimeout(()=>document.addEventListener('click',close),0);
+}
+// Raccourcis clavier : copier / coller / annuler
+document.addEventListener('keydown',e=>{
+  if(inTypingField(e.target)) return;
+  const mod=e.metaKey||e.ctrlKey;
+  if(mod&&e.key==='c'&&selection.size){ e.preventDefault(); copySelection(); }
+  else if(mod&&e.key==='v'){ e.preventDefault(); pasteClip(); }
+  else if(mod&&e.key==='z'){ e.preventDefault(); doUndo(); }
+});
 // Diffusion de MON curseur (throttlé rAF + plancher 40ms), en coordonnées canvas-local
 let _curRaf=0,_curLast=0,_curGoneSent=true;
 window.addEventListener('mousemove',e=>{
@@ -2700,7 +2949,9 @@ document.addEventListener('click',e=>{ if(!e.target.closest('#hSearch')) $('#hSe
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200); }
 $('#exportBtn').onclick=()=>{ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='organisation.json'; a.click(); toast('Exporté en JSON'); };
 $('#importBtn').onclick=()=>$('#fileInput').click();
-$('#fileInput').onchange=e=>{ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>{ try{ const d=JSON.parse(ev.target.result); if(!d.direction||!d.heads)throw 0; state=d; firstFit=true; commit(); toast('Organisation importée'); }catch(err){ toast('Fichier JSON invalide'); } }; r.readAsText(f); e.target.value=''; };
+$('#fileInput').onchange=e=>{ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>{ try{ const d=JSON.parse(ev.target.result); if(!d.direction||!d.heads)throw 0;
+  askConfirm({title:'Restaurer (remplacer le board)',message:'Le contenu ACTUEL de ce projet sera <b>remplacé</b> par le fichier. Pour <b>ajouter</b> sans écraser, utilise plutôt « Importer un projet (comme tribu) ».',confirmLabel:'Remplacer'}).then(ok=>{ if(!ok)return; _undoState=deepClone(state); state=d; migrate(); firstFit=true; commit(); toast('Board remplacé · Cmd/Ctrl+Z pour annuler'); });
+  }catch(err){ toast('Fichier JSON invalide'); } }; r.readAsText(f); e.target.value=''; };
 { const pb=$('#printBtn'); if(pb)pb.onclick=()=>window.print(); }
 $('#resetBtn').onclick=()=>{ askConfirm({title:'Réinitialiser l\'organisation',message:'Tout l\'organigramme actuel sera remplacé par une organisation vide. Action irréversible.',confirmLabel:'Réinitialiser'}).then(ok=>{ if(ok){ state=blank(); collapsed.clear(); firstFit=true; commit(); } }); };
 
@@ -2731,6 +2982,9 @@ function closeSheet(){ guardGloss(doCloseSheet); }
 $('#sheetClose').onclick=closeSheet; $('#sheetOv').onclick=closeSheet;
 $('#dashBtn').onclick=()=>openSheet('dash');
 $('#glossBtn').onclick=()=>openSheet('gloss');
+$('#homeBtn')&&($('#homeBtn').onclick=()=>{ if(collabActive())goHome(); });
+$('#shareProjBtn')&&($('#shareProjBtn').onclick=()=>{ if(collabActive()&&currentOrg)openAccessDlg(currentOrg.id); else toast('Ouvrez un projet pour le partager'); });
+$('#importProjBtn')&&($('#importProjBtn').onclick=()=>{ if(collabActive())openImportPicker(); else toast('Ouvrez un projet d\'abord'); });
 $('#adminBtn').onclick=()=>openSheet('admin');
 $('#adminBtnPf').onclick=()=>openSheet('admin');
 $('#stats').onclick=()=>openSheet('dash');
@@ -3060,7 +3314,8 @@ $('#sheetBody').addEventListener('drop',e=>{ if(!_dragRole)return; const z=e.tar
 
 /* ================= Administration (utilisateurs & accès) ================= */
 async function adminInvoke(action, payload){
-  const { data, error } = await sb.functions.invoke('create-user', { body:{ action, org_id: currentOrg?currentOrg.id:null, ...(payload||{}) } });
+  const org_id = (payload&&payload.org_id) || (currentOrg?currentOrg.id:null);
+  const { data, error } = await sb.functions.invoke('create-user', { body:{ action, ...(payload||{}), org_id } });
   if(error) throw new Error(error.message||String(error));
   if(data && data.error) throw new Error(data.error);
   return data;
