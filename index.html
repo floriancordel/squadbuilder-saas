@@ -420,6 +420,43 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* ---------- Écran de login ---------- */
+  /* ---------- Puce projet (header) + écran d'accueil des projets ---------- */
+  .proj-chip{display:none;align-items:center;gap:7px;background:#f2f4f7;border:1px solid var(--border);border-radius:9px;padding:5px 11px;font-size:13px;font-weight:650;color:var(--ink);cursor:pointer;max-width:240px}
+  .proj-chip:hover{background:#e9edf3;border-color:var(--tech)}
+  .proj-chip .pc-ico{font-size:13px}
+  .proj-chip #projChipName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .proj-chip .pc-chev{color:var(--muted);font-size:10px;margin-left:2px}
+  #brandHome{cursor:pointer}
+  #homeScreen{position:fixed;inset:0;z-index:95;background:var(--bg);display:none;flex-direction:column}
+  #homeScreen.open{display:flex}
+  .home-head{padding:22px 32px 14px;border-bottom:1px solid var(--border);background:var(--panel)}
+  .home-head .brand h1{font-size:18px}
+  .home-head .home-sub{font-size:13px;color:var(--muted);margin-top:4px;margin-left:36px}
+  .home-body{flex:1;display:flex;overflow:hidden}
+  .home-folders{flex:0 0 250px;border-right:1px solid var(--border);background:var(--panel);padding:16px;overflow:auto}
+  .hf-tree{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+  .hf-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap;overflow:hidden}
+  .hf-item:hover{background:#f2f4f7}
+  .hf-item.on{background:var(--tech-soft);color:var(--tech);font-weight:650}
+  .hf-item .hf-ic{flex:0 0 auto}
+  .hf-add{width:100%;border:1px dashed var(--line);background:#fff;border-radius:8px;padding:7px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+  .hf-add:hover{border-color:var(--tech);color:var(--tech)}
+  .home-main{flex:1;overflow:auto;padding:24px 32px}
+  .pj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+  .pj-card{position:relative;display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:14px;cursor:pointer;box-shadow:var(--shadow);transition:.13s}
+  .pj-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);border-color:var(--line)}
+  .pj-thumb{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--produit),var(--tech));color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex:0 0 auto}
+  .pj-body{min-width:0;flex:1}
+  .pj-name{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pj-badge{display:inline-block;margin-top:5px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .pj-badge.own{background:#eef2ff;color:#4338ca} .pj-badge.rw{background:#ecfdf5;color:#047857} .pj-badge.ro{background:#f3f4f6;color:#6b7280}
+  .pj-menu{position:absolute;top:8px;right:8px;border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;width:26px;height:26px;border-radius:7px;line-height:1}
+  .pj-menu:hover{background:#f2f4f7;color:var(--ink)}
+  .pj-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:50px 20px;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .pj-pop{position:fixed;z-index:200;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);padding:5px;min-width:170px;display:flex;flex-direction:column}
+  .pj-pop button{border:0;background:transparent;text-align:left;padding:8px 11px;border-radius:7px;font-size:13px;color:var(--ink);cursor:pointer}
+  .pj-pop button:hover{background:#f2f4f7} .pj-pop button.danger{color:#dc2626} .pj-pop button.danger:hover{background:#fef2f2}
+  body.view-mode .proj-chip,body.view-mode #homeScreen{display:none!important}
   #loginScreen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#08183a}
   #loginScreen.hidden{display:none}
   /* Fond « soie bleue » animé, recréé en CSS (inspiration brand Cegid) */
@@ -1018,7 +1055,8 @@
 <header>
   <div class="h-left">
     <button class="iconbtn burger" id="burgerBtn" title="Menu" aria-label="Menu"><span></span><span></span><span></span></button>
-    <div class="brand"><div class="logo" data-brandmark>S</div><h1>SquadBuilder</h1></div>
+    <div class="brand" id="brandHome" title="Retour à l'accueil des projets"><div class="logo" data-brandmark>S</div><h1>SquadBuilder</h1></div>
+    <button class="proj-chip" id="projChip" style="display:none" title="Changer de projet"><span class="pc-ico">🗂️</span><span id="projChipName">Projet</span><span class="pc-chev">▾</span></button>
     <div class="hsep hsep-stats"></div>
     <div class="stats" id="stats" title="Ouvrir le dashboard analytics"></div>
     <div class="hsep hsep-search"></div>
@@ -1124,6 +1162,14 @@
 </div>
 
 <div id="viewport"><div id="canvas"></div><div id="cursorLayer"></div></div>
+
+<div id="homeScreen">
+  <div class="home-head">
+    <div class="brand"><div class="logo" data-brandmark>S</div><h1>SquadBuilder</h1></div>
+    <div class="home-sub">Vos projets d'organigramme</div>
+  </div>
+  <div class="home-body" id="homeBody"></div>
+</div>
 <div id="affectHint"><span class="dotpulse"></span>Glissez pour affecter · déposez en bas pour retirer</div>
 <div id="dropTip"></div>
 <div id="dropDock">
@@ -1307,6 +1353,13 @@ let reconcileTimer = null, saveRetries = 0, revSupported = true;
 let editingId = null;                                        // entité ouverte dans un éditeur (diffusée en présence)
 const remoteCursors = new Map();                             // clé uid:tab -> {el, cx, cy, lastSeen}
 const remotePresence = new Map();                            // uid -> {name, color, editingId}
+/* ---------------- Multi-projets (état) ---------------- */
+let myEmail='';                                             // email (minuscule) de l'utilisateur connecté
+let orgGen=0;                                               // jeton de génération : invalide tout await d'un projet précédent
+let switching=false;                                        // vrai pendant un changement de projet (neutralise les (re)planifications)
+let userPrefs=null;                                         // { folders:[], placement:{}, last_org } (ou fallback localStorage)
+let prefsSupported=true;                                    // false si la table user_prefs n'existe pas encore
+const selection=new Set();                                  // ids sélectionnés au lasso (P4)
 function collabActive(){ return !!(currentOrg && !isDemo && !_viewMatch); }
 function deepClone(o){ return o==null?o:JSON.parse(JSON.stringify(o)); }
 // Sérialisation CANONIQUE (clés triées) — insensible au réordonnancement jsonb de Postgres
@@ -1341,42 +1394,51 @@ function setSaveState(s){
 }
 async function saveOrg() {
   saveTimer=null;
-  if (!currentOrg) { setSaveState(''); return; }
+  if (!currentOrg || switching) { setSaveState(''); return; }
+  if (!can('org.edit')) { setSaveState(''); return; }     // lecture seule : jamais de CAS refusé en boucle
   if (applyingRemote) { debouncedSave(); return; }        // ne pas perdre le timer pendant un resync
+  const org=currentOrg, rev0=baseRev, gen=orgGen;         // capture AVANT tout await (anti-corruption inter-projets)
   setSaveState('saving');
   const snapshot = deepClone(state);
   if (revSupported) {
-    // Compare-and-swap : Postgres arbitre l'ordre des écritures (fin du last-write-wins destructif)
     const { data, error } = await sb.from('organizations')
-      .update({ data: snapshot, rev: baseRev+1 })
-      .eq('id', currentOrg.id).eq('rev', baseRev).select('rev');
+      .update({ data: snapshot, rev: rev0+1 })
+      .eq('id', org.id).eq('rev', rev0).select('rev');
+    if (gen!==orgGen || currentOrg!==org) return;          // projet changé pendant l'await → on abandonne
     if (error) {
       if (error.code==='PGRST204' || error.code==='42703' || /'?rev'? column|column .*rev/i.test(error.message||'')) {
         revSupported=false; return saveOrg();             // colonne rev absente → mode compat
       }
       console.error('Erreur sauvegarde:', error); setSaveState('error'); scheduleRetry(); return;
     }
-    if (!data || data.length===0) {                        // personne d'autre a écrit entre-temps
+    if (!data || data.length===0) {                        // 0 ligne : conflit OU accès retiré OU projet supprimé
+      const ok = await accessStillOk(org.id);
+      if (gen!==orgGen) return;
+      if (!ok) { toast('Accès à ce projet retiré'); goHome(); return; }
       await pullAndReconcile('cas-conflict');
+      if (gen!==orgGen) return;
       setSaveState('pending'); debouncedSave(); return;
     }
     baseRev = data[0].rev; currentOrg.rev = baseRev; lastSyncedSnapshot = snapshot; saveRetries=0;
     setSaveState('saved'); rtBroadcastSaved();
   } else {
-    // Mode compat (avant migration `rev`) : update simple + signal de resync (merge par id reste actif)
-    const { error } = await sb.from('organizations').update({ data: snapshot }).eq('id', currentOrg.id);
+    const { error } = await sb.from('organizations').update({ data: snapshot }).eq('id', org.id);
+    if (gen!==orgGen || currentOrg!==org) return;
     if (error) { console.error('Erreur sauvegarde:', error); setSaveState('error'); clearTimeout(saveTimer); saveTimer=setTimeout(saveOrg,3000); return; }
     lastSyncedSnapshot = snapshot; setSaveState('saved'); rtBroadcastSaved();
   }
 }
+// Contrôle d'accès : la RLS masque la ligne si l'accès a été retiré → distingue refus vs conflit
+async function accessStillOk(orgId){ try{ const { data } = await sb.from('organizations').select('id').eq('id',orgId).maybeSingle(); return !!data; }catch(_){ return true; } }
 function scheduleRetry(){ if(saveRetries++>6){ setSaveState('error'); return; } clearTimeout(saveTimer); saveTimer=setTimeout(saveOrg, 1500+Math.random()*1500); }
 function rtBroadcastSaved(){ if(rtChannel){ try{ rtChannel.send({type:'broadcast',event:'saved',payload:{by:myTab,name:myName,rev:baseRev}}); }catch(_){} } }
 function debouncedSave() {
+  if(switching) return;
   if(currentOrg) setSaveState('pending');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveOrg, 700);
 }
-function flushSave(){ if(applyingRemote)return; if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; saveOrg(); } }
+function flushSave(){ if(applyingRemote || !saveTimer) return Promise.resolve(); clearTimeout(saveTimer); saveTimer=null; return saveOrg(); }
 window.addEventListener('beforeunload', ()=>{ flushSave(); leaveRoom(); });
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushSave(); });
 
@@ -1510,30 +1572,205 @@ async function onLogin(user) {
   $('#loginScreen').classList.add('hidden');
   $('#userBar').style.display = 'flex';
   if(user.user_metadata && user.user_metadata.must_change_password){ await forcePasswordChange(); }
-  currentOrg = await getMyOrg();
-  // Identité collab (avant tout save/broadcast)
-  myUid = user.id; myName = (user.email||'').split('@')[0]||'—'; myInitials = initialsOf(user.email); myColor = colorFor(user.id);
-  if (currentOrg && currentOrg.data && currentOrg.data.direction) {
-    state = currentOrg.data;
-    migrate();
-    baseRev = currentOrg.rev||0; lastSyncedSnapshot = deepClone(state);   // init AVANT tout save (fix critique CAS)
-  } else {
-    state = seed();
-    baseRev = (currentOrg&&currentOrg.rev)||0; lastSyncedSnapshot = deepClone(state);
-    if (currentOrg) await saveOrg();
-  }
-  const m = currentOrg ? await fetchMembership(currentOrg.id, user.email) : {role:'owner',perms:null};
-  fillProfile(user.email, m.role, m.perms);
-  firstFit = true;
+  // Identité collab
+  myUid = user.id; myEmail = (user.email||'').toLowerCase(); myName = (user.email||'').split('@')[0]||'—'; myInitials = initialsOf(user.email); myColor = colorFor(user.id);
+  await loadPrefs();
+  // Reprise du dernier projet si toujours accessible, sinon écran d'accueil
+  const orgs = await listMyOrgs();
+  const last = userPrefs && userPrefs.last_org && orgs.find(o=>o.id===userPrefs.last_org);
+  if(last){ await openOrg(last); } else { showHome(orgs); }
+}
+// Ouvre un projet : recharge tout l'état, les droits (AWAITÉS) et la room temps réel
+async function openOrg(org){
+  orgGen++;                                        // toute opération d'un projet précédent devient invalide
+  switching=false;
+  currentOrg = org;
+  state = (org.data && org.data.direction) ? org.data : seed();
+  migrate();
+  baseRev = org.rev||0; lastSyncedSnapshot = deepClone(state);
+  collapsed.clear(); selection.clear(); editingId=null; pendingReconcile=null;
+  tx=0; ty=0; scale=1; firstFit=true;
+  const m = await fetchMembership(org.id, myEmail);   // AWAITÉ avant render (pas de fuite de droits A→B)
+  fillProfile(myEmail, m.role, m.perms);
+  hideHome();
+  updateProjectChip();
   render();
   joinRoom();
+  if(userPrefs){ userPrefs.last_org=org.id; savePrefs(); }
+}
+async function switchOrg(id){
+  if(!id || (currentOrg && id===currentOrg.id)) return;
+  switching=true; orgGen++;
+  await flushSave();                                  // persiste le projet courant (réellement attendu)
+  clearTimeout(saveTimer); saveTimer=null; clearTimeout(reconcileTimer); reconcileTimer=null;
+  saveRetries=0; applyingRemote=false; pendingReconcile=null;
+  closeEditor(); editingId=null;
+  leaveRoom();
+  const { data, error } = await sb.from('organizations').select('*').eq('id',id).single();
+  if(error||!data){ toast('Projet introuvable'); switching=false; goHome(); return; }
+  await openOrg(data);                                // openOrg remet switching=false + orgGen++
+}
+async function goHome(){
+  switching=true; orgGen++;
+  await flushSave();
+  clearTimeout(saveTimer); saveTimer=null; clearTimeout(reconcileTimer); reconcileTimer=null;
+  saveRetries=0; applyingRemote=false; pendingReconcile=null;
+  closeEditor(); editingId=null;
+  leaveRoom();
+  currentOrg=null; state=null; canvas.innerHTML='';
+  switching=false; updateProjectChip();
+  const orgs = await listMyOrgs(); showHome(orgs);
+}
+async function listMyOrgs(){
+  try{
+    const { data:orgs } = await sb.from('organizations').select('id,name,owner_email,rev,updated_at');
+    const { data:mem } = await sb.from('memberships').select('org_id,role,permissions').eq('email',myEmail);
+    const roleOf={}; (mem||[]).forEach(m=>roleOf[m.org_id]=m.role);
+    return (orgs||[]).map(o=>({ ...o, myRole: (o.owner_email||'').toLowerCase()===myEmail ? 'owner' : (roleOf[o.id]||'viewer') }))
+      .sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
+  }catch(e){ console.error('listMyOrgs',e); return []; }
 }
 
+/* ---------------- Préférences utilisateur (dossiers, dernier projet) ---------------- */
+function _prefsLocalKey(){ return 'sqb_prefs_'+myEmail; }
+async function loadPrefs(){
+  if(prefsSupported){
+    try{
+      const { data, error } = await sb.from('user_prefs').select('*').eq('email',myEmail).maybeSingle();
+      if(error){ if(error.code==='PGRST205'||/user_prefs/.test(error.message||'')){ prefsSupported=false; } }
+      else { userPrefs = data || { email:myEmail, folders:[], placement:{}, last_org:null }; return; }
+    }catch(_){ prefsSupported=false; }
+  }
+  // Fallback local (avant migration user_prefs)
+  try{ userPrefs = JSON.parse(localStorage.getItem(_prefsLocalKey())||'null') || { folders:[], placement:{}, last_org:null }; }
+  catch(_){ userPrefs = { folders:[], placement:{}, last_org:null }; }
+}
+let _prefsTimer=null;
+function savePrefs(){
+  if(!userPrefs)return;
+  clearTimeout(_prefsTimer);
+  _prefsTimer=setTimeout(async()=>{
+    if(prefsSupported){
+      const row={ email:myEmail, folders:userPrefs.folders||[], placement:userPrefs.placement||{}, last_org:userPrefs.last_org||null };
+      const { error } = await sb.from('user_prefs').upsert(row,{onConflict:'email'});
+      if(error){ if(error.code==='PGRST205'||/user_prefs/.test(error.message||'')){ prefsSupported=false; } else { return; } }
+      else return;
+    }
+    try{ localStorage.setItem(_prefsLocalKey(), JSON.stringify(userPrefs)); }catch(_){}
+  }, 500);
+}
+
+/* ---------------- Écran d'accueil + projets ---------------- */
+function updateProjectChip(){
+  const chip=$('#projChip'); if(!chip)return;
+  if(currentOrg && collabActive()){ chip.style.display='inline-flex'; $('#projChipName').textContent=currentOrg.name||'Projet'; }
+  else chip.style.display='none';
+}
+function hideHome(){ const h=$('#homeScreen'); if(h)h.classList.remove('open'); }
+function showHome(orgs){
+  updateProjectChip();
+  const h=$('#homeScreen'); if(!h)return;
+  h.classList.add('open');
+  renderHome(orgs||[]);
+}
+let _homeOrgs=[], _homeFolder=null;   // dossier sélectionné (null = tous / racine)
+async function refreshHome(){ _homeOrgs=await listMyOrgs(); renderHome(_homeOrgs); }
+function folderTreeHTML(){
+  const fs=(userPrefs&&userPrefs.folders)||[];
+  const byParent={}; fs.forEach(f=>{ (byParent[f.parentId||'']=byParent[f.parentId||'']||[]).push(f); });
+  const branch=(pid,depth)=>{ const arr=(byParent[pid||'']||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+    return arr.map(f=>`<div class="hf-item ${_homeFolder===f.id?'on':''}" data-folder="${f.id}" style="padding-left:${12+depth*14}px"><span class="hf-ic">📁</span><span class="hf-name">${esc(f.name)}</span></div>`+branch(f.id,depth+1)).join(''); };
+  return `<div class="hf-item ${_homeFolder===null?'on':''}" data-folder="__all__"><span class="hf-ic">🗂️</span>Tous les projets</div>`+
+    branch('',0)+
+    `<div class="hf-item ${_homeFolder==='__none__'?'on':''}" data-folder="__none__"><span class="hf-ic">📂</span>Non classés</div>`;
+}
+function renderHome(orgs){
+  _homeOrgs=orgs;
+  const place=(userPrefs&&userPrefs.placement)||{};
+  let list=orgs;
+  if(_homeFolder==='__none__') list=orgs.filter(o=>!place[o.id]);
+  else if(_homeFolder&&_homeFolder!=='__all__'&&_homeFolder!==null) list=orgs.filter(o=>place[o.id]===_homeFolder);
+  const badge=r=>r==='owner'?'<span class="pj-badge own">Propriétaire</span>':(r==='viewer'?'<span class="pj-badge ro">Lecture</span>':'<span class="pj-badge rw">Écriture</span>');
+  const cards=list.map(o=>`<div class="pj-card" data-open="${o.id}">
+      <div class="pj-thumb">${esc((o.name||'P').slice(0,1).toUpperCase())}</div>
+      <div class="pj-body"><div class="pj-name">${esc(o.name||'Sans nom')}</div>${badge(o.myRole)}</div>
+      <button class="pj-menu" data-menu="${o.id}" title="Actions">⋯</button>
+    </div>`).join('') || `<div class="pj-empty">Aucun projet ici. <button class="btn primary" id="pjCreate2">＋ Créer un projet</button></div>`;
+  $('#homeBody').innerHTML=`
+    <aside class="home-folders">
+      <button class="btn primary" id="pjCreate" style="width:100%;justify-content:center;margin-bottom:12px">＋ Nouveau projet</button>
+      <div class="hf-tree">${folderTreeHTML()}</div>
+      <button class="hf-add" id="pjAddFolder">＋ Dossier</button>
+    </aside>
+    <section class="home-main"><div class="pj-grid">${cards}</div></section>`;
+}
+$('#homeScreen')&&$('#homeScreen').addEventListener('click',async e=>{
+  const open=e.target.closest('[data-open]'); const menu=e.target.closest('[data-menu]'); const fol=e.target.closest('[data-folder]');
+  if(menu){ e.stopPropagation(); projectMenu(menu.dataset.menu, menu); return; }
+  if(open){ switchOrg(open.dataset.open); return; }
+  if(fol){ _homeFolder = fol.dataset.folder==='__all__'?null:fol.dataset.folder; renderHome(_homeOrgs); return; }
+  if(e.target.id==='pjCreate'||e.target.id==='pjCreate2'){ createProject(); return; }
+  if(e.target.id==='pjAddFolder'){ addFolder(); return; }
+});
+async function createProject(){
+  const name=(prompt('Nom du nouveau projet :','Nouveau projet')||'').trim(); if(!name)return;
+  const { data, error } = await sb.from('organizations').insert({ name, data: blank(), owner_email: myEmail }).select('*').single();
+  if(error){ toast('Création impossible : '+(error.message||'')); return; }
+  toast('Projet « '+name+' » créé'); await openOrg(data);
+}
+async function duplicateProject(id){
+  const src=_homeOrgs.find(o=>o.id===id); if(!src)return;
+  const { data:full } = await sb.from('organizations').select('data').eq('id',id).single();
+  const { data, error } = await sb.from('organizations').insert({ name:'Copie de '+(src.name||'projet'), data: deepClone((full&&full.data)||blank()), owner_email: myEmail }).select('*').single();
+  if(error){ toast('Duplication impossible'); return; }
+  toast('Projet dupliqué'); refreshHome();
+}
+async function renameProject(id){
+  const src=_homeOrgs.find(o=>o.id===id); const name=(prompt('Renommer le projet :',src?src.name:'')||'').trim(); if(!name)return;
+  const { error } = await sb.from('organizations').update({ name }).eq('id',id);
+  if(error){ toast('Renommage impossible'); return; }
+  if(currentOrg&&currentOrg.id===id){ currentOrg.name=name; updateProjectChip(); }
+  refreshHome();
+}
+function deleteProject(id){
+  const src=_homeOrgs.find(o=>o.id===id);
+  askConfirm({title:'Supprimer le projet',message:`« <b>${esc(src?src.name:'')}</b> » et son organigramme seront définitivement supprimés.`,confirmLabel:'Supprimer'}).then(async ok=>{
+    if(!ok)return;
+    const { error } = await sb.from('organizations').delete().eq('id',id);
+    if(error){ toast('Suppression impossible (êtes-vous propriétaire ?)'); return; }
+    if(userPrefs&&userPrefs.placement){ delete userPrefs.placement[id]; savePrefs(); }
+    if(currentOrg&&currentOrg.id===id){ goHome(); } else refreshHome();
+    toast('Projet supprimé');
+  });
+}
+function projectMenu(id, anchor){
+  const src=_homeOrgs.find(o=>o.id===id); const owner=src&&src.myRole==='owner';
+  const items=[['Ouvrir',()=>switchOrg(id)],['Dupliquer',()=>duplicateProject(id)]];
+  if(owner){ items.push(['Renommer',()=>renameProject(id)]); items.push(['Partager / Accès',()=>openAccessDlg(id)]); items.push(['Supprimer',()=>deleteProject(id)]); }
+  const m=document.createElement('div'); m.className='pj-pop';
+  m.innerHTML=items.map((it,i)=>`<button data-i="${i}" class="${it[0]==='Supprimer'?'danger':''}">${it[0]}</button>`).join('');
+  const r=anchor.getBoundingClientRect(); m.style.top=(r.bottom+4)+'px'; m.style.left=(Math.min(r.left,window.innerWidth-180))+'px';
+  document.body.appendChild(m);
+  const close=()=>{ m.remove(); document.removeEventListener('click',close); };
+  m.addEventListener('click',ev=>{ const b=ev.target.closest('[data-i]'); if(b){ items[+b.dataset.i][1](); } close(); });
+  setTimeout(()=>document.addEventListener('click',close),0);
+}
+function addFolder(){
+  const name=(prompt('Nom du dossier :','Nouveau dossier')||'').trim(); if(!name||!userPrefs)return;
+  userPrefs.folders=userPrefs.folders||[]; userPrefs.folders.push({id:uid(),name,parentId:_homeFolder&&_homeFolder!=='__none__'?_homeFolder:''});
+  savePrefs(); renderHome(_homeOrgs);
+}
+function openAccessDlg(id){ toast('Partage / accès — disponible en phase suivante'); } // P3
+$('#brandHome')&&($('#brandHome').onclick=()=>{ if(collabActive())goHome(); });
+$('#projChip')&&($('#projChip').onclick=()=>{ if(collabActive())goHome(); });
+
 function onLogout() {
+  switching=true; orgGen++;
   leaveRoom();
-  currentOrg = null;
-  state = null;
-  clearTimeout(saveTimer);
+  currentOrg = null; state = null; userPrefs=null; myEmail='';
+  clearTimeout(saveTimer); saveTimer=null; clearTimeout(reconcileTimer); reconcileTimer=null;
+  applyingRemote=false; pendingReconcile=null; editingId=null; switching=false;
+  hideHome(); updateProjectChip();
   canvas.innerHTML = '';
   $('#loginScreen').classList.remove('hidden');
   $('#userBar').style.display = 'none';
@@ -3487,13 +3724,15 @@ setInterval(()=>{ const now=Date.now(); remoteCursors.forEach((c,k)=>{ if(now-(c
 
 /* ---- Signal de sauvegarde distante + réconciliation par identifiants ---- */
 function onRemoteSaved(p){ if(!p||p.by===myTab) return; lastSavedBy=p.name||''; scheduleReconcile(); }
-function scheduleReconcile(){ clearTimeout(reconcileTimer); reconcileTimer=setTimeout(()=>pullAndReconcile('saved'),300); }
+function scheduleReconcile(){ if(switching)return; clearTimeout(reconcileTimer); reconcileTimer=setTimeout(()=>pullAndReconcile('saved'),300); }
 async function pullAndReconcile(reason){
-  if(!currentOrg || applyingRemote) return;
+  if(!currentOrg || applyingRemote || switching) return;
   if(editingId){ pendingReconcile=reason; return; }         // un éditeur est ouvert → on diffère (ne pas arracher le formulaire)
+  const org=currentOrg, gen=orgGen;                          // capture avant l'await (anti-corruption inter-projets)
   try{
     const sel = revSupported ? 'data,rev' : 'data';
-    const { data, error } = await sb.from('organizations').select(sel).eq('id',currentOrg.id).single();
+    const { data, error } = await sb.from('organizations').select(sel).eq('id',org.id).single();
+    if(gen!==orgGen || currentOrg!==org) return;             // projet changé pendant l'await
     if(error||!data){ if(error&&(error.code==='PGRST204'||/rev/.test(error.message||''))) revSupported=false; return; }
     const remote=data.data; if(!remote||!remote.direction) return;
     applyingRemote=true;
@@ -3507,7 +3746,7 @@ async function pullAndReconcile(reason){
     if(dirty.size){ setSaveState('pending'); debouncedSave(); }  // persister MON travail non confirmé ; sinon rien
   }catch(e){ console.error('reconcile', e); }
   finally{ applyingRemote=false; }
-  if(reason!=='cas-conflict' && lastSavedBy) toast('Board mis à jour par '+lastSavedBy);
+  if(gen===orgGen && reason!=='cas-conflict' && lastSavedBy) toast('Board mis à jour par '+lastSavedBy);
 }
 
 /* ---- Diff & réassertion par entité (id stable : pid / id) ---- */
