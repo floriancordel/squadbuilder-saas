@@ -29,7 +29,7 @@
   button{font-family:inherit}
 
   /* ---------- Barre du haut ---------- */
-  header{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:14px;padding:9px 16px;background:var(--panel);border-bottom:1px solid var(--border);z-index:30}
+  header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:9px 16px;background:var(--panel);border-bottom:1px solid var(--border);z-index:30}
   .brand{display:flex;align-items:center;gap:9px}
   .brand .logo{width:26px;height:26px;border-radius:7px;overflow:hidden;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--produit),var(--tech));color:#fff;font-weight:800;font-size:14px}
   .brand .logo svg,.bm-head .logo svg{width:100%;height:100%;display:block;border-radius:inherit}
@@ -552,9 +552,12 @@
   header{gap:12px;flex-wrap:nowrap;min-height:52px;z-index:39}
   .h-left{display:flex;align-items:center;gap:10px;min-width:0;justify-self:start;overflow:visible}
   .h-right{display:flex;align-items:center;gap:10px;min-width:0;justify-self:end}
-  .modesw{flex:0 0 auto;justify-self:center}
+  .modesw{flex:0 0 auto}
+  /* Colonne centrale flexible : la recherche remplit l'espace entre les deux
+     groupes, centrée, sans jamais les chevaucher — s'ajuste seule au resize. */
+  .h-center{justify-self:stretch;min-width:0;display:flex;justify-content:center}
   /* Recherche d'une personne (header) */
-  .hsearch{position:relative;display:flex;align-items:center;gap:6px;background:#f2f4f7;border:1px solid var(--border);border-radius:9px;padding:5px 8px;flex:0 1 210px;min-width:78px}
+  .hsearch{position:relative;display:flex;align-items:center;gap:6px;background:#f2f4f7;border:1px solid var(--border);border-radius:9px;padding:5px 10px;width:100%;max-width:440px;min-width:0}
   .hsearch:focus-within{background:#fff;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
   .hsearch .hs-ic{font-size:12px;opacity:.55;flex:0 0 auto}
   .hsearch input{border:0;background:transparent;outline:none;font-size:12.5px;color:var(--ink);width:100%;min-width:0}
@@ -571,7 +574,7 @@
   .hs-item .hsi-count{font-size:9.5px;font-weight:700;color:var(--tech);background:var(--tech-soft);border-radius:20px;padding:1px 6px;flex:0 0 auto}
   .hs-item mark{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
   .hs-empty{padding:12px;font-size:12px;color:var(--muted);text-align:center}
-  @media(max-width:820px){ .hsearch,.hsep-search{display:none} }
+  @media(max-width:640px){ .h-center{display:none} }
   /* Zoom flottant en bas à gauche */
   #zoomDock{position:fixed;left:16px;bottom:16px;z-index:36;display:flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:3px;box-shadow:var(--shadow-lg)}
   #zoomDock button{border:0;background:transparent;width:30px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--ink);line-height:1}
@@ -1130,7 +1133,8 @@
     <button class="proj-chip" id="projChip" style="display:none" title="Changer de projet"><span class="pc-ico">🗂️</span><span id="projChipName">Projet</span><span class="pc-chev">▾</span></button>
     <div class="hsep hsep-stats"></div>
     <div class="stats" id="stats" title="Ouvrir le dashboard analytics"></div>
-    <div class="hsep hsep-search"></div>
+  </div>
+  <div class="h-center">
     <div class="hsearch" id="hSearch">
       <span class="hs-ic">🔍</span>
       <input id="hSearchInput" type="text" placeholder="Rechercher une personne…" autocomplete="off" spellcheck="false">
@@ -1138,11 +1142,11 @@
       <div class="hs-drop" id="hSearchDrop"></div>
     </div>
   </div>
-  <div class="modesw" id="modeSwitch">
-    <button data-mode="edit" class="on" title="Consulter l'organigramme"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></span>Lecture</button>
-    <button data-mode="affect" title="Éditer et affecter par glisser-déposer"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>Édition</button>
-  </div>
   <div class="h-right">
+    <div class="modesw" id="modeSwitch">
+      <button data-mode="edit" class="on" title="Consulter l'organigramme"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></span>Lecture</button>
+      <button data-mode="affect" title="Éditer et affecter par glisser-déposer"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>Édition</button>
+    </div>
     <span class="save-state" id="saveState"></span>
     <button class="btn ghost hbtn" id="printBtn2" title="Imprimer / exporter en PDF">🖨 Imprimer</button>
     <button class="btn ghost hbtn" id="shareBtn" title="Générer un lien de partage en lecture seule">🔗 Partager</button>
