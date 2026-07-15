@@ -491,6 +491,19 @@
   .ac-rm{border:1px solid var(--border);background:#fff;color:#dc2626;width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:15px;flex:0 0 auto}
   .ac-rm:hover{background:#fef2f2;border-color:#fecaca}
   .ac-note{font-size:11.5px;color:var(--faint);line-height:1.5;margin-top:14px}
+  /* Historique des versions (snapshots) */
+  #histOv{position:fixed;inset:0;background:rgba(17,24,39,.4);z-index:96;opacity:0;pointer-events:none;transition:.16s}
+  #histOv.open{opacity:1;pointer-events:auto}
+  #histDlg{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(.98);width:520px;max-width:94vw;max-height:88vh;background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg);z-index:97;opacity:0;pointer-events:none;transition:.18s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+  #histDlg.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  .hs-row{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:9px;padding:9px 11px}
+  .hs-main{min-width:0;flex:1}
+  .hs-label{font-size:13px;font-weight:650;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hs-meta{font-size:11px;color:var(--muted);margin-top:2px}
+  .hs-restore{border:1px solid var(--border);background:#fff;color:var(--tech);border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;flex:0 0 auto}
+  .hs-restore:hover{background:var(--tech-soft);border-color:var(--tech)}
+  .hs-del{border:1px solid var(--border);background:#fff;color:#dc2626;width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:15px;flex:0 0 auto}
+  .hs-del:hover{background:#fef2f2;border-color:#fecaca}
   .admin-note.ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#047857;font-size:12px;padding:8px 11px;border-radius:8px;margin-top:10px}
   .admin-note.ok code{background:#fff;border:1px solid #a7f3d0;border-radius:5px;padding:1px 6px;font-weight:700}
   #loginScreen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#08183a}
@@ -1190,6 +1203,7 @@
     <button class="bm-item" id="homeBtn"><span class="mi">🗂️</span>Tous mes projets</button>
     <button class="bm-item" id="shareProjBtn"><span class="mi">👥</span>Partage & accès</button>
     <button class="bm-item" id="importProjBtn"><span class="mi">⬇︎</span>Importer un projet (comme tribu)</button>
+    <button class="bm-item" id="historyBtn"><span class="mi">🕑</span>Historique des versions</button>
 
     <div class="bm-sec">Vues</div>
     <button class="bm-item" id="dashBtn"><span class="mi">📊</span>Dashboard analytics</button>
@@ -1340,6 +1354,17 @@
     <div id="acResult"></div>
     <div class="ac-list" id="acList"><div class="dash-empty">Chargement…</div></div>
     <div class="ac-note">L'invité reçoit un accès au projet. Pour un email sans compte, un mot de passe temporaire est généré (à lui transmettre). Le propriétaire ne peut pas être retiré.</div>
+  </div>
+</div>
+
+<div id="histOv"></div>
+<div id="histDlg" role="dialog" aria-modal="true">
+  <div class="ac-head"><div class="ac-ic">🕑</div><div><h3>Historique des versions</h3><div class="ac-sub" id="histSub">—</div></div><button class="close" id="histClose">×</button></div>
+  <div class="ac-body">
+    <div class="ac-invite"><input id="histLabel" placeholder="Nom de la version (ex. « Cible 2026 »)" maxlength="80"><button class="btn primary" id="histFreeze">Figer</button></div>
+    <div id="histResult"></div>
+    <div class="ac-list" id="histList"><div class="dash-empty">Chargement…</div></div>
+    <div class="ac-note">« Figer » enregistre une copie immuable de l'organigramme actuel. « Restaurer » remplace l'organigramme courant par cette version — pense à figer l'état actuel avant si tu veux le conserver.</div>
   </div>
 </div>
 
@@ -1925,6 +1950,77 @@ $('#acList')&&$('#acList').addEventListener('click',async e=>{
 });
 $('#brandHome')&&($('#brandHome').onclick=()=>{ if(collabActive())goHome(); });
 $('#projChip')&&($('#projChip').onclick=()=>{ if(collabActive())goHome(); });
+
+/* ---------------- Historique des versions (snapshots) ---------------- */
+function fmtSnapDate(iso){ try{ const d=new Date(iso); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }catch(_){ return iso||''; } }
+async function openHistDlg(){
+  if(!collabActive()){ toast('L\'historique est disponible sur un projet connecté'); return; }
+  $('#histSub').textContent=currentOrg.name||'Projet';
+  $('#histLabel').value=''; $('#histResult').innerHTML='';
+  $('#histList').innerHTML='<div class="dash-empty">Chargement…</div>';
+  $('#histOv').classList.add('open'); $('#histDlg').classList.add('open');
+  loadHistory();
+}
+function closeHistDlg(){ $('#histOv').classList.remove('open'); $('#histDlg').classList.remove('open'); }
+async function loadHistory(){
+  const box=$('#histList'); if(!currentOrg)return;
+  try{
+    const { data, error } = await sb.from('org_snapshots')
+      .select('id,label,author_email,created_at,rev').eq('org_id',currentOrg.id)
+      .order('created_at',{ascending:false}).limit(50);
+    if(error) throw error;
+    const rows=data||[];
+    box.innerHTML = rows.length ? rows.map(s=>`<div class="hs-row">
+      <div class="hs-main"><div class="hs-label">${esc(s.label||'Version sans nom')}</div><div class="hs-meta">${esc(fmtSnapDate(s.created_at))}${s.author_email?' · '+esc(s.author_email):''}${s.rev!=null?' · rev '+s.rev:''}</div></div>
+      ${can('org.edit')?`<button class="hs-restore" data-restore="${s.id}">Restaurer</button><button class="hs-del" data-del="${s.id}" title="Supprimer">×</button>`:''}
+    </div>`).join('') : '<div class="dash-empty">Aucune version figée pour l\'instant.</div>';
+  }catch(e){ box.innerHTML=`<div class="admin-note warn">Impossible de charger l'historique.<br><span style="opacity:.7;font-size:11px">${esc(e.message||String(e))}</span></div>`; }
+}
+async function snapFreeze(){
+  if(!currentOrg || !can('org.edit')){ toast('Lecture seule'); return; }
+  const btn=$('#histFreeze'); btn.disabled=true; btn.textContent='…';
+  try{
+    await flushSave();                                    // figer l'état RÉELLEMENT persisté
+    const label=($('#histLabel').value||'').trim().slice(0,80);
+    const { error } = await sb.from('org_snapshots').insert({ org_id:currentOrg.id, rev:baseRev, label, data:deepClone(state), author_email:myEmail });
+    if(error) throw error;
+    $('#histLabel').value=''; $('#histResult').innerHTML=`<div class="admin-note ok">Version figée.</div>`;
+    loadHistory();
+  }catch(e){ $('#histResult').innerHTML=`<div class="admin-note warn">${esc(e.message||String(e))}</div>`; }
+  btn.disabled=false; btn.textContent='Figer';
+}
+// Remplace l'organigramme courant puis commit via le MÊME compare-and-swap que saveOrg
+// (rev + broadcast Realtime) : jamais d'écriture directe qui écraserait des éditeurs concurrents.
+async function applyRestoredBoard(data){
+  state=deepClone(data||{}); migrate();
+  collapsed.clear(); selection.clear(); editingId=null; pendingReconcile=null;
+  closeEditor(); closeDetail(); render();
+  setSaveState('pending'); await saveOrg();
+}
+async function restoreSnapshot(id){
+  if(!currentOrg || !can('org.edit')){ toast('Lecture seule'); return; }
+  try{
+    const { data, error } = await sb.from('org_snapshots').select('label,data,created_at').eq('id',id).single();
+    if(error) throw error;
+    const ok=await askConfirm({title:'Restaurer cette version',message:`L'organigramme sera remplacé par « <b>${esc(data.label||'version sans nom')}</b> » (${esc(fmtSnapDate(data.created_at))}).<br>Pense à figer l'état actuel avant, si tu veux le conserver.`,confirmLabel:'Restaurer'});
+    if(!ok) return;
+    closeHistDlg(); await flushSave(); await applyRestoredBoard(data.data); toast('Version restaurée');
+  }catch(e){ toast('Restauration impossible'); }
+}
+async function deleteSnapshot(id){
+  const ok=await askConfirm({title:'Supprimer la version',message:'Cette version figée sera définitivement supprimée.',confirmLabel:'Supprimer'});
+  if(!ok) return;
+  try{ const { error }=await sb.from('org_snapshots').delete().eq('id',id); if(error) throw error; loadHistory(); }
+  catch(e){ toast('Suppression impossible'); }
+}
+$('#historyBtn')&&($('#historyBtn').onclick=openHistDlg);
+$('#histClose')&&($('#histClose').onclick=closeHistDlg);
+$('#histOv')&&($('#histOv').onclick=closeHistDlg);
+$('#histFreeze')&&($('#histFreeze').onclick=snapFreeze);
+$('#histList')&&$('#histList').addEventListener('click',e=>{
+  const r=e.target.closest('[data-restore]'); if(r){ restoreSnapshot(r.dataset.restore); return; }
+  const d=e.target.closest('[data-del]'); if(d){ deleteSnapshot(d.dataset.del); return; }
+});
 
 function onLogout() {
   switching=true; orgGen++;
