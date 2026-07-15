@@ -585,9 +585,13 @@
   .hl-opt .hl-n{margin-left:auto;font-size:10px;font-weight:700;color:var(--muted);background:#eef1f6;border-radius:20px;padding:0 6px}
   .hl-opt.on .hl-n{background:#fff;color:var(--tech)}
   /* Effet de mise en évidence sur l'organigramme */
-  body.hl-active #canvas .card:not(.hl-on),body.hl-active #canvas .mini:not(.hl-on){opacity:.16;filter:grayscale(.55)}
+  body.hl-active:not(.hl-squads) #canvas .card:not(.hl-on),body.hl-active:not(.hl-squads) #canvas .mini:not(.hl-on){opacity:.16;filter:grayscale(.55)}
   #canvas .card.hl-on,#canvas .mini.hl-on{box-shadow:0 0 0 2px var(--tech),0 6px 18px rgba(37,99,235,.28);z-index:3}
   .card,.mini{transition:opacity .2s,filter .2s,box-shadow .13s}
+  /* Focus « squads non conformes » : cible les buckets squad (pas les personnes) */
+  body.hl-squads #canvas .bucket:not(.bp-off),body.hl-squads #canvas .cell{opacity:.2;filter:grayscale(.55)}
+  #canvas .bucket.bp-off{box-shadow:0 0 0 2px var(--open),0 8px 22px rgba(217,119,6,.30);z-index:3}
+  .bucket{transition:opacity .2s,filter .2s,box-shadow .13s}
   .hgroup{display:flex;align-items:center;gap:6px;padding:0 4px}
   .hsep{width:1px;height:22px;background:var(--border)}
   .brand h1 .beta{font-size:9px;font-weight:700;color:var(--tech);background:var(--tech-soft);border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle;letter-spacing:.02em}
@@ -1145,6 +1149,8 @@
       <button class="hl-opt" data-hl="filled"><i class="d" style="background:#15803d"></i>Postes pourvus</button>
       <button class="hl-opt" data-hl="temp"><i class="d" style="background:#6d28d9"></i>Missions TEMP</button>
       <button class="hl-opt" data-hl="over"><i class="d" style="background:#dc2626"></i>Sur-alloués (&gt;100%)</button>
+      <div class="hlp-sec">Operating model</div>
+      <button class="hl-opt" data-hl="bp"><i class="d" style="background:var(--open)"></i>Squads non conformes</button>
       <div class="hlp-sec">Filière</div>
       <button class="hl-opt" data-hl="side:produit"><i class="d" style="background:var(--produit)"></i>Produit</button>
       <button class="hl-opt" data-hl="side:tech"><i class="d" style="background:var(--tech)"></i>Tech</button>
@@ -2220,6 +2226,8 @@ function auditSquad(sq){
   else if(n>max) gaps.push({short:'sur-effectif', msg:`sur-effectif : ${n} devs (cible ${min}-${max})`});
   return gaps;
 }
+// Toutes les squads du board (rattachées à une tribu + volantes).
+function allSquads(){ const out=[]; (state.heads||[]).forEach(h=>(h.squads||[]).forEach(s=>out.push(s))); (state.squads||[]).forEach(s=>out.push(s)); return out; }
 function blueprintBadge(sq){
   const gaps=auditSquad(sq);
   if(!gaps.length) return `<span class="bp-badge ok" title="Conforme à l'operating model — cible : ${bpTargetLabel()}">✓</span>`;
@@ -2894,7 +2902,7 @@ window.addEventListener('resize',()=>apply());
 
 /* ---------------- Focus / mise en évidence de catégories ---------------- */
 let hlMode=null, _hlNameDisp='';
-const HL_LABELS={open:'Postes à pourvoir',filled:'Postes pourvus',temp:'Missions TEMP',over:'Sur-alloués','side:produit':'Produit','side:tech':'Tech','loc:FR':'Hub · FR','loc:Maroc':'COE · Maroc'};
+const HL_LABELS={open:'Postes à pourvoir',filled:'Postes pourvus',temp:'Missions TEMP',over:'Sur-alloués',bp:'Squads non conformes','side:produit':'Produit','side:tech':'Tech','loc:FR':'Hub · FR','loc:Maroc':'COE · Maroc'};
 function hlLabelOf(m){ if(!m)return 'Focus'; if(m.indexOf('etp:')===0)return _hlNameDisp||'Recherche'; if(m.indexOf('fam:')===0)return famLabel(m.slice(4)); return HL_LABELS[m]||'Focus'; }
 function hlMatch(p){ const m=hlMode; if(!m)return true;
   if(m==='open')return isOpen(p); if(m==='filled')return !!p.name; if(m==='temp')return isTemp(p);
@@ -2905,13 +2913,18 @@ function hlMatch(p){ const m=hlMode; if(!m)return true;
   if(m.indexOf('etp:')===0)return etpKey(p)===m.slice(4);
   return true;
 }
-function hlCount(m){ const save=hlMode; hlMode=m; let n=0; allPersons().forEach(p=>{ if(hlMatch(p))n++; }); hlMode=save; return n; }
+function hlCount(m){ if(m==='bp')return allSquads().filter(s=>auditSquad(s).length).length; const save=hlMode; hlMode=m; let n=0; allPersons().forEach(p=>{ if(hlMatch(p))n++; }); hlMode=save; return n; }
 function applyHighlight(){
-  const on=!!hlMode;
+  const on=!!hlMode, squadMode=hlMode==='bp';
   document.body.classList.toggle('hl-active',on);
+  document.body.classList.toggle('hl-squads',on&&squadMode);
   document.querySelectorAll('#canvas .card[data-pid],#canvas .mini[data-pid]').forEach(el=>{
-    const p=pmap[el.dataset.pid]; const match=!p||hlMatch(p);
+    const p=pmap[el.dataset.pid]; const match=!squadMode&&(!p||hlMatch(p));
     el.classList.toggle('hl-on',on&&match);
+  });
+  document.querySelectorAll('#canvas .bucket[data-squad]').forEach(el=>{
+    const sq=findSquad(el.dataset.squad);
+    el.classList.toggle('bp-off',squadMode&&!!sq&&auditSquad(sq).length>0);
   });
   const lbl=$('#hlLbl'); if(lbl)lbl.textContent=hlLabelOf(hlMode);
   document.querySelectorAll('#hlPanel .hl-opt').forEach(b=>b.classList.toggle('on',b.dataset.hl===hlMode));
