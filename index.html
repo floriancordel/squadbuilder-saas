@@ -224,6 +224,10 @@
   .cres .alloc.over{background:#fee2e2;color:#b91c1c}
   /* Pastille d'alerte sur-allocation (haut-droite de chaque carte) */
   .over-badge{position:absolute;top:5px;right:5px;width:16px;height:16px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:1;display:flex;align-items:center;justify-content:center;z-index:4;box-shadow:0 1px 3px rgba(220,38,38,.55);cursor:help}
+  /* Squad Blueprints — écart à l'operating model (indicatif, non bloquant) */
+  .bp-badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;border-radius:20px;padding:2px 8px;line-height:1.5;white-space:nowrap;cursor:help;flex:0 0 auto}
+  .bp-badge.warn{background:var(--open-bg);color:var(--open);border:1px solid var(--open-bd)}
+  .bp-badge.ok{color:var(--coe-ink);opacity:.45;font-weight:600;padding:2px 5px}
   .card.isover .role,.mini.isover .m-role,.cres.isover .cr-role{padding-right:16px}
 
   /* ---------- Rangée de leads dynamique + ajout de rôle ---------- */
@@ -2201,6 +2205,28 @@ function roleAllowedInBlock(role, block){
   return g.blocks.includes(block);
 }
 function blockOfDropType(t){ return t.type==='squad'?'member':t.type==='cell'?'cell':t.type==='leads'?t.lk:null; }
+// ---------- Squad Blueprints : conformité à l'operating model (V1) ----------
+// Cible par défaut d'une squad. Indicatif et NON bloquant : on rend la dérive
+// visible sans empêcher une squad de varier légitimement.
+const SQUAD_BP={ leads:[{side:'produit',label:'PM'},{side:'tech',label:'Tech Lead'}], members:{min:5,max:7} };
+function bpTargetLabel(){ return `1 PM · 1 Tech Lead · ${SQUAD_BP.members.min}-${SQUAD_BP.members.max} devs`; }
+// Compare une squad à la cible → liste d'écarts { short (badge), msg (tooltip) }.
+// Fonction pure : ne lit que la squad, ne mute rien.
+function auditSquad(sq){
+  const gaps=[]; const leads=leadsOf(sq);
+  SQUAD_BP.leads.forEach(req=>{ if(!leads.some(p=>p.side===req.side)) gaps.push({short:'manque '+req.label, msg:'manque un '+req.label}); });
+  const n=(sq.members||[]).length; const {min,max}=SQUAD_BP.members;
+  if(n<min) gaps.push({short:'sous-effectif', msg:`sous-effectif : ${n} dev${n>1?'s':''} (cible ${min}-${max})`});
+  else if(n>max) gaps.push({short:'sur-effectif', msg:`sur-effectif : ${n} devs (cible ${min}-${max})`});
+  return gaps;
+}
+function blueprintBadge(sq){
+  const gaps=auditSquad(sq);
+  if(!gaps.length) return `<span class="bp-badge ok" title="Conforme à l'operating model — cible : ${bpTargetLabel()}">✓</span>`;
+  const label=gaps.length===1?gaps[0].short:gaps.length+' écarts';
+  const tip=`Écart à l'operating model (cible : ${bpTargetLabel()}) :\n`+gaps.map(g=>'• '+g.msg).join('\n');
+  return `<span class="bp-badge warn" title="${esc(tip)}">⚠ ${esc(label)}</span>`;
+}
 function squadHTML(sq,flying){
   const isColl=collapsed.has(sq.id);
   const leadCount=leadsOf(sq).length;
@@ -2216,6 +2242,7 @@ function squadHTML(sq,flying){
       <span class="blk-move" title="Glisser pour rattacher la squad à une autre tribu">⠿</span>
       <span class="blk-dot"></span>
       <div class="bh-txt"><span class="blk-title">${esc(sq.name)}</span>${desc}</div>
+      ${blueprintBadge(sq)}
       <span class="count">${total}</span>
     </div>
     ${body}
