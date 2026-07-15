@@ -911,6 +911,24 @@
   .pill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:20px;padding:1px 8px}
   .pill.temp{background:#ede9fe;color:#6d28d9} .pill.open{background:var(--open-bg);color:var(--open)} .pill.over{background:#fee2e2;color:#b91c1c}
   .dash-empty{color:var(--faint);font-size:12.5px;padding:6px 2px}
+  /* Cockpit d'alertes */
+  .alerts-wrap{display:flex;flex-direction:column;gap:10px}
+  .alert-grp{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--muted);border-radius:12px;padding:11px 13px;box-shadow:var(--shadow)}
+  .alert-grp.sev-high{border-left-color:#dc2626}
+  .alert-grp.sev-med{border-left-color:var(--open)}
+  .ag-head{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:9px}
+  .ag-ic{font-size:14px;line-height:1}
+  .ag-title{flex:1}
+  .ag-n{font-size:11px;font-weight:800;color:#fff;background:var(--muted);border-radius:20px;padding:1px 8px}
+  .alert-grp.sev-high .ag-n{background:#dc2626}
+  .alert-grp.sev-med .ag-n{background:var(--open)}
+  .ag-body{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .alert-row{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:#fff;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;transition:.12s}
+  .alert-row:hover{border-color:var(--tech);background:var(--tech-soft)}
+  .ar-more{font-size:11px;color:var(--muted);font-weight:600;padding:0 4px}
+  .alert-hyg{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+  .hyg-chip{font-size:11.5px;color:var(--muted);background:#f2f4f7;border-radius:20px;padding:4px 10px}
+  .hyg-chip b{color:var(--ink)}
   /* Administration */
   .admin-form{display:flex;flex-direction:column;gap:10px}
   .af-field>label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin:2px 0 6px}
@@ -3171,6 +3189,56 @@ function computeAnalytics(){
   return A;
 }
 function barRow(label,val,max,cls){ const pct=max?Math.round(val/max*100):0; return `<div class="bar-row"><span class="bl" title="${esc(label)}">${esc(label)}</span><span class="bar-track"><span class="bar-fill ${cls||''}" style="width:${pct}%"></span></span><span class="bv">${val}</span></div>`; }
+/* ---- Cockpit d'alertes : santé du staffing & qualité des données ---- */
+function computeAlerts(){
+  const persons=allPersons(); computeAllocByName();
+  const today=new Date(); today.setHours(0,0,0,0);
+  const parseDate=d=>{ if(!d)return null; const t=new Date(d+'T00:00:00'); return isNaN(t.getTime())?null:t; };
+  const groups=[];
+  // 1) Sur-allocation cumulée >100% (une entrée par ETP)
+  const overMap={};
+  persons.forEach(p=>{ if(!p.name)return; const k=etpKey(p); if(!k||overMap[k])return; const tot=totalAllocOf(p); if(tot>100)overMap[k]={key:k,name:p.name,total:tot}; });
+  const over=Object.values(overMap).sort((a,b)=>b.total-a.total);
+  if(over.length) groups.push({sev:'high',icon:'⚠',title:'Sur-allocation (>100 %)',items:over.map(o=>({key:o.key,label:o.name,tag:o.total+' %',tagcls:'over'}))});
+  // 2) Matricule partagé par des identités différentes
+  const byMat={};
+  persons.forEach(p=>{ const m=(p.matricule||'').trim(); if(!m||!p.name)return; const mk=m.toLowerCase(); (byMat[mk]=byMat[mk]||{m,ids:{}}).ids[idNorm(fullNameOf(p))]={key:etpKey(p),name:p.name}; });
+  const collItems=[];
+  Object.values(byMat).forEach(o=>{ const ids=Object.values(o.ids); if(ids.length>1) ids.forEach(id=>collItems.push({key:id.key,label:id.name,tag:'mat. '+o.m,tagcls:'open'})); });
+  if(collItems.length) groups.push({sev:'high',icon:'🆔',title:'Matricule partagé par plusieurs identités',items:collItems});
+  // 3) Missions TEMP échues / à échéance (≤30 j)
+  const DAY=864e5, expired=[], soon=[];
+  persons.forEach(p=>{ if(!isTemp(p)||!p.name)return; const t=parseDate(p.tempUntil); if(!t)return; const diff=t-today; if(diff<0)expired.push({key:etpKey(p),label:p.name,tag:'échu '+p.tempUntil,tagcls:'over'}); else if(diff<=30*DAY)soon.push({key:etpKey(p),label:p.name,tag:p.tempUntil,tagcls:'temp'}); });
+  if(expired.length) groups.push({sev:'high',icon:'⏳',title:'Missions TEMP échues',items:expired});
+  if(soon.length) groups.push({sev:'med',icon:'⏳',title:'Missions TEMP à échéance (≤ 30 j)',items:soon});
+  // 4) Squads non conformes à l'operating model → renvoie vers le Focus
+  const nc=allSquads().filter(s=>auditSquad(s).length);
+  if(nc.length) groups.push({sev:'med',icon:'▢',title:"Squads hors operating model",focusBp:true,items:nc.map(s=>{ const g=auditSquad(s); return {label:s.name,tag:g.length+' écart'+(g.length>1?'s':''),tagcls:'open'}; })});
+  // 5) Hygiène des données (comptes agrégés, non listés)
+  let noMat=0, openNoReq=0;
+  persons.forEach(p=>{ if(p.name && !(p.matricule||'').trim())noMat++; if(!p.name && !(p.reqId||'').trim())openNoReq++; });
+  const hyg=[];
+  if(noMat)hyg.push({label:'Postes pourvus sans matricule',n:noMat});
+  if(openNoReq)hyg.push({label:'Postes ouverts sans référence de recrutement',n:openNoReq});
+  return {groups,hyg};
+}
+function alertsHTML(){
+  const {groups,hyg}=computeAlerts();
+  if(!groups.length && !hyg.length)
+    return `<div class="dash-sec"><h3>Alertes</h3><div class="panelbox"><div class="dash-empty">Aucune alerte — organigramme sain 👍</div></div></div>`;
+  const CAP=12;
+  const gHTML=groups.map(g=>{
+    const shown=g.items.slice(0,CAP);
+    const rows=shown.map(it=>{
+      const attr=it.key?`data-focus-etp="${esc(it.key)}"`:(g.focusBp?'data-focus-bp="1"':'');
+      return `<button class="alert-row" ${attr}><span class="ar-label">${esc(it.label)}</span>${it.tag?`<span class="pill ${it.tagcls||''}">${esc(it.tag)}</span>`:''}</button>`;
+    }).join('');
+    const more=g.items.length>CAP?`<span class="ar-more">+${g.items.length-CAP} autre(s)</span>`:'';
+    return `<div class="alert-grp sev-${g.sev}"><div class="ag-head"><span class="ag-ic">${g.icon}</span><span class="ag-title">${esc(g.title)}</span><span class="ag-n">${g.items.length}</span></div><div class="ag-body">${rows}${more}</div></div>`;
+  }).join('');
+  const hygHTML=hyg.length?`<div class="alert-hyg">${hyg.map(h=>`<span class="hyg-chip">${esc(h.label)} · <b>${h.n}</b></span>`).join('')}</div>`:'';
+  return `<div class="dash-sec"><h3>Alertes</h3><div class="alerts-wrap">${gHTML}${hygHTML}</div></div>`;
+}
 function renderDashboard(){
   const A=computeAnalytics();
   const rate=A.people?Math.round(A.filled/A.people*100):0;
@@ -3210,6 +3278,7 @@ function renderDashboard(){
 
   $('#sheetBody').innerHTML=`
     <div class="dash-kpis">${kpisHTML}</div>
+    ${alertsHTML()}
     <div class="dash-sec"><h3>Répartitions</h3>
       <div class="dash-cols">
         <div class="panelbox"><h4>Par localisation</h4>${locHTML}</div>
@@ -3330,6 +3399,13 @@ $('#sheetBody').addEventListener('click',e=>{
   const sd=e.target.closest('[data-skill-del]'); if(sd){ if(glossDraft){ glossDraft.skills.splice(+sd.dataset.skillDel,1); markDirty(); renderFiche(); } return; }
   const rd=e.target.closest('[data-resp-del]'); if(rd){ if(glossDraft){ glossDraft.responsibilities.splice(+rd.dataset.respDel,1); markDirty(); renderFiche(); } return; }
   const bc=e.target.closest('[data-block]'); if(bc){ if(glossDraft){ glossDraft.blocks=glossDraft.blocks||[]; const k=bc.dataset.block; const i=glossDraft.blocks.indexOf(k); if(i>=0)glossDraft.blocks.splice(i,1); else glossDraft.blocks.push(k); markDirty(); bc.closest('.blk-check').classList.toggle('on',glossDraft.blocks.includes(k)); } return; }
+});
+// Cockpit d'alertes : clic sur une ligne → fermer le dashboard et cibler
+$('#sheetBody').addEventListener('click',e=>{
+  const fe=e.target.closest('[data-focus-etp]');
+  if(fe){ const k=fe.dataset.focusEtp; const nm=fe.querySelector('.ar-label'); doCloseSheet(); _hlNameDisp=nm?nm.textContent:''; hlMode='etp:'+k; applyHighlight(); centerOnPerson(k); return; }
+  const fb=e.target.closest('[data-focus-bp]');
+  if(fb){ doCloseSheet(); hlMode='bp'; applyHighlight(); return; }
 });
 $('#sheetBody').addEventListener('keydown',e=>{
   if(sheetView!=='gloss'||!can('roles.edit'))return;
