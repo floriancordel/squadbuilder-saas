@@ -434,11 +434,17 @@
   .proj-chip #projChipName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .proj-chip .pc-chev{color:var(--muted);font-size:10px;margin-left:2px}
   #brandHome{cursor:pointer}
-  #homeScreen{position:fixed;inset:0;z-index:95;background:var(--bg);display:none;flex-direction:column}
+  /* Écran d'accueil : SOUS le header (marque + profil restent visibles) */
+  #homeScreen{position:fixed;left:0;right:0;bottom:0;top:var(--hdr-h,53px);z-index:60;background:var(--bg);display:none;flex-direction:column}
   #homeScreen.open{display:flex}
-  .home-head{padding:22px 32px 14px;border-bottom:1px solid var(--border);background:var(--panel)}
-  .home-head .brand h1{font-size:18px}
-  .home-head .home-sub{font-size:13px;color:var(--muted);margin-top:4px;margin-left:36px}
+  /* En mode accueil, on masque les contrôles liés au projet (le header reste) */
+  body.home-mode .stats,body.home-mode .hsep-stats,body.home-mode .h-center,
+  body.home-mode .modesw,body.home-mode .save-state,body.home-mode .hbtn,
+  body.home-mode #presenceBar,body.home-mode .proj-chip,body.home-mode #burgerBtn{display:none!important}
+  .home-head{display:flex;align-items:center;gap:16px;padding:18px 28px 14px;border-bottom:1px solid var(--border);background:var(--panel)}
+  .home-head h2{margin:0;font-size:17px;font-weight:750;letter-spacing:-.01em}
+  .home-head .home-sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+  #homeBack{margin-left:auto;flex:0 0 auto;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none}
   .home-body{flex:1;display:flex;overflow:hidden}
   .home-folders{flex:0 0 250px;border-right:1px solid var(--border);background:var(--panel);padding:16px;overflow:auto}
   .hf-tree{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
@@ -845,6 +851,17 @@
   #confirmDlg p b{color:var(--ink)}
   .cd-foot{display:flex;gap:10px}
   .cd-foot .btn{flex:1;justify-content:center;padding:10px}
+  /* Modale de saisie (remplace prompt()) — même famille que confirmDlg */
+  #inputOv{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:110;opacity:0;pointer-events:none;transition:.16s}
+  #inputOv.open{opacity:1;pointer-events:auto}
+  #inputDlg{position:fixed;top:50%;left:50%;transform:translate(-50%,-46%) scale(.96);width:400px;max-width:92vw;background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);z-index:112;padding:26px 24px 20px;text-align:center;opacity:0;pointer-events:none;transition:.18s cubic-bezier(.4,0,.2,1)}
+  #inputDlg.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  #inputDlg .cd-ic{background:var(--tech-soft)}
+  #inputDlg h3{margin:0 0 7px;font-size:17px;font-weight:700;letter-spacing:-.01em}
+  #inputDlg p{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.5}
+  #inputDlg p:empty{display:none}
+  #inDlgField{width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-size:14px;margin-bottom:18px;text-align:left}
+  #inDlgField:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
   .btn.danger-btn{background:#dc2626;color:#fff;border-color:#dc2626}
   .btn.danger-btn:hover{background:#b91c1c;border-color:#b91c1c}
 
@@ -945,6 +962,14 @@
   .alert-hyg{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
   .hyg-chip{font-size:11.5px;color:var(--muted);background:#f2f4f7;border-radius:20px;padding:4px 10px}
   .hyg-chip b{color:var(--ink)}
+  /* Matrice de droits utilisateur × projet (administration) */
+  .mx-scroll{overflow-x:auto}
+  .mx-table th:first-child,.mx-table td:first-child{position:sticky;left:0;background:var(--panel);z-index:1}
+  .mx-mail{font-size:12.5px;font-weight:600;white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+  .mx-set{border:1px solid var(--border);border-radius:7px;padding:4px 6px;font-size:12px;background:#fff}
+  .mx-set.lvl-none{color:var(--faint)}
+  .mx-set.lvl-viewer{color:#4338ca}
+  .mx-set.lvl-editor{color:var(--tech);font-weight:600}
   /* Administration */
   .admin-form{display:flex;flex-direction:column;gap:10px}
   .af-field>label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin:2px 0 6px}
@@ -1248,8 +1273,8 @@
 
 <div id="homeScreen">
   <div class="home-head">
-    <div class="brand"><div class="logo" data-brandmark>S</div><h1>SquadBuilder</h1></div>
-    <div class="home-sub">Vos projets d'organigramme</div>
+    <div><h2>Mes projets</h2><div class="home-sub">Créez, organisez et partagez vos organigrammes</div></div>
+    <button class="btn" id="homeBack">← Retour au projet</button>
   </div>
   <div class="home-body" id="homeBody"></div>
 </div>
@@ -1334,6 +1359,17 @@
   <div class="sheet-body" id="sheetBody"></div>
 </div>
 
+<div id="inputOv"></div>
+<div id="inputDlg" role="dialog" aria-modal="true">
+  <div class="cd-ic" id="inDlgIco">✏️</div>
+  <h3 id="inDlgTitle">Saisir</h3>
+  <p id="inDlgMsg"></p>
+  <input id="inDlgField" type="text" autocomplete="off" spellcheck="false" maxlength="80">
+  <div class="cd-foot">
+    <button class="btn" id="inDlgCancel">Annuler</button>
+    <button class="btn primary" id="inDlgOk">Valider</button>
+  </div>
+</div>
 <div id="confirmOv"></div>
 <div id="confirmDlg" role="alertdialog" aria-modal="true">
   <div class="cd-ic" id="cdIco">🗑️</div>
@@ -1726,6 +1762,7 @@ async function goHome(){
   saveRetries=0; applyingRemote=false; pendingReconcile=null;
   closeEditor(); editingId=null;
   leaveRoom();
+  if(currentOrg)_homeReturn={ id:currentOrg.id, name:currentOrg.name };
   currentOrg=null; state=null; canvas.innerHTML='';
   switching=false; updateProjectChip();
   const orgs = await listMyOrgs(); showHome(orgs);
@@ -1775,13 +1812,24 @@ function updateProjectChip(){
   if(currentOrg && collabActive()){ chip.style.display='inline-flex'; $('#projChipName').textContent=currentOrg.name||'Projet'; }
   else chip.style.display='none';
 }
-function hideHome(){ const h=$('#homeScreen'); if(h)h.classList.remove('open'); }
+let _homeReturn=null;   // dernier projet ouvert : pour « ← Retour au projet »
+function _setHdrH(){ const hd=document.querySelector('header'); if(hd)document.documentElement.style.setProperty('--hdr-h',hd.offsetHeight+'px'); }
+window.addEventListener('resize',()=>{ if(document.body.classList.contains('home-mode'))_setHdrH(); });
+function hideHome(){ const h=$('#homeScreen'); if(h)h.classList.remove('open'); document.body.classList.remove('home-mode'); }
+function _updateHomeBack(){
+  const back=$('#homeBack'); if(!back)return;
+  if(_homeReturn&&_homeReturn.id){ back.style.display='inline-flex'; back.textContent='← Retour à « '+(_homeReturn.name||'projet')+' »'; }
+  else back.style.display='none';
+}
 function showHome(orgs){
   updateProjectChip();
   const h=$('#homeScreen'); if(!h)return;
+  _setHdrH(); document.body.classList.add('home-mode');
+  _updateHomeBack();
   h.classList.add('open');
   renderHome(orgs||[]);
 }
+$('#homeBack')&&($('#homeBack').onclick=()=>{ if(_homeReturn&&_homeReturn.id)switchOrg(_homeReturn.id); });
 let _homeOrgs=[], _homeFolder=null;   // dossier sélectionné (null = tous / racine)
 async function refreshHome(){ _homeOrgs=await listMyOrgs(); renderHome(_homeOrgs); }
 function folderTreeHTML(){
@@ -1837,7 +1885,7 @@ if($('#homeScreen')){
 }
 function folderMenu(fid, anchor){
   const f=(userPrefs.folders||[]).find(x=>x.id===fid);
-  const items=[['Renommer',()=>{ const n=(prompt('Renommer le dossier :',f?f.name:'')||'').trim(); if(n){ f.name=n; savePrefs(); renderHome(_homeOrgs); } }],
+  const items=[['Renommer',async()=>{ const n=await askInput({icon:'📁',title:'Renommer le dossier',value:f?f.name:'',confirmLabel:'Renommer'}); if(n&&f){ f.name=n; savePrefs(); renderHome(_homeOrgs); } }],
     ['Supprimer',()=>{ // réattribue les sous-dossiers au parent, déclasse les projets
       const par=f?f.parentId||'':''; (userPrefs.folders||[]).forEach(c=>{ if(c.parentId===fid)c.parentId=par; });
       Object.keys(userPrefs.placement||{}).forEach(k=>{ if(userPrefs.placement[k]===fid)delete userPrefs.placement[k]; });
@@ -1852,9 +1900,10 @@ function folderMenu(fid, anchor){
   setTimeout(()=>document.addEventListener('click',close),0);
 }
 async function createProject(){
-  const name=(prompt('Nom du nouveau projet :','Nouveau projet')||'').trim(); if(!name)return;
+  const name=await askInput({ icon:'🗂️', title:'Nouveau projet', message:'Un organigramme vierge sera créé.', placeholder:'Nom du projet', confirmLabel:'Créer' });
+  if(!name)return;
   const { data, error } = await sb.from('organizations').insert({ name, data: blank(), owner_email: myEmail }).select('*').single();
-  if(error){ toast('Création impossible : '+(error.message||'')); return; }
+  if(error){ toast('Création impossible : '+(error.message||'erreur inconnue')); console.error('createProject',error); return; }
   toast('Projet « '+name+' » créé'); await openOrg(data);
 }
 async function duplicateProject(id){
@@ -1865,9 +1914,12 @@ async function duplicateProject(id){
   toast('Projet dupliqué'); refreshHome();
 }
 async function renameProject(id){
-  const src=_homeOrgs.find(o=>o.id===id); const name=(prompt('Renommer le projet :',src?src.name:'')||'').trim(); if(!name)return;
+  const src=_homeOrgs.find(o=>o.id===id);
+  const name=await askInput({ icon:'✏️', title:'Renommer le projet', value:src?src.name:'', placeholder:'Nom du projet', confirmLabel:'Renommer' });
+  if(!name)return;
   const { error } = await sb.from('organizations').update({ name }).eq('id',id);
-  if(error){ toast('Renommage impossible'); return; }
+  if(error){ toast('Renommage impossible : '+(error.message||'')); return; }
+  if(_homeReturn&&_homeReturn.id===id){ _homeReturn.name=name; _updateHomeBack(); }
   if(currentOrg&&currentOrg.id===id){ currentOrg.name=name; updateProjectChip(); }
   refreshHome();
 }
@@ -1875,9 +1927,11 @@ function deleteProject(id){
   const src=_homeOrgs.find(o=>o.id===id);
   askConfirm({title:'Supprimer le projet',message:`« <b>${esc(src?src.name:'')}</b> » et son organigramme seront définitivement supprimés.`,confirmLabel:'Supprimer'}).then(async ok=>{
     if(!ok)return;
-    const { error } = await sb.from('organizations').delete().eq('id',id);
-    if(error){ toast('Suppression impossible (êtes-vous propriétaire ?)'); return; }
+    const { error, count } = await sb.from('organizations').delete({count:'exact'}).eq('id',id);
+    if(error){ toast('Suppression impossible : '+(error.message||'')); return; }
+    if(count===0){ toast('Suppression refusée — seul le propriétaire peut supprimer un projet'); return; }
     if(userPrefs&&userPrefs.placement){ delete userPrefs.placement[id]; savePrefs(); }
+    if(_homeReturn&&_homeReturn.id===id){ _homeReturn=null; _updateHomeBack(); }
     if(currentOrg&&currentOrg.id===id){ goHome(); } else refreshHome();
     toast('Projet supprimé');
   });
@@ -1894,8 +1948,9 @@ function projectMenu(id, anchor){
   m.addEventListener('click',ev=>{ const b=ev.target.closest('[data-i]'); if(b){ items[+b.dataset.i][1](); } close(); });
   setTimeout(()=>document.addEventListener('click',close),0);
 }
-function addFolder(){
-  const name=(prompt('Nom du dossier :','Nouveau dossier')||'').trim(); if(!name||!userPrefs)return;
+async function addFolder(){
+  const name=await askInput({ icon:'📁', title:'Nouveau dossier', message:_homeFolder&&_homeFolder!=='__none__'?'Le dossier sera créé dans le dossier sélectionné.':'', placeholder:'Nom du dossier', confirmLabel:'Créer' });
+  if(!name||!userPrefs)return;
   userPrefs.folders=userPrefs.folders||[]; userPrefs.folders.push({id:uid(),name,parentId:_homeFolder&&_homeFolder!=='__none__'?_homeFolder:''});
   savePrefs(); renderHome(_homeOrgs);
 }
@@ -2029,7 +2084,7 @@ $('#histList')&&$('#histList').addEventListener('click',e=>{
 function onLogout() {
   switching=true; orgGen++;
   leaveRoom();
-  currentOrg = null; state = null; userPrefs=null; myEmail='';
+  currentOrg = null; state = null; userPrefs=null; myEmail=''; _homeReturn=null;
   clearTimeout(saveTimer); saveTimer=null; clearTimeout(reconcileTimer); reconcileTimer=null;
   applyingRemote=false; pendingReconcile=null; editingId=null; switching=false;
   hideHome(); updateProjectChip();
@@ -3181,6 +3236,30 @@ $('#shareBtn').onclick=async()=>{
   }catch(err){ $('#sh-status').textContent='Impossible de générer le lien : '+(err.message||err); }
 };
 
+/* ---- Modale de saisie (remplace prompt()) ---- */
+let _inResolve=null;
+function askInput(opts){
+  opts=opts||{};
+  return new Promise(resolve=>{
+    _inResolve=resolve;
+    $('#inDlgIco').textContent=opts.icon||'✏️';
+    $('#inDlgTitle').textContent=opts.title||'Saisir';
+    $('#inDlgMsg').textContent=opts.message||'';
+    const f=$('#inDlgField'); f.value=opts.value||''; f.placeholder=opts.placeholder||'';
+    $('#inDlgOk').textContent=opts.confirmLabel||'Valider';
+    $('#inputOv').classList.add('open'); $('#inputDlg').classList.add('open');
+    setTimeout(()=>{ f.focus(); f.select(); },30);
+  });
+}
+function _inFinish(v){ $('#inputOv').classList.remove('open'); $('#inputDlg').classList.remove('open'); if(_inResolve){ const r=_inResolve; _inResolve=null; r(v); } }
+$('#inDlgOk').onclick=()=>_inFinish($('#inDlgField').value.trim()||null);
+$('#inDlgCancel').onclick=()=>_inFinish(null);
+$('#inputOv').onclick=()=>_inFinish(null);
+$('#inDlgField').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ e.preventDefault(); _inFinish($('#inDlgField').value.trim()||null); }
+  else if(e.key==='Escape'){ _inFinish(null); }
+});
+
 /* ---- Modale de confirmation (remplace confirm()) ---- */
 let _cdResolve=null;
 function askConfirm(opts){
@@ -3544,7 +3623,8 @@ let adminEditEmail=null;
 function renderAdmin(){
   const body=$('#sheetBody');
   if(!can('users.manage')){ body.innerHTML=`<div class="dash-empty" style="padding:40px">🔒 Réservé aux administrateurs.</div>`; return; }
-  const demoNote = (!currentOrg) ? `<div class="admin-note warn">Mode démo : la création de comptes nécessite d'être connecté avec un vrai compte (sur le site déployé, pas en preview).</div>` : '';
+  const demoNote = isDemo ? `<div class="admin-note warn">Mode démo : la gestion des comptes nécessite d'être connecté avec un vrai compte.</div>`
+    : (!currentOrg ? `<div class="admin-note">Aucun projet ouvert : la création de compte et le détail des droits ci-dessous s'appliquent au projet que tu ouvriras. La matrice « Accès par projet » en bas gère tous tes projets.</div>` : '');
   const defPerms=ROLE_TEMPLATES.find(t=>t.key==='editor').perms;
   body.innerHTML=`
     ${demoNote}
@@ -3565,11 +3645,69 @@ function renderAdmin(){
         <div id="au-list"><div class="dash-empty">Chargement…</div></div>
       </div>
     </div>
+    <div class="dash-sec"><h3>Accès par projet</h3><div class="panelbox" id="au-matrix"><div class="dash-empty">Chargement…</div></div></div>
     <div class="dash-sec"><h3>Profils prédéfinis</h3><div class="panelbox">${ROLE_TEMPLATES.map(t=>`<div class="tmpl-row"><span class="tmpl-name">${esc(t.label)}</span><span class="tmpl-desc">${esc(t.desc)}</span><span class="tmpl-perms">${t.perms.length?t.perms.map(k=>esc((PERMISSIONS.find(p=>p.key===k)||{}).label)).join(' · '):'Lecture seule'}</span></div>`).join('')}</div></div>`;
   $('#au-tmpl').onchange=()=>{ const t=ROLE_TEMPLATES.find(x=>x.key===$('#au-tmpl').value); if(t){ document.querySelectorAll('#au-perms .perm-check').forEach(l=>{ const cb=l.querySelector('input'); cb.checked=t.perms.includes(cb.dataset.perm); l.classList.toggle('on',cb.checked); }); } };
   $('#au-perms').addEventListener('change',e=>{ const l=e.target.closest('.perm-check'); if(l)l.classList.toggle('on',e.target.checked); const g=[...document.querySelectorAll('#au-perms [data-perm]:checked')].map(i=>i.dataset.perm); $('#au-tmpl').value=templateForPerms(g); });
   $('#au-create').onclick=adminCreateUser;
   loadMembers();
+  loadAccessMatrix();
+}
+/* ---- Droits fins : matrice utilisateur × projet ----
+   Chaque cellule = niveau d'accès d'un utilisateur à UN projet (Aucun / Lecture /
+   Écriture). Mutations via l'Edge Function (create upsert la membership, update,
+   remove), toujours scoped par org_id et réservées owner/admin du projet. */
+function _mxLevelClass(sel){ sel.className='mx-set lvl-'+sel.value; }
+async function loadAccessMatrix(){
+  const box=$('#au-matrix'); if(!box)return;
+  if(isDemo){ box.innerHTML='<div class="dash-empty">Indisponible en démo.</div>'; return; }
+  try{
+    const orgs=(await listMyOrgs()).filter(o=>o.myRole==='owner'||o.myRole==='admin');
+    if(!orgs.length){ box.innerHTML='<div class="dash-empty">Aucun projet dont tu es propriétaire ou administrateur.</div>'; return; }
+    const { data:mems, error } = await sb.from('memberships').select('org_id,email,role');
+    if(error) throw error;
+    const manageable=new Set(orgs.map(o=>o.id));
+    const byEmail={};
+    (mems||[]).forEach(m=>{ if(!manageable.has(m.org_id))return; const em=(m.email||'').toLowerCase(); (byEmail[em]=byEmail[em]||{})[m.org_id]=m.role; });
+    const emails=Object.keys(byEmail).sort((a,b)=>a.localeCompare(b,'fr'));
+    const head=`<tr><th>Utilisateur</th>${orgs.map(o=>`<th>${esc(o.name||'—')}</th>`).join('')}</tr>`;
+    const rows=emails.map(em=>{
+      const cells=orgs.map(o=>{
+        const role=byEmail[em][o.id]||'none';
+        if(role==='owner') return '<td><span class="ac-lvl own">Propriétaire</span></td>';
+        if(em===myEmail)   return `<td>${role==='none'?'<span style="color:var(--faint)">—</span>':esc(acLevelLabel(role))}</td>`;
+        const lvl=role==='none'?'none':acLevelOf(role);
+        return `<td><select class="mx-set lvl-${lvl}" data-email="${esc(em)}" data-org="${o.id}" data-prev="${lvl}">
+          <option value="none" ${lvl==='none'?'selected':''}>Aucun</option>
+          <option value="viewer" ${lvl==='viewer'?'selected':''}>Lecture</option>
+          <option value="editor" ${lvl==='editor'?'selected':''}>Écriture</option>
+        </select></td>`;
+      }).join('');
+      return `<tr><td class="mx-mail" title="${esc(em)}">${esc(em)}</td>${cells}</tr>`;
+    }).join('');
+    box.innerHTML=`<div class="mx-scroll"><table class="dtable mx-table"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+      <div class="admin-note">« Aucun » retire l'accès au projet. « Écriture » permet de modifier l'organigramme et le référentiel. Seuls tes projets en propriété/administration apparaissent ; le propriétaire d'un projet ne peut pas être modifié, ni ton propre accès.</div>`;
+    box.querySelectorAll('.mx-set').forEach(sel=>{
+      sel.onchange=async()=>{
+        const email=sel.dataset.email, org_id=sel.dataset.org, prev=sel.dataset.prev, val=sel.value;
+        sel.disabled=true;
+        try{
+          if(val==='none'){ await adminInvoke('remove',{org_id,email}); }
+          else{
+            const role=val, perms=val==='editor'?['org.edit','roles.edit']:[];
+            if(prev==='none'){
+              const r=await adminInvoke('create',{org_id,email,role,permissions:perms});
+              if(r&&r.password&&!r.existed) toast('Compte créé — mot de passe : '+r.password);
+            } else {
+              await adminInvoke('update',{org_id,email,role,permissions:perms});
+            }
+          }
+          sel.dataset.prev=val; _mxLevelClass(sel); toast('Accès mis à jour');
+        }catch(e){ sel.value=prev; _mxLevelClass(sel); toast('Erreur : '+(e.message||e)); }
+        sel.disabled=false;
+      };
+    });
+  }catch(e){ box.innerHTML=`<div class="admin-note warn">Impossible de charger la matrice d'accès.<br><span style="opacity:.7;font-size:11px">${esc(e.message||String(e))}</span></div>`; }
 }
 function memberRowHTML(m){
   const perms=Array.isArray(m.permissions)?m.permissions:permsForRole(m.role,null);
@@ -3586,7 +3724,8 @@ function memberRowHTML(m){
 }
 async function loadMembers(){
   const box=$('#au-list'); if(!box)return;
-  if(!currentOrg){ box.innerHTML=`<div class="dash-empty">Indisponible en démo (connecte-toi avec un vrai compte).</div>`; return; }
+  if(isDemo){ box.innerHTML=`<div class="dash-empty">Indisponible en démo (connecte-toi avec un vrai compte).</div>`; return; }
+  if(!currentOrg){ box.innerHTML=`<div class="dash-empty">Ouvre un projet pour gérer ses membres en détail — ou utilise la matrice « Accès par projet » ci-dessous.</div>`; return; }
   try{
     const data=await adminInvoke('list'); const members=(data&&data.members)||[];
     box.innerHTML = members.length?`<div class="member-list">${members.map(memberRowHTML).join('')}</div>`:`<div class="dash-empty">Aucun membre.</div>`;
@@ -3603,6 +3742,7 @@ async function loadMembers(){
 async function adminCreateUser(){
   const email=$('#au-email').value.trim();
   if(!email){ toast('Email requis'); return; }
+  if(!currentOrg){ toast('Ouvre d\'abord le projet auquel rattacher ce compte'); return; }
   const perms=[...document.querySelectorAll('#au-perms [data-perm]:checked')].map(i=>i.dataset.perm);
   const role=templateForPerms(perms);
   const btn=$('#au-create'); btn.disabled=true; btn.textContent='Création…';
@@ -4276,7 +4416,8 @@ function reassert(base, id, local){ const fe=findEntity(local,id); removeEntityE
 function purgeCollapsed(){ const ids=new Set(['DIR']); forEachEntity(state,(o,m)=>{ if(m.kind==='head'||m.kind==='squad'||m.kind==='cell') ids.add(m.id); }); [...collapsed].forEach(id=>{ if(!ids.has(id)) collapsed.delete(id); }); }
 
 const _viewMatch=location.hash.match(/[#&]view=(.+)$/);
-const isDemo = !_viewMatch && (window.self !== window.top
+// ?real : forcer le vrai login même en local / iframe (tests de dev connectés)
+const isDemo = !_viewMatch && !new URLSearchParams(location.search).has('real') && (window.self !== window.top
   || new URLSearchParams(location.search).has('demo')
   || /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(location.hostname));
 if (_viewMatch) {
