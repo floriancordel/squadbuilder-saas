@@ -29,7 +29,7 @@
   button{font-family:inherit}
 
   /* ---------- Barre du haut ---------- */
-  header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:9px 16px;background:var(--panel);border-bottom:1px solid var(--border);z-index:30}
+  header{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr) auto;align-items:center;gap:14px;padding:9px 16px;background:var(--panel);border-bottom:1px solid var(--border);z-index:30}
   .brand{display:flex;align-items:center;gap:9px}
   .brand .logo{width:26px;height:26px;border-radius:7px;overflow:hidden;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--produit),var(--tech));color:#fff;font-weight:800;font-size:14px}
   .brand .logo svg,.bm-head .logo svg{width:100%;height:100%;display:block;border-radius:inherit}
@@ -428,7 +428,13 @@
 
   /* ---------- Écran de login ---------- */
   /* ---------- Puce projet (header) + écran d'accueil des projets ---------- */
-  .proj-chip{display:none;align-items:center;gap:7px;background:#f2f4f7;border:1px solid var(--border);border-radius:9px;padding:5px 11px;font-size:13px;font-weight:650;color:var(--ink);cursor:pointer;max-width:240px}
+  .proj-chip{display:none;align-items:center;gap:7px;background:#f2f4f7;border:1px solid var(--border);border-radius:9px;padding:5px 11px;font-size:13px;font-weight:650;color:var(--ink);cursor:pointer;max-width:240px;min-width:0}
+  .proj-chip #projChipName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .proj-chip .pc-chev{flex:0 0 auto}
+  @media (max-width:980px){ .brand h1{display:none} }
+  @media (max-width:760px){ .proj-chip{max-width:140px} }
+  @media (max-width:700px){ .modesw .ml{display:none} .modesw button{padding:6px 9px} .proj-chip{max-width:110px} .proj-chip .pc-ico{display:none} }
+  @media (max-width:460px){ .proj-chip{display:none!important} header{gap:8px} }
   .proj-chip:hover{background:#e9edf3;border-color:var(--tech)}
   .proj-chip .pc-ico{font-size:13px}
   .proj-chip #projChipName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -675,10 +681,28 @@
   .profile-btn:hover{background:#f2f4f7;border-color:var(--line)}
   .avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--produit),var(--tech));color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;text-transform:uppercase}
   .avatar.big{width:38px;height:38px;border-radius:10px;font-size:15px}
-  .pf-meta{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+  /* Profil réduit aux initiales : les métadonnées vivent dans le popover */
+  .pf-meta{display:none}
+  .profile-btn{padding:3px}
+  /* Menu Partager groupé (imprimer / lien / accès) */
+  .share-wrap{position:relative}
+  .share-wrap .pc-chev{font-size:9px;color:var(--faint);margin-left:4px}
+  .share-pop{position:absolute;top:calc(100% + 8px);right:0;min-width:250px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;display:none;z-index:70}
+  .share-wrap.open .share-pop{display:block}
+  .share-pop button{width:100%;border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:500}
+  .share-pop button:hover{background:#f2f4f7}
+  .share-pop .mi{width:18px;text-align:center;font-size:14px;opacity:.9}
+  /* Switcher de projets (dropdown du chip) */
+  .proj-pop{position:fixed;min-width:260px;max-width:340px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;z-index:80;max-height:60vh;overflow:auto}
+  .proj-pop button{width:100%;border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:9px;font-weight:500}
+  .proj-pop button:hover{background:#f2f4f7}
+  .proj-pop button.cur{background:var(--tech-soft);color:var(--tech);font-weight:650}
+  .proj-pop .pp-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .proj-pop .pp-badge{font-size:10px;font-weight:700;color:var(--muted);background:#f2f4f7;border-radius:20px;padding:1px 7px;flex:0 0 auto}
+  .proj-pop .pp-sep{height:1px;background:var(--border);margin:5px 4px}
   .pf-name{font-size:12.5px;font-weight:700;color:var(--ink);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pf-role{font-size:10.5px;color:var(--muted)}
-  .pf-chev{font-size:10px;color:var(--faint);margin-left:2px}
+  .profile-btn .pf-chev{display:none}
   @media (max-width:700px){.profile-btn .pf-meta,.profile-btn .pf-chev{display:none}}
   .profile-pop{position:absolute;top:calc(100% + 6px);right:0;width:250px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);padding:8px;z-index:46;display:none;flex-direction:column;gap:1px}
   .profile-pop.open{display:flex}
@@ -1018,7 +1042,7 @@
   body.ro-roles .gtree-add,body.ro-roles .gtree-edit,body.ro-roles .fiche-del,body.ro-roles #glossAdd{display:none!important}
   body.ro-roles .fiche input,body.ro-roles .fiche select,body.ro-roles .fiche textarea,body.ro-roles .fiche .seg,body.ro-roles .fiche .skill-chip button,body.ro-roles .fiche .resp-item button,body.ro-roles .fiche .blk-check{pointer-events:none;opacity:.75}
   body.ro-roles .skill-input,body.ro-roles .resp-input{display:none}
-  body.view-mode #modeSwitch,body.view-mode #shareBtn,body.view-mode #burgerBtn,body.view-mode #logoutBtn{display:none!important}
+  body.view-mode #modeSwitch,body.view-mode #shareWrap,body.view-mode #burgerBtn,body.view-mode #logoutBtn{display:none!important}
   body.view-mode .brand h1::after{content:' · Vue partagée';font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0}
   #editor.ro .ed-foot{display:none}
   #editor.ro input,#editor.ro textarea,#editor.ro select,#editor.ro .seg,#editor.ro .switch-row{pointer-events:none;opacity:.72}
@@ -1169,13 +1193,19 @@
   </div>
   <div class="h-right">
     <div class="modesw" id="modeSwitch">
-      <button data-mode="edit" class="on" title="Consulter l'organigramme"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></span>Lecture</button>
-      <button data-mode="affect" title="Éditer et affecter par glisser-déposer"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>Édition</button>
+      <button data-mode="edit" class="on" title="Consulter l'organigramme"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="ml">Lecture</span></button>
+      <button data-mode="affect" title="Éditer et affecter par glisser-déposer"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span><span class="ml">Édition</span></button>
     </div>
     <span class="save-state" id="saveState"></span>
-    <button class="btn ghost hbtn" id="printBtn2" title="Imprimer / exporter en PDF">🖨 Imprimer</button>
-    <button class="btn ghost hbtn" id="shareBtn" title="Générer un lien de partage en lecture seule">🔗 Partager</button>
-    <div id="presenceBar" title="Collaborateurs en ligne"></div>
+    <div id="presenceBar" title="Connectés sur ce projet"></div>
+    <div class="share-wrap" id="shareWrap">
+      <button class="btn ghost hbtn" id="shareMenuBtn" title="Partager, imprimer, gérer les accès">↗ Partager<span class="pc-chev">▾</span></button>
+      <div class="share-pop" id="sharePop">
+        <button id="sm-link"><span class="mi">🔗</span>Lien de partage (lecture seule)</button>
+        <button id="sm-print"><span class="mi">🖨</span>Imprimer / exporter en PDF</button>
+        <button id="sm-access"><span class="mi">👥</span>Partage &amp; accès…</button>
+      </div>
+    </div>
     <div class="hsep"></div>
     <div class="profile-wrap" id="userBar" style="display:none">
       <button class="profile-btn" id="profileBtn">
@@ -1719,7 +1749,7 @@ async function onLogin(user) {
   if(user.user_metadata && user.user_metadata.must_change_password){ await forcePasswordChange(); }
   // Identité collab
   myUid = user.id; myEmail = (user.email||'').toLowerCase(); myName = (user.email||'').split('@')[0]||'—'; myInitials = initialsOf(user.email); myColor = colorFor(user.id);
-  await loadPrefs();
+  await Promise.all([loadPrefs(), loadAppPerms()]);
   // Reprise du dernier projet si toujours accessible, sinon écran d'accueil
   const orgs = await listMyOrgs();
   const last = userPrefs && userPrefs.last_org && orgs.find(o=>o.id===userPrefs.last_org);
@@ -1776,6 +1806,18 @@ async function listMyOrgs(){
       .sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
   }catch(e){ console.error('listMyOrgs',e); return []; }
 }
+
+/* ---------------- Droits globaux (niveau application) ---------------- */
+// Reflet client de app_perms — l'enforcement réel est en DB (policy org_insert).
+let myAppPerms={ can_create_projects:true, is_platform_admin:false };
+async function loadAppPerms(){
+  myAppPerms={ can_create_projects:true, is_platform_admin:false };
+  try{
+    const { data, error } = await sb.from('app_perms').select('*').eq('email',myEmail).maybeSingle();
+    if(!error && data) myAppPerms=data;
+  }catch(_){ /* table absente → défauts permissifs */ }
+}
+function canCreateProject(){ return myAppPerms.can_create_projects!==false; }
 
 /* ---------------- Préférences utilisateur (dossiers, dernier projet) ---------------- */
 function _prefsLocalKey(){ return 'sqb_prefs_'+myEmail; }
@@ -1852,10 +1894,10 @@ function renderHome(orgs){
       <div class="pj-thumb">${esc((o.name||'P').slice(0,1).toUpperCase())}</div>
       <div class="pj-body"><div class="pj-name">${esc(o.name||'Sans nom')}</div>${badge(o.myRole)}</div>
       <button class="pj-menu" data-menu="${o.id}" title="Actions">⋯</button>
-    </div>`).join('') || `<div class="pj-empty">Aucun projet ici. <button class="btn primary" id="pjCreate2">＋ Créer un projet</button></div>`;
+    </div>`).join('') || `<div class="pj-empty">Aucun projet ici. ${canCreateProject()?'<button class="btn primary" id="pjCreate2">＋ Créer un projet</button>':''}</div>`;
   $('#homeBody').innerHTML=`
     <aside class="home-folders">
-      <button class="btn primary" id="pjCreate" style="width:100%;justify-content:center;margin-bottom:12px">＋ Nouveau projet</button>
+      ${canCreateProject()?'<button class="btn primary" id="pjCreate" style="width:100%;justify-content:center;margin-bottom:12px">＋ Nouveau projet</button>':''}
       <div class="hf-tree">${folderTreeHTML()}</div>
       <button class="hf-add" id="pjAddFolder">＋ Dossier</button>
     </aside>
@@ -1900,6 +1942,7 @@ function folderMenu(fid, anchor){
   setTimeout(()=>document.addEventListener('click',close),0);
 }
 async function createProject(){
+  if(!canCreateProject()){ toast('La création de projets est désactivée pour ton compte'); return; }
   const name=await askInput({ icon:'🗂️', title:'Nouveau projet', message:'Un organigramme vierge sera créé.', placeholder:'Nom du projet', confirmLabel:'Créer' });
   if(!name)return;
   const { data, error } = await sb.from('organizations').insert({ name, data: blank(), owner_email: myEmail }).select('*').single();
@@ -1907,6 +1950,7 @@ async function createProject(){
   toast('Projet « '+name+' » créé'); await openOrg(data);
 }
 async function duplicateProject(id){
+  if(!canCreateProject()){ toast('La création de projets est désactivée pour ton compte'); return; }
   const src=_homeOrgs.find(o=>o.id===id); if(!src)return;
   const { data:full } = await sb.from('organizations').select('data').eq('id',id).single();
   const { data, error } = await sb.from('organizations').insert({ name:'Copie de '+(src.name||'projet'), data: deepClone((full&&full.data)||blank()), owner_email: myEmail }).select('*').single();
@@ -1938,7 +1982,8 @@ function deleteProject(id){
 }
 function projectMenu(id, anchor){
   const src=_homeOrgs.find(o=>o.id===id); const owner=src&&src.myRole==='owner';
-  const items=[['Ouvrir',()=>switchOrg(id)],['Dupliquer',()=>duplicateProject(id)]];
+  const items=[['Ouvrir',()=>switchOrg(id)]];
+  if(canCreateProject()) items.push(['Dupliquer',()=>duplicateProject(id)]);
   if(owner){ items.push(['Renommer',()=>renameProject(id)]); items.push(['Partager / Accès',()=>openAccessDlg(id)]); items.push(['Supprimer',()=>deleteProject(id)]); }
   const m=document.createElement('div'); m.className='pj-pop';
   m.innerHTML=items.map((it,i)=>`<button data-i="${i}" class="${it[0]==='Supprimer'?'danger':''}">${it[0]}</button>`).join('');
@@ -2008,7 +2053,25 @@ $('#acList')&&$('#acList').addEventListener('click',async e=>{
   });
 });
 $('#brandHome')&&($('#brandHome').onclick=()=>{ if(collabActive())goHome(); });
-$('#projChip')&&($('#projChip').onclick=()=>{ if(collabActive())goHome(); });
+// Chip projet : dropdown de bascule directe entre projets (sans repasser par l'accueil)
+$('#projChip')&&($('#projChip').onclick=async e=>{
+  if(!collabActive())return;
+  e.stopPropagation();
+  const old=document.querySelector('.proj-pop'); if(old){ old.remove(); return; }
+  const r=$('#projChip').getBoundingClientRect();
+  const m=document.createElement('div'); m.className='proj-pop';
+  m.innerHTML='<button disabled style="opacity:.6">Chargement…</button>';
+  m.style.top=(r.bottom+6)+'px'; m.style.left=Math.min(r.left,window.innerWidth-300)+'px';
+  document.body.appendChild(m);
+  const close=()=>{ m.remove(); document.removeEventListener('click',close); };
+  setTimeout(()=>document.addEventListener('click',close),0);
+  const orgs=await listMyOrgs();
+  if(!document.body.contains(m))return;
+  const badge=x=>x==='owner'?'Propriétaire':(x==='viewer'?'Lecture':'Écriture');
+  m.innerHTML=orgs.map(o=>`<button data-sw="${o.id}" class="${currentOrg&&o.id===currentOrg.id?'cur':''}"><span class="pp-name">${esc(o.name||'Sans nom')}</span><span class="pp-badge">${badge(o.myRole)}</span></button>`).join('')
+    +'<div class="pp-sep"></div><button data-sw="__home__"><span class="mi">🗂️</span><span class="pp-name">Tous mes projets…</span></button>';
+  m.addEventListener('click',ev=>{ const b=ev.target.closest('[data-sw]'); if(!b)return; const id=b.dataset.sw; close(); if(id==='__home__')goHome(); else if(!currentOrg||id!==currentOrg.id)switchOrg(id); });
+});
 
 /* ---------------- Historique des versions (snapshots) ---------------- */
 function fmtSnapDate(iso){ try{ const d=new Date(iso); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }catch(_){ return iso||''; } }
@@ -2085,6 +2148,7 @@ function onLogout() {
   switching=true; orgGen++;
   leaveRoom();
   currentOrg = null; state = null; userPrefs=null; myEmail=''; _homeReturn=null;
+  myAppPerms={ can_create_projects:true, is_platform_admin:false };
   clearTimeout(saveTimer); saveTimer=null; clearTimeout(reconcileTimer); reconcileTimer=null;
   applyingRemote=false; pendingReconcile=null; editingId=null; switching=false;
   hideHome(); updateProjectChip();
@@ -2559,14 +2623,13 @@ function updateStats(){
   squads+=(state.squads||[]).length;
   let open=0; all.forEach(p=>{ if(!p.name)open++; if(isTemp(p))temps++; });
   const pool=(state.pool||[]).length;
+  // Compact : l'essentiel seulement — le détail (tribus, squads, TEMP…) vit dans
+  // le dashboard, qu'un clic sur les stats ouvre.
   const st=(n,l,cls,opt)=>`<span class="st ${cls||''} ${opt?'opt':''}"><b>${n}</b><span>${l}</span></span>`;
   $('#stats').innerHTML=
-    st(state.heads.length,'tribus')+
-    st(squads,'squads')+
-    st(all.length,'postes','','opt')+
-    st(open,open>1?'à pourvoir':'à pourvoir',open?'warn':'')+
-    (temps?st(temps,'TEMP','warn','opt'):'')+
-    (pool?st(pool,'à affecter','alert'):'');
+    st(all.length,'postes')+
+    (open?st(open,'à pourvoir','warn'):'')+
+    (pool?st(pool,'à affecter','alert','opt'):'');
 }
 
 /* ---------------- Actions ---------------- */
@@ -3203,7 +3266,12 @@ $('#adminBtnPf').onclick=()=>openSheet('admin');
 $('#stats').onclick=()=>openSheet('dash');
 
 /* ---- Impression & partage (lecture seule) ---- */
-$('#printBtn2').onclick=()=>window.print();
+/* ---- Menu « Partager » groupé : lien lecture seule / impression / accès ---- */
+function closeSharePop(){ const w=$('#shareWrap'); if(w)w.classList.remove('open'); }
+$('#shareMenuBtn')&&($('#shareMenuBtn').onclick=e=>{ e.stopPropagation(); $('#shareWrap').classList.toggle('open'); });
+document.addEventListener('click',e=>{ const w=$('#shareWrap'); if(w&&w.classList.contains('open')&&!e.target.closest('#shareWrap'))w.classList.remove('open'); });
+$('#sm-print')&&($('#sm-print').onclick=()=>{ closeSharePop(); window.print(); });
+$('#sm-access')&&($('#sm-access').onclick=()=>{ closeSharePop(); if(collabActive()&&currentOrg)openAccessDlg(currentOrg.id); else toast('Ouvrez un projet pour gérer ses accès'); });
 // Encodage/décodage compressé pour le lien de partage (gzip + base64url)
 function b64urlFromBytes(bytes){ let s=''; bytes.forEach(b=>s+=String.fromCharCode(b)); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function bytesFromB64url(str){ str=str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4)str+='='; const bin=atob(str); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i); return a; }
@@ -3222,7 +3290,8 @@ async function decodeShare(str){
 }
 function closeShareDlg(){ $('#shareOv').classList.remove('open'); $('#shareDlg').classList.remove('open'); }
 $('#shClose').onclick=closeShareDlg; $('#shareOv').onclick=closeShareDlg; $('#sh-cancel').onclick=closeShareDlg;
-$('#shareBtn').onclick=async()=>{
+$('#sm-link').onclick=async()=>{
+  closeSharePop();
   $('#sh-status').style.display='block'; $('#sh-status').textContent='Génération du lien…'; $('#sh-linkwrap').style.display='none';
   $('#shareOv').classList.add('open'); $('#shareDlg').classList.add('open');
   try{
@@ -3646,12 +3715,51 @@ function renderAdmin(){
       </div>
     </div>
     <div class="dash-sec"><h3>Accès par projet</h3><div class="panelbox" id="au-matrix"><div class="dash-empty">Chargement…</div></div></div>
+    ${myAppPerms.is_platform_admin?'<div class="dash-sec"><h3>Droits globaux</h3><div class="panelbox" id="au-global"><div class="dash-empty">Chargement…</div></div></div>':''}
     <div class="dash-sec"><h3>Profils prédéfinis</h3><div class="panelbox">${ROLE_TEMPLATES.map(t=>`<div class="tmpl-row"><span class="tmpl-name">${esc(t.label)}</span><span class="tmpl-desc">${esc(t.desc)}</span><span class="tmpl-perms">${t.perms.length?t.perms.map(k=>esc((PERMISSIONS.find(p=>p.key===k)||{}).label)).join(' · '):'Lecture seule'}</span></div>`).join('')}</div></div>`;
   $('#au-tmpl').onchange=()=>{ const t=ROLE_TEMPLATES.find(x=>x.key===$('#au-tmpl').value); if(t){ document.querySelectorAll('#au-perms .perm-check').forEach(l=>{ const cb=l.querySelector('input'); cb.checked=t.perms.includes(cb.dataset.perm); l.classList.toggle('on',cb.checked); }); } };
   $('#au-perms').addEventListener('change',e=>{ const l=e.target.closest('.perm-check'); if(l)l.classList.toggle('on',e.target.checked); const g=[...document.querySelectorAll('#au-perms [data-perm]:checked')].map(i=>i.dataset.perm); $('#au-tmpl').value=templateForPerms(g); });
   $('#au-create').onclick=adminCreateUser;
   loadMembers();
   loadAccessMatrix();
+  if(myAppPerms.is_platform_admin) loadGlobalPerms();
+}
+/* ---- Droits globaux (admin plateforme) : qui peut créer des projets ---- */
+async function loadGlobalPerms(){
+  const box=$('#au-global'); if(!box)return;
+  if(isDemo){ box.innerHTML='<div class="dash-empty">Indisponible en démo.</div>'; return; }
+  try{
+    const { data:mems } = await sb.from('memberships').select('email');
+    const { data:perms, error } = await sb.from('app_perms').select('*');
+    if(error) throw error;
+    const permByEmail={}; (perms||[]).forEach(p=>permByEmail[(p.email||'').toLowerCase()]=p);
+    const emails=[...new Set([...(mems||[]).map(m=>(m.email||'').toLowerCase()), ...Object.keys(permByEmail)])].sort((a,b)=>a.localeCompare(b,'fr'));
+    box.innerHTML=`<div class="mx-scroll"><table class="dtable mx-table"><thead><tr><th>Utilisateur</th><th>Peut créer des projets</th><th>Admin plateforme</th></tr></thead><tbody>${
+      emails.map(em=>{
+        const p=permByEmail[em]||{};
+        const canC=p.can_create_projects!==false;
+        const self=em===myEmail;
+        return `<tr><td class="mx-mail" title="${esc(em)}">${esc(em)}</td>
+          <td>${self?'<span class="ac-lvl own">Oui (toi)</span>':`<select class="mx-set gp-set lvl-${canC?'editor':'none'}" data-email="${esc(em)}"><option value="1" ${canC?'selected':''}>Oui</option><option value="0" ${canC?'':'selected'}>Non</option></select>`}</td>
+          <td>${p.is_platform_admin?'<span class="ac-lvl own">Admin</span>':'<span style="color:var(--faint)">—</span>'}</td></tr>`;
+      }).join('')}</tbody></table></div>
+      <div class="admin-note">Droits de niveau application, appliqués côté serveur (RLS) : un compte sans « créer des projets » ne peut plus créer ni dupliquer de projet — il conserve ses accès existants. Ton propre droit est verrouillé pour éviter de t'enfermer dehors.</div>`;
+    box.querySelectorAll('.gp-set').forEach(sel=>{
+      sel.onchange=async()=>{
+        const email=sel.dataset.email, val=sel.value==='1', prev=!val;
+        sel.disabled=true;
+        try{
+          const row={ email, can_create_projects:val, is_platform_admin:(permByEmail[email]||{}).is_platform_admin===true };
+          const { error:uerr } = await sb.from('app_perms').upsert(row,{onConflict:'email'});
+          if(uerr) throw uerr;
+          (permByEmail[email]=permByEmail[email]||{email}).can_create_projects=val;
+          sel.className='mx-set gp-set lvl-'+(val?'editor':'none');
+          toast('Droit global mis à jour');
+        }catch(e){ sel.value=prev?'1':'0'; toast('Erreur : '+(e.message||e)); }
+        sel.disabled=false;
+      };
+    });
+  }catch(e){ box.innerHTML=`<div class="admin-note warn">Impossible de charger les droits globaux.<br><span style="opacity:.7;font-size:11px">${esc(e.message||String(e))}</span></div>`; }
 }
 /* ---- Droits fins : matrice utilisateur × projet ----
    Chaque cellule = niveau d'accès d'un utilisateur à UN projet (Aucun / Lecture /
@@ -4046,7 +4154,10 @@ document.addEventListener('drop',e=>{
     if(t.type==='pool'||t.type==='trash'){ return; }
     if(block && !roleAllowedInBlock(src.role,block)){ const bl=(BLOCK_TYPES.find(b=>b.key===block)||{}).label||block; toast('« '+(src.role||'Ce rôle')+' » n\'est pas autorisé dans « '+bl+' »'); return; }
     let affectedR=null;
-    if(t.type==='fill'){ const post=pmap[t.pid]; if(post){ post.firstName=src.firstName; post.lastName=src.lastName; post.matricule=src.matricule; syncName(post); post.loc=src.loc; post.alloc=src.alloc; post.allocMode='part'; post.status='Occupé'; post.reqId=''; affectedR=post; } }
+    if(t.type==='fill'){ const lp=locate(t.pid); const post=lp?lp.list[lp.index]:null;
+      if(!post){ toast('Ce poste n\'existe plus — rien n\'a été modifié'); return; }
+      if(post.name){ toast('Ce poste vient d\'être pourvu ('+post.name+') — rien n\'a été modifié'); return; }
+      post.firstName=src.firstName; post.lastName=src.lastName; post.matricule=src.matricule; syncName(post); post.loc=src.loc; post.alloc=src.alloc; post.allocMode='part'; post.status='Occupé'; post.reqId=''; affectedR=post; }
     else { const np=reg(person(src.role,src.side,src.name,src.loc)); np.firstName=src.firstName; np.lastName=src.lastName; np.matricule=src.matricule; syncName(np); np.alloc=src.alloc; np.allocMode='part'; np.status='Occupé';
       if(t.type==='leads'){ const c=containerByKind(t.lk,t.li); if(c){ c.leads=c.leads||[]; c.leads.push(np); affectedR=np; } }
       else if(t.type==='squad'){ const sq=findSquad(t.squad); if(sq){ np.side=(np.side==='produit'||np.side==='tech')?np.side:guessSide(np.role); sq.members.push(np); affectedR=np; } }
@@ -4060,23 +4171,46 @@ document.addEventListener('drop',e=>{
     const bl=(BLOCK_TYPES.find(b=>b.key===block)||{}).label||block;
     toast('« '+(src.role||'Ce rôle')+' » n\'est pas autorisé dans « '+bl+' »'); dragPid=null; return;
   }
-  const p=detachPerson(dragPid); dragPid=null;
-  if(!p)return;
-  let affected=null;
+  // ANTI-PERTE : on résout et VALIDE la cible dans le state AVANT de détacher qui
+  // que ce soit. pmap peut référencer des objets périmés (reconcile distant, undo,
+  // restauration) : on passe par locate() qui ne connaît que le state vivant.
+  // Si la cible n'existe plus → on ne touche à rien. Zéro perte possible.
+  let insert=null, isTrash=false;
   if(t.type==='fill'){
-    const post=pmap[t.pid];
-    if(post){ post.firstName=p.firstName; post.lastName=p.lastName; post.matricule=p.matricule; syncName(post); if(p.loc)post.loc=p.loc; post.temp=isTemp(p); post.tempUntil=post.temp?(p.tempUntil||''):''; post.status=post.name?'Occupé':'Ouvert'; if(post.name)post.reqId=''; affected=post; }
+    const lp=locate(t.pid); const post=lp?lp.list[lp.index]:null;
+    if(!post){ toast('Ce poste n\'existe plus — rien n\'a été modifié'); dragPid=null; return; }
+    if(post.name){ toast('Ce poste vient d\'être pourvu ('+post.name+') — rien n\'a été modifié'); dragPid=null; return; }
+    insert=p=>{ post.firstName=p.firstName; post.lastName=p.lastName; post.matricule=p.matricule; syncName(post); if(p.loc)post.loc=p.loc; post.temp=isTemp(p); post.tempUntil=post.temp?(p.tempUntil||''):''; post.status=post.name?'Occupé':'Ouvert'; if(post.name)post.reqId=''; return post; };
   } else if(t.type==='leads'){
-    const c=containerByKind(t.lk,t.li); if(c){ c.leads=c.leads||[]; p.status=p.name?'Occupé':'Ouvert'; c.leads.push(p); affected=p; }
+    const c=containerByKind(t.lk,t.li);
+    if(!c){ toast('Cible introuvable — rien n\'a été modifié'); dragPid=null; return; }
+    insert=p=>{ c.leads=c.leads||[]; p.status=p.name?'Occupé':'Ouvert'; c.leads.push(p); return p; };
   } else if(t.type==='squad'){
-    const sq=findSquad(t.squad); if(sq){ p.side=(p.side==='produit'||p.side==='tech')?p.side:guessSide(p.role); p.status=p.name?'Occupé':'Ouvert'; sq.members.push(p); affected=p; }
+    const sq=findSquad(t.squad);
+    if(!sq){ toast('Squad introuvable — rien n\'a été modifié'); dragPid=null; return; }
+    insert=p=>{ p.side=(p.side==='produit'||p.side==='tech')?p.side:guessSide(p.role); p.status=p.name?'Occupé':'Ouvert'; sq.members.push(p); return p; };
   } else if(t.type==='cell'){
-    const c=findCell(t.cell); if(c){ if(p.alloc==null)p.alloc=100; p.status=p.name?'Occupé':'Ouvert'; c.members.push(p); affected=p; }
+    const c=findCell(t.cell);
+    if(!c){ toast('Cellule introuvable — rien n\'a été modifié'); dragPid=null; return; }
+    insert=p=>{ if(p.alloc==null)p.alloc=100; p.status=p.name?'Occupé':'Ouvert'; c.members.push(p); return p; };
   } else if(t.type==='pool'){
-    state.pool=state.pool||[]; state.pool.push(p);
-    toast((p.name||'Ressource')+' remis « à affecter »');
+    insert=p=>{ state.pool=state.pool||[]; state.pool.push(p); toast((p.name||'Ressource')+' remis « à affecter »'); return null; };
   } else if(t.type==='trash'){
-    toast((p.name||'Ressource')+' retiré de l\'organigramme');
+    isTrash=true;
+  } else { dragPid=null; return; }
+  const p=detachPerson(dragPid); dragPid=null;
+  if(!p){ toast('Élément introuvable — rien n\'a été modifié'); return; }
+  let affected=null;
+  if(isTrash){ toast((p.name||'Ressource')+' retiré de l\'organigramme'); }
+  else {
+    affected=insert(p);
+    // Filet béton : après l'opération, la personne doit exister quelque part
+    // (sauf « fill » où son identité est absorbée par le poste, et corbeille).
+    if(t.type!=='fill' && !locate(p.pid)){
+      state.pool=state.pool||[]; state.pool.push(p);
+      toast('⚠ Affectation impossible — « '+(p.name||p.role||'la ressource')+' » a été remis au vivier');
+      affected=null;
+    }
   }
   commit(); if(affected)warnEtp(affected);
 });
