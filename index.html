@@ -3180,8 +3180,10 @@ function hsNorm(s){ return (s||'').toString().toLowerCase().normalize('NFD').rep
 function hsHighlight(text,q){ if(!q)return esc(text); const t=text||'',nt=hsNorm(t),nq=hsNorm(q); const i=nt.indexOf(nq); if(i<0)return esc(t); return esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length)); }
 function searchPersons(q){
   const map={};
-  allPersons().forEach(p=>{ const k=etpKey(p); if(!k||!p.name)return; if(!map[k])map[k]={key:k,name:p.name,matricule:p.matricule||'',side:p.side,roles:new Set(),count:0}; map[k].roles.add(p.role||'—'); map[k].count++; });
-  let arr=Object.values(map).map(m=>({key:m.key,name:m.name,matricule:m.matricule,side:m.side,roles:[...m.roles],count:m.count}));
+  const add=(p,where)=>{ const k=etpKey(p); if(!k||!p.name)return; if(!map[k])map[k]={key:k,name:p.name,matricule:p.matricule||'',side:p.side,roles:new Set(),count:0,board:0,pool:0}; map[k].roles.add(p.role||'—'); map[k].count++; map[k][where]++; };
+  allPersons().forEach(p=>add(p,'board'));
+  (state.pool||[]).forEach(p=>add(p,'pool'));   // le vivier est cherchable aussi
+  let arr=Object.values(map).map(m=>({key:m.key,name:m.name,matricule:m.matricule,side:m.side,roles:[...m.roles],count:m.count,board:m.board,pool:m.pool}));
   const nq=hsNorm(q);
   if(nq) arr=arr.filter(x=>hsNorm(x.name).includes(nq)||hsNorm(x.matricule).includes(nq)||x.roles.some(r=>hsNorm(r).includes(nq)));
   arr.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
@@ -3191,7 +3193,7 @@ let hsIdx=-1, hsList=[];
 function renderSearchDrop(q){
   const drop=$('#hSearchDrop'); hsList=searchPersons(q); hsIdx=-1;
   if(!hsList.length){ drop.innerHTML=`<div class="hs-empty">${q?'Aucune personne trouvée':'Tapez un nom…'}</div>`; drop.classList.add('open'); return; }
-  drop.innerHTML=hsList.map((x,i)=>`<div class="hs-item" data-i="${i}"><span class="hsi-dot" style="background:${x.side==='produit'?'var(--produit)':'var(--tech)'}"></span><div class="hsi-main"><div class="hsi-name">${hsHighlight(x.name,q)}</div><div class="hsi-sub">${esc(x.roles.join(' · '))}</div></div>${x.count>1?`<span class="hsi-count">×${x.count}</span>`:''}</div>`).join('');
+  drop.innerHTML=hsList.map((x,i)=>`<div class="hs-item" data-i="${i}"><span class="hsi-dot" style="background:${x.side==='produit'?'var(--produit)':'var(--tech)'}"></span><div class="hsi-main"><div class="hsi-name">${hsHighlight(x.name,q)}</div><div class="hsi-sub">${esc(x.roles.join(' · '))}</div></div>${x.pool&&!x.board?'<span class="hsi-count">Vivier</span>':''}${x.count>1?`<span class="hsi-count">×${x.count}</span>`:''}</div>`).join('');
   drop.classList.add('open');
 }
 function centerOnPerson(key){
@@ -3201,9 +3203,19 @@ function centerOnPerson(key){
   tx+=(vp.left+vp.width/2)-(r.left+r.width/2); ty+=(vp.top+vp.height/2)-(r.top+r.height/2); apply();
 }
 function pickSearch(x){
-  _hlNameDisp=x.name; hlMode='etp:'+x.key; applyHighlight();
   $('#hSearchInput').value=x.name; $('#hSearch').classList.add('has-val');
   $('#hSearchDrop').classList.remove('open');
+  if(x.pool && !x.board){
+    // Personne au vivier uniquement : ouvrir le panneau (mode Édition) filtré sur elle
+    if(!can('org.edit')){ toast(x.name+' est au vivier (visible en mode Édition)'); return; }
+    setMode('affect');
+    poolFilter=x.name; const pi=$('#poolSearch'); if(pi)pi.value=x.name;
+    poolSide='all'; poolLoc='all'; poolFam='all'; poolType='pool';
+    renderPool();
+    toast(x.name+' est au vivier « à affecter »');
+    return;
+  }
+  _hlNameDisp=x.name; hlMode='etp:'+x.key; applyHighlight();
   centerOnPerson(x.key);
 }
 function clearSearch(){ $('#hSearchInput').value=''; $('#hSearch').classList.remove('has-val'); $('#hSearchDrop').classList.remove('open'); if(hlMode&&hlMode.indexOf('etp:')===0){ hlMode=null; _hlNameDisp=''; applyHighlight(); } }
