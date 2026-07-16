@@ -4194,6 +4194,10 @@ document.addEventListener('drop',e=>{
     const lp=locate(t.pid); const post=lp?lp.list[lp.index]:null;
     if(!post){ toast('Ce poste n\'existe plus — rien n\'a été modifié'); dragPid=null; return; }
     if(post.name){ toast('Ce poste vient d\'être pourvu ('+post.name+') — rien n\'a été modifié'); dragPid=null; return; }
+    // Une carte SANS identité ne peut pas pourvoir un poste : l'absorption d'un
+    // nom vide ferait « disparaître » la carte sans rien changer au poste.
+    const ls=locate(dragPid); const moving=ls?ls.list[ls.index]:null;
+    if(!moving || !((moving.name||'').trim())){ toast('La carte glissée n\'a pas d\'identité — poste inchangé'); dragPid=null; return; }
     insert=p=>{ post.firstName=p.firstName; post.lastName=p.lastName; post.matricule=p.matricule; syncName(post); if(p.loc)post.loc=p.loc; post.temp=isTemp(p); post.tempUntil=post.temp?(p.tempUntil||''):''; post.status=post.name?'Occupé':'Ouvert'; if(post.name)post.reqId=''; return post; };
   } else if(t.type==='leads'){
     const c=containerByKind(t.lk,t.li);
