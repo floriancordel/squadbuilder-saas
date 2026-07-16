@@ -2338,10 +2338,12 @@ function migrate(){
     if(g.jobProfile===undefined)g.jobProfile='';
   });
   const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.reqId===undefined)p.reqId='';
-    // Identité ETP : découpe le champ « name » historique (1er mot = Prénom, reste = NOM)
-    if(p.firstName===undefined && p.lastName===undefined){ const s=splitFullName(p.name||''); p.firstName=s.first; p.lastName=s.last; }
-    if(p.firstName===undefined)p.firstName=''; if(p.lastName===undefined)p.lastName=''; if(p.matricule===undefined)p.matricule='';
-    p.name=fullNameOf(p);
+    // Identité ETP : découpe le champ « name » historique (1er mot = Prénom, reste = NOM).
+    // == null couvre undefined ET null (données importées historiques : null explicite,
+    // qui passait entre les mailles de ===undefined et faisait EFFACER le nom au chargement).
+    if(p.firstName==null && p.lastName==null){ const s=splitFullName(p.name||''); p.firstName=s.first; p.lastName=s.last; }
+    if(p.firstName==null)p.firstName=''; if(p.lastName==null)p.lastName=''; if(p.matricule==null)p.matricule='';
+    p.name=fullNameOf(p)||((p.name||'').trim());   // filet : ne JAMAIS effacer un nom existant
     if(p.temp===undefined)p.temp=(p.status==='TEMP'); if(p.status==='TEMP')p.status=p.name?'Occupé':'Ouvert'; if(!p.status)p.status=p.name?'Occupé':'Ouvert'; if(p.alloc===undefined||p.alloc===null||isNaN(+p.alloc))p.alloc=100; else p.alloc=+p.alloc; if(!p.allocMode)p.allocMode=(p.alloc===100?'full':'part'); };
   // direction {product,tech} -> {leads:[]}
   const d=state.direction||{};
