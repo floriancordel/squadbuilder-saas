@@ -1039,7 +1039,7 @@
   /* Pas de droit "org.edit" → organigramme en lecture seule */
   body.ro-org .add-lead,body.ro-org .add-slot,body.ro-org .node-tools,body.ro-org .cap-edit,body.ro-org #modeSwitch [data-mode="affect"]{display:none!important}
   /* Pas de droit "roles.edit" → référentiel en lecture seule */
-  body.ro-roles .gtree-add,body.ro-roles .gtree-edit,body.ro-roles .fiche-del,body.ro-roles #glossAdd{display:none!important}
+  body.ro-roles .gtree-add,body.ro-roles .gtree-edit,body.ro-roles .fiche-del,body.ro-roles #glossAdd,body.ro-roles [data-gdup],body.ro-roles .fiche-save{display:none!important}
   body.ro-roles .fiche input,body.ro-roles .fiche select,body.ro-roles .fiche textarea,body.ro-roles .fiche .seg,body.ro-roles .fiche .skill-chip button,body.ro-roles .fiche .resp-item button,body.ro-roles .fiche .blk-check{pointer-events:none;opacity:.75}
   body.ro-roles .skill-input,body.ro-roles .resp-input{display:none}
   body.view-mode #modeSwitch,body.view-mode #shareWrap,body.view-mode #burgerBtn,body.view-mode #logoutBtn{display:none!important}
@@ -1088,8 +1088,28 @@
 
   /* ---------- Référentiel master-détail (arbre + fiche) ---------- */
   .sheet-body.gloss-mode{padding:0;overflow:hidden}
+  /* Mode « Étendre » : le sheet passe en quasi plein écran pour la vue référentiel */
+  #sheet.wide{width:min(1440px,96vw);height:94vh}
+  #sheetExpand{display:none;margin-left:auto;border:0;background:#f2f4f7;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--muted)}
+  #sheetExpand:hover{background:#e5e7eb;color:var(--ink)}
+  #sheetExpand.shown{display:inline-flex;align-items:center;justify-content:center}
+  .sheet-head .close{margin-left:0}
   .gloss2{display:flex;height:100%}
-  .gtree{width:272px;flex:0 0 272px;border-right:1px solid var(--border);background:#fbfcfe;display:flex;flex-direction:column;height:100%}
+  .gtree{width:272px;flex:0 0 272px;border-right:1px solid var(--border);background:#fbfcfe;display:flex;flex-direction:column;height:100%;position:relative;transition:width .22s cubic-bezier(.4,0,.2,1),flex-basis .22s cubic-bezier(.4,0,.2,1);overflow:hidden}
+  .gloss2.tree-collapsed .gtree{width:46px;flex-basis:46px}
+  .gloss2.tree-collapsed .gtree-top,.gloss2.tree-collapsed .gtree-search,.gloss2.tree-collapsed .gtree-body,.gloss2.tree-collapsed .gtree-hint{opacity:0;pointer-events:none}
+  .gtree-rail{position:absolute;left:0;right:0;bottom:0;border:0;border-top:1px solid var(--border);background:#fbfcfe;color:var(--faint);padding:9px 0 9px 17px;font-size:12px;cursor:pointer;text-align:left;white-space:nowrap}
+  .gtree-rail:hover{color:var(--ink)}
+  .gtree-body{padding-bottom:46px}
+  /* Recherche dans l'arbre */
+  .gtree-search{position:relative;margin:10px 12px 2px;flex:0 0 auto}
+  .gtree-search input{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;background:#fff;padding:7px 26px 7px 28px;font-size:12.5px;color:var(--ink)}
+  .gtree-search input:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
+  .gtree-search .gs-ic{position:absolute;left:9px;top:7px;font-size:11px;opacity:.5}
+  .gtree-search kbd{position:absolute;right:8px;top:7px;font-size:9.5px;color:var(--faint);border:1px solid var(--border);border-radius:4px;padding:0 4px;background:#fff;font-family:inherit}
+  /* Compteur d'usage par rôle */
+  .gt-use{margin-left:auto;font-size:10px;font-weight:700;color:var(--faint);background:#f0f2f7;border-radius:20px;padding:0 6px;flex:0 0 auto}
+  .gt-role.sel .gt-use{background:#fff;color:inherit}
   .gtree-add{margin:12px;border:1px dashed var(--line);background:#fff;border-radius:9px;padding:10px;font-size:13px;font-weight:700;color:var(--tech);cursor:pointer}
   .gtree-add:hover{background:var(--tech-soft);border-color:var(--tech)}
   .gtree-body{flex:1;overflow:auto;padding:0 8px 20px}
@@ -1111,12 +1131,29 @@
   .gt-role-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .gt-role.justadded{animation:rolepop 1s ease-out 1}
   .gt-empty{font-size:11.5px;color:var(--faint);padding:5px 9px}
-  .gfiche{flex:1;overflow:auto;padding:24px 28px 44px}
+  .gfiche{flex:1;overflow:auto;padding:0 0 44px}
   .fiche-empty{text-align:center;color:var(--muted);padding:70px 20px}
   .fiche-empty .fe-ic{font-size:40px;opacity:.5}
   .fiche-empty h3{margin:12px 0 4px;font-size:16px;color:var(--ink)}
-  .fiche{max-width:660px}
+  .fiche{max-width:none}
   .fiche.justadded{animation:rolepop 1s ease-out 1;border-radius:14px}
+  /* Barre d'actions sticky de la fiche-document */
+  .fiche-bar{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:8px;background:var(--panel);border-bottom:1px solid var(--border);padding:9px 24px;min-height:32px}
+  .fiche-crumb{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+  .fiche-crumb b{color:var(--ink);font-weight:700}
+  .fiche-actions{display:flex;gap:7px;flex:0 0 auto}
+  .fiche-abtn{border:1px solid var(--border);background:#fff;color:var(--ink);border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .fiche-abtn:hover{background:#f8fafc;border-color:var(--line)}
+  /* Corps du document : héro + sections en cartes */
+  .fiche-paper{max-width:860px;margin:0 auto;padding:20px 28px 0}
+  .fiche-hero{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px 22px;margin-bottom:14px}
+  .fiche-usage{display:flex;align-items:center;gap:10px;background:#fbfcfe;border:1px solid var(--border);border-radius:10px;padding:9px 13px;font-size:12.5px;color:var(--muted);margin-top:14px;flex-wrap:wrap}
+  .fiche-usage b{color:var(--ink);font-weight:750}
+  .fiche-usage .fu-see{margin-left:auto;border:0;background:transparent;color:var(--tech);font-weight:650;font-size:12px;cursor:pointer;white-space:nowrap;padding:0}
+  .fiche-usage .fu-see:hover{text-decoration:underline}
+  .fiche-sec{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:16px 22px;margin-top:12px}
+  .fiche-sec h4{display:flex;align-items:center;gap:9px}
+  .fiche-sec h4::after{content:'';flex:1;height:1px;background:var(--border)}
   .fiche-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}
   .fiche-badge{font-size:11px;font-weight:700;border-radius:7px;padding:3px 10px}
   .fiche-badge.tech{background:var(--tech-soft);color:var(--tech)}
@@ -1171,6 +1208,23 @@
     #viewport{overflow:visible;width:100%!important}#canvas{position:static;transform:none!important;padding:0}
     body{overflow:visible}
     .card:hover,.mini:hover{transform:none;box-shadow:var(--shadow)}
+  }
+  /* Impression d'une FICHE DE POSTE (scopée body.print-fiche — n'affecte pas le print du board) */
+  #printFiche{display:none}
+  @media print{
+    body.print-fiche #viewport,body.print-fiche #sheet,body.print-fiche #sheetOv,body.print-fiche .toast{display:none!important}
+    body.print-fiche #printFiche{display:block;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#1f2937;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .pf-band{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border-radius:10px;padding:14px 20px;font-size:12px;font-weight:700;letter-spacing:.03em}
+    .pf-title{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:20px 0 8px}
+    .pf-badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+    .pf-bdg{font-size:10.5px;font-weight:700;border:1px solid #d1d5db;border-radius:20px;padding:3px 10px;color:#374151}
+    .pf-h{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin:20px 0 8px;border-bottom:1px solid #e6e8ec;padding-bottom:5px}
+    .pf-p{font-size:13px;line-height:1.65;margin:0}
+    .pf-li{font-size:13px;line-height:1.6;margin:0 0 5px;padding-left:16px;position:relative}
+    .pf-li::before{content:'—';position:absolute;left:0;color:#2563eb;font-weight:700}
+    .pf-chips{display:flex;gap:6px;flex-wrap:wrap}
+    .pf-chip{font-size:11.5px;font-weight:650;border:1px solid #d1d5db;border-radius:20px;padding:4px 12px}
+    .pf-foot{margin-top:28px;padding-top:10px;border-top:1px solid #e6e8ec;font-size:10.5px;color:#9ca3af}
   }
 </style>
 </head>
@@ -1384,6 +1438,7 @@
   <div class="sheet-head">
     <div class="sh-ic" id="sheetIco">📊</div>
     <div><h2 id="sheetTitle">Dashboard</h2><div class="sh-sub" id="sheetSub"></div></div>
+    <button id="sheetExpand" title="Étendre / réduire">⤢</button>
     <button class="close" id="sheetClose">×</button>
   </div>
   <div class="sheet-body" id="sheetBody"></div>
@@ -1489,6 +1544,7 @@
 <input type="file" id="peopleInput" accept=".xlsx,.xls,.csv" style="display:none">
 <datalist id="roleList"></datalist>
 <div class="toast" id="toast"></div>
+<div id="printFiche"></div>
 
 <script>
 "use strict";
@@ -2286,6 +2342,19 @@ function rebuildRoleLists(){
   const rl=$('#roleList'); if(rl) rl.innerHTML=names.map(r=>`<option value="${esc(r)}">`).join('');
 }
 function glossFor(role){ return (state.glossary||[]).find(g=>(g.name||'').toLowerCase()===(role||'').toLowerCase())||null; }
+// Utilisation d'un rôle dans le projet : personnes sur le board, squads concernées, vivier.
+// Même règle de matching que glossFor (nom, insensible à la casse).
+function usageOfRole(name){
+  const k=(name||'').toLowerCase(); if(!k) return {board:0,squads:0,pool:0,total:0};
+  const match=p=>p&&(p.role||'').toLowerCase()===k;
+  let board=0, squads=0, pool=0;
+  const scanSquad=s=>{ const hit=leadsOf(s).some(match)||(s.members||[]).some(match); if(hit)squads++; };
+  allPersons().forEach(p=>{ if(match(p))board++; });
+  (state.heads||[]).forEach(h=>(h.squads||[]).forEach(scanSquad));
+  (state.squads||[]).forEach(scanSquad);
+  (state.pool||[]).forEach(p=>{ if(match(p))pool++; });
+  return {board, squads, pool, total:board+pool};
+}
 function newCell(name){ return {id:uid(),name:name||'Support Cell',members:[]}; }
 function resource(role,name,loc,alloc,side){
   const p=person(role||'Ressource','tech',name||'',loc||'',(name?'Occupé':'Ouvert'));
@@ -3141,7 +3210,7 @@ window.addEventListener('resize',()=>apply());
 /* ---------------- Focus / mise en évidence de catégories ---------------- */
 let hlMode=null, _hlNameDisp='';
 const HL_LABELS={open:'Postes à pourvoir',filled:'Postes pourvus',temp:'Missions TEMP',over:'Sur-alloués',bp:'Squads non conformes','side:produit':'Produit','side:tech':'Tech','loc:FR':'Hub · FR','loc:Maroc':'COE · Maroc'};
-function hlLabelOf(m){ if(!m)return 'Focus'; if(m.indexOf('etp:')===0)return _hlNameDisp||'Recherche'; if(m.indexOf('fam:')===0)return famLabel(m.slice(4)); return HL_LABELS[m]||'Focus'; }
+function hlLabelOf(m){ if(!m)return 'Focus'; if(m.indexOf('etp:')===0)return _hlNameDisp||'Recherche'; if(m.indexOf('fam:')===0)return famLabel(m.slice(4)); if(m.indexOf('role:')===0)return _hlNameDisp||m.slice(5); return HL_LABELS[m]||'Focus'; }
 function hlMatch(p){ const m=hlMode; if(!m)return true;
   if(m==='open')return isOpen(p); if(m==='filled')return !!p.name; if(m==='temp')return isTemp(p);
   if(m==='over')return !!p.name && totalAllocOf(p)>100;
@@ -3149,6 +3218,7 @@ function hlMatch(p){ const m=hlMode; if(!m)return true;
   if(m==='loc:FR')return p.loc==='FR'; if(m==='loc:Maroc')return p.loc==='Maroc';
   if(m.indexOf('fam:')===0)return famOfRole(p.role)===m.slice(4);
   if(m.indexOf('etp:')===0)return etpKey(p)===m.slice(4);
+  if(m.indexOf('role:')===0)return (p.role||'').toLowerCase()===m.slice(5).toLowerCase();
   return true;
 }
 function hlCount(m){ if(m==='bp')return allSquads().filter(s=>auditSquad(s).length).length; const save=hlMode; hlMode=m; let n=0; allPersons().forEach(p=>{ if(hlMatch(p))n++; }); hlMode=save; return n; }
@@ -3263,11 +3333,18 @@ function openSheet(view){
   sheetView=view;
   $('#sheetOv').classList.add('open'); $('#sheet').classList.add('open');
   $('#sheetBody').classList.toggle('gloss-mode', view==='gloss');
-  if(view==='dash'){ $('#sheetIco').textContent='📊'; $('#sheetTitle').textContent='Dashboard analytics'; $('#sheetSub').textContent="Vue d'ensemble de l'organisation"; renderDashboard(); }
-  else if(view==='admin'){ $('#sheetIco').textContent='🛡️'; $('#sheetTitle').textContent='Administration'; $('#sheetSub').textContent='Gérez les accès à SquadBuilder'; renderAdmin(); }
-  else { $('#sheetIco').textContent='📖'; $('#sheetTitle').textContent='Référentiel des rôles'; $('#sheetSub').textContent='Gérez les métiers et leurs définitions'; renderGlossary(); }
+  const ex=$('#sheetExpand');
+  if(view==='dash'){ $('#sheetIco').textContent='📊'; $('#sheetTitle').textContent='Dashboard analytics'; $('#sheetSub').textContent="Vue d'ensemble de l'organisation"; if(ex){ex.classList.remove('shown');} $('#sheet').classList.remove('wide'); renderDashboard(); }
+  else if(view==='admin'){ $('#sheetIco').textContent='🛡️'; $('#sheetTitle').textContent='Administration'; $('#sheetSub').textContent='Gérez les accès à SquadBuilder'; if(ex){ex.classList.remove('shown');} $('#sheet').classList.remove('wide'); renderAdmin(); }
+  else { $('#sheetIco').textContent='📖'; $('#sheetTitle').textContent='Référentiel des postes'; $('#sheetSub').textContent='Fiches de poste, familles de métiers, compétences'; if(ex){ ex.classList.add('shown'); ex.textContent=glossWide?'⤡':'⤢'; } $('#sheet').classList.toggle('wide',glossWide); renderGlossary(); }
 }
-function doCloseSheet(){ sheetView=null; glossDraft=null; $('#sheetOv').classList.remove('open'); $('#sheet').classList.remove('open'); }
+function doCloseSheet(){ sheetView=null; glossDraft=null; $('#sheetOv').classList.remove('open'); $('#sheet').classList.remove('open','wide'); const ex=$('#sheetExpand'); if(ex)ex.classList.remove('shown'); }
+$('#sheetExpand')&&($('#sheetExpand').onclick=()=>{
+  glossWide=!glossWide;
+  try{ localStorage.setItem('sqb_gloss_wide',glossWide?'1':'0'); }catch(_){}
+  $('#sheet').classList.toggle('wide',glossWide);
+  $('#sheetExpand').textContent=glossWide?'⤡':'⤢';
+});
 function closeSheet(){ guardGloss(doCloseSheet); }
 $('#sheetClose').onclick=closeSheet; $('#sheetOv').onclick=closeSheet;
 $('#dashBtn').onclick=()=>openSheet('dash');
@@ -3407,6 +3484,9 @@ $('#rdClose').onclick=closeRoleDlg; $('#roleDlgOv').onclick=closeRoleDlg; $('#rd
 $('#rd-save').onclick=()=>{
   const name=$('#rd-name').value.trim();
   if(!name){ $('#rd-name').focus(); $('#rd-name').style.borderColor='#dc2626'; return; }
+  // Anti-doublon : la liaison rôle ↔ personnes se fait par nom, l'unicité est vitale
+  const dup=glossFor(name);
+  if(dup){ $('#rd-name').focus(); $('#rd-name').style.borderColor='#dc2626'; toast('Un rôle « '+dup.name+' » existe déjà ('+famLabel(dup.family)+')'); return; }
   const fam=$('#rd-fam').value;
   const blocks=[...$('#rd-blocks').querySelectorAll('input:checked')].map(i=>i.value);
   const role={id:uid(),name,family:fam,blocks:blocks.length?blocks:['member','cell'],side:rdSide,definition:$('#rd-desc').value.trim(),skills:[],responsibilities:[],jobProfile:''};
@@ -3567,6 +3647,9 @@ function renderDashboard(){
 
 /* ---- Référentiel des rôles ---- */
 let glossSel=null, glossExpanded=null, glossEdit=false;
+let glossFilter='';                                             // recherche dans l'arbre
+let glossTreeCollapsed=false;                                   // arbre replié en rail
+let glossWide=(function(){ try{ return localStorage.getItem('sqb_gloss_wide')==='1'; }catch(_){ return false; } })();
 let glossDraft=null; // édition en brouillon : on ne persiste qu'au clic « Enregistrer »
 function glossRoleById(id){ return (state.glossary||[]).find(g=>g.id===id)||null; }
 function startDraft(){ const g=glossSel?glossRoleById(glossSel):null; glossDraft=g?JSON.parse(JSON.stringify(g)):null; updateFicheSave(); }
@@ -3575,16 +3658,23 @@ function glossIsDirty(){ if(!glossDraft)return false; const live=glossRoleById(g
 function markDirty(){ updateFicheSave(); }
 function updateFicheSave(){ const b=$('#ficheSave'); if(b)b.disabled=!glossIsDirty(); }
 function commitDraft(){
-  if(!glossDraft)return;
+  if(!glossDraft)return false;
+  const nm=(glossDraft.name||'').trim();
+  if(!nm){ toast('Le nom du rôle ne peut pas être vide'); return false; }
+  // Anti-doublon : deux rôles ne peuvent pas partager le même nom (la liaison se fait par nom)
+  const dup=(state.glossary||[]).find(x=>x.id!==glossDraft.id && (x.name||'').toLowerCase()===nm.toLowerCase());
+  if(dup){ toast('Un rôle « '+dup.name+' » existe déjà ('+famLabel(dup.family)+') — choisis un autre nom'); return false; }
+  glossDraft.name=nm;
   const idx=(state.glossary||[]).findIndex(g=>g.id===glossDraft.id);
   if(idx>=0) state.glossary[idx]=JSON.parse(JSON.stringify(glossDraft));
   save(); rebuildRoleLists(); updateFicheSave();
+  return true;
 }
 function discardDraft(){ startDraft(); }
 // Vérifie s'il y a des modifs non enregistrées avant de « quitter » la fiche courante.
 function guardGloss(proceed){
   if(sheetView!=='gloss' || !glossIsDirty()){ proceed(); return; }
-  askLeave().then(v=>{ if(v==='save'){ commitDraft(); proceed(); } else if(v==='discard'){ discardDraft(); proceed(); } });
+  askLeave().then(v=>{ if(v==='save'){ if(commitDraft())proceed(); } else if(v==='discard'){ discardDraft(); proceed(); } });
 }
 function famLabel(key){ const f=FAMILIES.find(x=>x.key===key); return f?f.label:key; }
 function ensureGlossSel(){
@@ -3596,15 +3686,21 @@ function ensureGlossSel(){
 }
 function glossTreeHTML(){
   const gl=state.glossary||[];
+  const q=hsNorm(glossFilter.trim());
   return FAMILIES.map(fam=>{
-    const roles=gl.filter(g=>g.family===fam.key).sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
-    const open=glossExpanded.has(fam.key);
-    const rolesHTML=roles.length?roles.map(g=>`<div class="gt-role ${g.side} ${glossSel===g.id?'sel':''}" data-role="${g.id}" ${glossEdit?`draggable="true" data-drag-role="${g.id}"`:''}>${glossEdit?'<span class="gt-grip">⠿</span>':''}<span class="gt-role-dot"></span><span class="gt-role-name">${esc(g.name)}</span></div>`).join(''):`<div class="gt-empty">—</div>`;
+    let roles=gl.filter(g=>g.family===fam.key).sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
+    if(q) roles=roles.filter(g=>hsNorm(g.name||'').includes(q));
+    if(q && !roles.length) return '';                            // recherche : familles sans résultat masquées
+    const open=q?true:glossExpanded.has(fam.key);                // recherche : tout déplié
+    const rolesHTML=roles.length?roles.map(g=>{
+      const u=usageOfRole(g.name).total;
+      return `<div class="gt-role ${g.side} ${glossSel===g.id?'sel':''}" data-role="${g.id}" ${glossEdit?`draggable="true" data-drag-role="${g.id}"`:''}>${glossEdit?'<span class="gt-grip">⠿</span>':''}<span class="gt-role-dot"></span><span class="gt-role-name">${esc(g.name)}</span>${u?`<span class="gt-use" title="${u} personne(s) portent ce rôle">${u}</span>`:''}</div>`;
+    }).join(''):`<div class="gt-empty">—</div>`;
     return `<div class="gt-cat ${open?'open':''}" data-fam="${fam.key}">
       <div class="gt-cat-head" data-cat-toggle="${fam.key}"><span class="gt-chev">▸</span><span class="gt-cat-label">${esc(fam.label)}</span><span class="gt-count">${roles.length}</span></div>
       <div class="gt-roles" data-fam-drop="${fam.key}">${rolesHTML}</div>
     </div>`;
-  }).join('');
+  }).join('') || `<div class="gt-empty" style="padding:14px">Aucun rôle ne correspond à « ${esc(glossFilter)} »</div>`;
 }
 function ficheHTML(g){
   if(!g) return `<div class="fiche-empty"><div class="fe-ic">📖</div><h3>Aucun rôle sélectionné</h3><p>Sélectionne un rôle dans l'arbre à gauche, ou crée-en un nouveau.</p></div>`;
@@ -3612,39 +3708,61 @@ function ficheHTML(g){
   const resp=(g.responsibilities||[]).map((r,i)=>`<li class="resp-item"><span>${esc(r)}</span><button data-resp-del="${i}" title="Retirer">×</button></li>`).join('');
   const jp=g.jobProfile?`<a class="rc-jp-open" href="${esc(g.jobProfile)}" target="_blank" rel="noopener">Ouvrir ↗</a>`:'';
   const blocks=BLOCK_TYPES.map(b=>`<label class="blk-check ${(g.blocks||[]).includes(b.key)?'on':''}"><input type="checkbox" data-block="${b.key}" ${(g.blocks||[]).includes(b.key)?'checked':''}>${esc(b.label)}</label>`).join('');
+  // Utilisation calculée sur le rôle ENREGISTRÉ (le nom du brouillon peut différer)
+  const live=glossRoleById(g.id); const u=usageOfRole((live||g).name);
+  const usage=`<div class="fiche-usage">
+      <span>Porté par <b>${u.total} personne${u.total>1?'s':''}</b>${u.squads?` · <b>${u.squads} squad${u.squads>1?'s':''}</b>`:''}${u.pool?` · <b>${u.pool} au vivier</b>`:''}</span>
+      ${u.board?`<button class="fu-see" data-gusage="${esc((live||g).name)}">Voir sur l'organigramme ↗</button>`:''}
+    </div>`;
   return `<div class="fiche ${g.side==='produit'?'produit':''}" data-id="${g.id}">
-    <div class="fiche-head">
-      <span class="fiche-badge ${g.side}">${g.side==='produit'?'Produit':'Tech'}</span>
-      <span class="fiche-cat">${esc(famLabel(g.family))}</span>
-      <button class="fiche-save" id="ficheSave" data-gsave ${glossIsDirty()?'':'disabled'}>💾 Enregistrer</button>
-      <button class="fiche-del" data-gdel>🗑 Supprimer</button>
+    <div class="fiche-bar">
+      <span class="fiche-crumb">${esc(famLabel(g.family))} › <b>${esc(g.name||'Sans nom')}</b></span>
+      <div class="fiche-actions">
+        <button class="fiche-abtn" data-gdup title="Créer une copie de cette fiche">⧉ Dupliquer</button>
+        <button class="fiche-abtn" data-gprint title="Imprimer / exporter la fiche de poste en PDF">📄 PDF</button>
+        <button class="fiche-del" data-gdel title="Supprimer le rôle">🗑</button>
+        <button class="fiche-save" id="ficheSave" data-gsave ${glossIsDirty()?'':'disabled'}>💾 Enregistrer</button>
+      </div>
     </div>
-    <input class="fiche-name" data-gf="name" value="${esc(g.name)}" placeholder="Nom du rôle">
-    <div class="fiche-controls">
-      <div class="fc"><label>Filière</label><div class="seg" id="fiche-side"><button data-gs="produit" class="${g.side==='produit'?'on produit':''}">Produit</button><button data-gs="tech" class="${g.side==='tech'?'on tech':''}">Tech</button></div></div>
-      <div class="fc"><label>Famille de métier</label><select data-gf="family">${FAMILIES.map(f=>`<option value="${f.key}" ${f.key===g.family?'selected':''}>${esc(f.label)}</option>`).join('')}</select></div>
+    <div class="fiche-paper">
+    <div class="fiche-hero">
+      <div class="fiche-head" style="margin-bottom:2px">
+        <span class="fiche-badge ${g.side}">${g.side==='produit'?'Produit':'Tech'}</span>
+        <span class="fiche-cat">${esc(famLabel(g.family))}</span>
+      </div>
+      <input class="fiche-name" data-gf="name" value="${esc(g.name)}" placeholder="Nom du rôle">
+      <div class="fiche-controls">
+        <div class="fc"><label>Filière</label><div class="seg" id="fiche-side"><button data-gs="produit" class="${g.side==='produit'?'on produit':''}">Produit</button><button data-gs="tech" class="${g.side==='tech'?'on tech':''}">Tech</button></div></div>
+        <div class="fc"><label>Famille de métier</label><select data-gf="family">${FAMILIES.map(f=>`<option value="${f.key}" ${f.key===g.family?'selected':''}>${esc(f.label)}</option>`).join('')}</select></div>
+      </div>
+      ${usage}
     </div>
-    <section class="fiche-sec"><h4>Disponible dans les blocs</h4><div class="blk-checks">${blocks}</div><div class="fiche-hint">Coche les types de bloc où ce rôle peut être ajouté (Direction, Tribu, Squad, Équipe R&D, Support Cell).</div></section>
-    <section class="fiche-sec"><h4>Description / mission</h4><textarea class="fiche-def" data-gf="definition" placeholder="Rôle, mission, périmètre…">${esc(g.definition||'')}</textarea></section>
+    <section class="fiche-sec"><h4>Mission</h4><textarea class="fiche-def" data-gf="definition" placeholder="Rôle, mission, périmètre…">${esc(g.definition||'')}</textarea></section>
     <section class="fiche-sec"><h4>Responsabilités clés</h4><ul class="resp-list">${resp}</ul><input class="resp-input" placeholder="+ responsabilité, Entrée pour ajouter"></section>
     <section class="fiche-sec"><h4>Compétences</h4><div class="rc-skills">${skills}<input class="skill-input" placeholder="+ compétence, Entrée pour ajouter"></div></section>
-    <section class="fiche-sec"><h4>Job profile (lien)</h4><div class="rc-jp"><input class="rc-jp-input" data-gf="jobProfile" value="${esc(g.jobProfile||'')}" placeholder="https://notion.so/… ou lien Drive"><span class="rc-jp-actions">${jp}</span></div></section>
+    <section class="fiche-sec"><h4>Disponible dans les blocs</h4><div class="blk-checks">${blocks}</div><div class="fiche-hint">Coche les types de bloc où ce rôle peut être ajouté (Direction, Tribu, Squad, Équipe R&D, Support Cell).</div></section>
+    <section class="fiche-sec"><h4>Fiche de poste externe (lien)</h4><div class="rc-jp"><input class="rc-jp-input" data-gf="jobProfile" value="${esc(g.jobProfile||'')}" placeholder="https://notion.so/… ou lien Drive"><span class="rc-jp-actions">${jp}</span></div></section>
+    </div>
   </div>`;
 }
 function renderGlossary(){
   ensureGlossSel();
   $('#sheetBody').innerHTML=`
-    <div class="gloss2 ${glossEdit?'editing':''}">
+    <div class="gloss2 ${glossEdit?'editing':''} ${glossTreeCollapsed?'tree-collapsed':''}">
       <div class="gtree">
         <div class="gtree-top">
           <button class="gtree-add" id="glossAdd">＋ Nouveau rôle</button>
           <button class="gtree-edit ${glossEdit?'on':''}" id="glossEditBtn" title="Réorganiser les rôles">${glossEdit?'✓ Terminer':'✎ Réorganiser'}</button>
         </div>
+        <div class="gtree-search"><span class="gs-ic">🔎</span><input id="gtreeSearch" placeholder="Rechercher un rôle…" value="${esc(glossFilter)}" autocomplete="off"><kbd>/</kbd></div>
         ${glossEdit?'<div class="gtree-hint">Glisse un rôle dans une autre famille de métier.</div>':''}
-        <div class="gtree-body">${glossTreeHTML()}</div>
+        <div class="gtree-body" id="gtreeBody">${glossTreeHTML()}</div>
+        <button class="gtree-rail" id="gtreeRail" title="${glossTreeCollapsed?'Déplier l\'arbre':'Replier l\'arbre'}">${glossTreeCollapsed?'⟩':'⟨ Replier'}</button>
       </div>
       <div class="gfiche" id="gfiche">${ficheHTML(glossDraft)}</div>
     </div>`;
+  const gs=$('#gtreeSearch');
+  if(gs) gs.addEventListener('input',()=>{ glossFilter=gs.value; const b=$('#gtreeBody'); if(b)b.innerHTML=glossTreeHTML(); });
   updateFicheSave();
 }
 function renderFiche(){ const el=$('#gfiche'); if(el)el.innerHTML=ficheHTML(glossDraft); updateFicheSave(); }
@@ -3652,8 +3770,12 @@ $('#sheetBody').addEventListener('click',e=>{
   if(sheetView!=='gloss')return;
   const ct=e.target.closest('[data-cat-toggle]'); if(ct){ const k=ct.dataset.catToggle; glossExpanded.has(k)?glossExpanded.delete(k):glossExpanded.add(k); ct.closest('.gt-cat').classList.toggle('open'); return; }
   const rn=e.target.closest('[data-role]'); if(rn){ const id=rn.dataset.role; if(id===glossSel)return; guardGloss(()=>{ glossSel=id; startDraft(); document.querySelectorAll('.gt-role.sel').forEach(x=>x.classList.remove('sel')); const now=document.querySelector('.gt-role[data-role="'+id+'"]'); if(now)now.classList.add('sel'); renderFiche(); }); return; }
+  const rail=e.target.closest('#gtreeRail'); if(rail){ glossTreeCollapsed=!glossTreeCollapsed; const g2=document.querySelector('.gloss2'); if(g2)g2.classList.toggle('tree-collapsed',glossTreeCollapsed); rail.textContent=glossTreeCollapsed?'⟩':'⟨ Replier'; return; }
+  const gu=e.target.closest('[data-gusage]'); if(gu){ const name=gu.dataset.gusage; guardGloss(()=>{ doCloseSheet(); _hlNameDisp=name; hlMode='role:'+name; applyHighlight(); toast('Personnes portant « '+name+' » mises en évidence'); }); return; }
+  const gp=e.target.closest('[data-gprint]'); if(gp){ printFicheDoc(); return; }
   if(!can('roles.edit'))return; // édition du référentiel interdite
-  const sv=e.target.closest('[data-gsave]'); if(sv){ commitDraft(); renderGlossary(); toast('Fiche enregistrée'); return; }
+  const sv=e.target.closest('[data-gsave]'); if(sv){ if(commitDraft()){ renderGlossary(); toast('Fiche enregistrée'); } return; }
+  const dup=e.target.closest('[data-gdup]'); if(dup){ duplicateRole(); return; }
   const eb=e.target.closest('#glossEditBtn'); if(eb){ guardGloss(()=>{ glossEdit=!glossEdit; renderGlossary(); }); return; }
   const add=e.target.closest('#glossAdd'); if(add){ guardGloss(openRoleDlg); return; }
   const del=e.target.closest('[data-gdel]'); if(del){ const g=glossDraft; if(g){ askConfirm({title:'Supprimer le rôle',message:`Le rôle « <b>${esc(g.name)}</b> » sera retiré du référentiel.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.glossary=state.glossary.filter(x=>x.id!==g.id); glossSel=null; glossDraft=null; save(); rebuildRoleLists(); renderGlossary(); toast('Rôle supprimé'); } }); } return; }
@@ -3689,6 +3811,54 @@ $('#sheetBody').addEventListener('dragstart',e=>{ if(!can('roles.edit'))return; 
 $('#sheetBody').addEventListener('dragend',e=>{ const el=e.target.closest('[data-drag-role]'); if(el)el.classList.remove('gt-dragging'); document.querySelectorAll('.gt-roles.famover').forEach(n=>n.classList.remove('famover')); _dragRole=null; });
 $('#sheetBody').addEventListener('dragover',e=>{ if(!_dragRole)return; const z=e.target.closest('[data-fam-drop]'); if(!z)return; e.preventDefault(); document.querySelectorAll('.gt-roles.famover').forEach(n=>{if(n!==z)n.classList.remove('famover');}); z.classList.add('famover'); });
 $('#sheetBody').addEventListener('drop',e=>{ if(!_dragRole)return; const z=e.target.closest('[data-fam-drop]'); if(!z)return; e.preventDefault(); const dragId=_dragRole, fam=z.dataset.famDrop; _dragRole=null; const g0=glossRoleById(dragId); if(!g0||g0.family===fam)return; guardGloss(()=>{ const g=glossRoleById(dragId); if(!g)return; g.family=fam; glossSel=g.id; startDraft(); glossExpanded.add(fam); save(); toast('« '+g.name+' » déplacé vers '+famLabel(fam)); renderGlossary(); }); });
+
+// Dupliquer la fiche courante (nom unique « X (copie) », sélection + focus sur le nom)
+function duplicateRole(){
+  if(!glossSel)return;
+  guardGloss(()=>{
+    const base=glossRoleById(glossSel); if(!base)return;
+    const c=JSON.parse(JSON.stringify(base)); c.id=uid();
+    let nm=base.name+' (copie)', n=2;
+    while(glossFor(nm)) nm=base.name+' (copie '+(n++)+')';
+    c.name=nm;
+    state.glossary.push(c); save(); rebuildRoleLists();
+    glossSel=c.id; glossExpanded.add(c.family); startDraft(); renderGlossary();
+    toast('Fiche dupliquée — renomme-la');
+    const rn=document.querySelector('.gt-role[data-role="'+c.id+'"]'); if(rn){ rn.classList.add('justadded'); rn.scrollIntoView({block:'nearest'}); }
+    const ni=document.querySelector('.fiche-name'); if(ni){ ni.focus(); ni.select(); }
+  });
+}
+// Imprimer / exporter la fiche de poste en PDF (version ENREGISTRÉE ; brouillon → garde-fou)
+function printFicheDoc(){
+  if(!glossDraft)return;
+  const doPrint=()=>{
+    const live=glossRoleById(glossDraft?glossDraft.id:glossSel)||glossDraft; if(!live)return;
+    const u=usageOfRole(live.name);
+    const el=$('#printFiche'); if(!el)return;
+    el.innerHTML=`
+      <div class="pf-band">${esc((currentOrg&&currentOrg.name)||'SquadBuilder')} — Référentiel des postes</div>
+      <div class="pf-title">${esc(live.name||'Sans nom')}</div>
+      <div class="pf-badges"><span class="pf-bdg">Filière ${live.side==='produit'?'Produit':'Tech'}</span><span class="pf-bdg">${esc(famLabel(live.family))}</span>${(live.blocks||[]).map(b=>{ const t=BLOCK_TYPES.find(x=>x.key===b); return '<span class="pf-bdg">'+esc(t?t.label:b)+'</span>'; }).join('')}</div>
+      ${live.definition?`<div class="pf-h">Mission</div><p class="pf-p">${esc(live.definition)}</p>`:''}
+      ${(live.responsibilities||[]).length?`<div class="pf-h">Responsabilités clés</div>${live.responsibilities.map(r=>'<p class="pf-li">'+esc(r)+'</p>').join('')}`:''}
+      ${(live.skills||[]).length?`<div class="pf-h">Compétences</div><div class="pf-chips">${live.skills.map(s=>'<span class="pf-chip">'+esc(s)+'</span>').join('')}</div>`:''}
+      ${live.jobProfile?`<div class="pf-h">Fiche de poste externe</div><p class="pf-p">${esc(live.jobProfile)}</p>`:''}
+      <div class="pf-foot">Porté par ${u.total} personne${u.total>1?'s':''} dans ce projet · Généré depuis SquadBuilder — ${new Date().toLocaleDateString('fr-FR')}</div>`;
+    document.body.classList.add('print-fiche');
+    const cleanup=()=>{ document.body.classList.remove('print-fiche'); el.innerHTML=''; window.removeEventListener('afterprint',cleanup); };
+    window.addEventListener('afterprint',cleanup);
+    window.print();
+    setTimeout(cleanup,2000);   // filet si afterprint ne se déclenche pas
+  };
+  if(glossIsDirty()) guardGloss(doPrint); else doPrint();
+}
+// Raccourci « / » : focus sur la recherche de l'arbre quand le référentiel est ouvert
+document.addEventListener('keydown',e=>{
+  if(e.key!=='/'||sheetView!=='gloss')return;
+  const tag=(e.target&&e.target.tagName)||'';
+  if(/INPUT|TEXTAREA|SELECT/.test(tag))return;
+  const gs=$('#gtreeSearch'); if(gs){ e.preventDefault(); gs.focus(); gs.select(); }
+});
 
 /* ================= Administration (utilisateurs & accès) ================= */
 async function adminInvoke(action, payload){
