@@ -1041,7 +1041,8 @@
   /* Pas de droit "roles.edit" → référentiel en lecture seule */
   body.ro-roles .gtree-add,body.ro-roles .gtree-edit,body.ro-roles .fiche-del,body.ro-roles #glossAdd,body.ro-roles [data-gdup],body.ro-roles .fiche-save{display:none!important}
   body.ro-roles .fiche input,body.ro-roles .fiche select,body.ro-roles .fiche textarea,body.ro-roles .fiche .seg,body.ro-roles .fiche .skill-chip button,body.ro-roles .fiche .resp-item button,body.ro-roles .fiche .blk-check{pointer-events:none;opacity:.75}
-  body.ro-roles .skill-input,body.ro-roles .resp-input{display:none}
+  body.ro-roles .skill-input,body.ro-roles .resp-input,body.ro-roles .path-add,body.ro-roles .path-chip button{display:none}
+  body.ro-roles .lvl-tog,body.ro-roles .lvl-exp{pointer-events:none;opacity:.75}
   body.view-mode #modeSwitch,body.view-mode #shareWrap,body.view-mode #burgerBtn,body.view-mode #logoutBtn{display:none!important}
   body.view-mode .brand h1::after{content:' · Vue partagée';font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0}
   #editor.ro .ed-foot{display:none}
@@ -1152,6 +1153,29 @@
   .fiche-usage .fu-see{margin-left:auto;border:0;background:transparent;color:var(--tech);font-weight:650;font-size:12px;cursor:pointer;white-space:nowrap;padding:0}
   .fiche-usage .fu-see:hover{text-decoration:underline}
   .fiche-sec{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:16px 22px;margin-top:12px}
+  /* Niveaux de séniorité */
+  .lvl-rows{display:flex;flex-direction:column;gap:7px}
+  .lvl-row{display:grid;grid-template-columns:118px 1fr;gap:10px;align-items:center}
+  .lvl-tog{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--faint)}
+  .lvl-row.on .lvl-tog{color:var(--ink)}
+  .lvl-tog input{accent-color:var(--tech);width:14px;height:14px;cursor:pointer}
+  .lvl-exp{border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:12.5px;font-family:inherit;color:var(--ink);background:#fff}
+  .lvl-exp:disabled{background:#f8fafc;color:var(--faint)}
+  .lvl-exp:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
+  /* Passerelles de carrière */
+  .path-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+  .path-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:20px;padding:5px 11px;font-size:12.5px;font-weight:650}
+  .path-chip b{font-weight:800;color:var(--tech)}
+  .path-chip.lat b{color:var(--produit)}
+  .path-chip .pc-nav{cursor:pointer}
+  .path-chip .pc-nav:hover{color:var(--tech);text-decoration:underline}
+  .path-chip.ghost{opacity:.55;border-style:dashed}
+  .path-chip button{border:0;background:transparent;color:var(--faint);cursor:pointer;font-size:14px;line-height:1;padding:0}
+  .path-chip button:hover{color:#dc2626}
+  .path-add{display:flex;gap:8px;align-items:stretch}
+  .path-kind{flex:0 0 auto}
+  .path-input{flex:1;border:1px dashed var(--line);border-radius:8px;padding:8px 11px;font-size:12.5px;font-family:inherit;color:var(--ink);background:#fcfdff}
+  .path-input:focus{outline:none;border-color:var(--tech);border-style:solid}
   .fiche-sec h4{display:flex;align-items:center;gap:9px}
   .fiche-sec h4::after{content:'';flex:1;height:1px;background:var(--border)}
   .fiche-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}
@@ -2232,7 +2256,7 @@ function syncName(p){ p.name=fullNameOf(p); return p; }
 function setPersonName(p,full){ const s=splitFullName(full); p.firstName=s.first; p.lastName=s.last; syncName(p); p.status=p.name?'Occupé':'Ouvert'; return p; }
 // Clé d'identité : matricule si présent, sinon Prénom+NOM normalisés ; '' pour un poste ouvert
 function etpKey(p){ if(!p)return ''; const m=(p.matricule||'').trim(); if(m)return 'id:'+idNorm(m); const nk=idNorm(fullNameOf(p)); return nk?'nk:'+nk:''; }
-function person(role,side,name='',loc='',status='',tempUntil=''){const temp=status==='TEMP';const s=splitFullName(name);const nm=[s.first,s.last].filter(Boolean).join(' ').trim();return{pid:uid(),role,side,firstName:s.first,lastName:s.last,matricule:'',name:nm,loc,status:nm?'Occupé':'Ouvert',temp,tempUntil:temp?tempUntil:'',alloc:100,allocMode:'full',reqId:''};}
+function person(role,side,name='',loc='',status='',tempUntil=''){const temp=status==='TEMP';const s=splitFullName(name);const nm=[s.first,s.last].filter(Boolean).join(' ').trim();return{pid:uid(),role,side,firstName:s.first,lastName:s.last,matricule:'',name:nm,loc,status:nm?'Occupé':'Ouvert',temp,tempUntil:temp?tempUntil:'',alloc:100,allocMode:'full',reqId:'',level:''};}
 function isOpen(p){ return !p.name; }
 function isTemp(p){ return p.temp===true||p.status==='TEMP'; }
 const OPEN_LABEL='À pourvoir';
@@ -2298,6 +2322,8 @@ const BLOCK_TYPES=[
   {key:'member',label:'Équipe R&D'},
   {key:'cell',label:'Support Cell'},
 ];
+// Échelle de séniorité unique et courte (format career ladder, pas une grille SIRH)
+const LEVELS=['Junior','Confirmé','Senior','Staff'];
 // Bibliothèque de rôles : famille (f), blocs (b), filière (s), def (d), compétences (sk), responsabilités (r)
 const ROLE_LIB=[
   {n:'CPO',f:'management',b:['direction'],s:'produit',d:"Chief Product Officer — porte la vision et la stratégie produit de l'organisation.",sk:['Vision produit','Stratégie','Priorisation','Leadership'],r:["Définir la vision et la stratégie produit","Arbitrer la roadmap au niveau organisation","Aligner le produit sur les objectifs business"]},
@@ -2334,7 +2360,7 @@ const ROLE_LIB=[
 ];
 const ROLE_LIB_MAP={}; ROLE_LIB.forEach(x=>ROLE_LIB_MAP[x.n]=x);
 function familyGuess(name,side){ side=side||guessSide(name); return side==='produit'?'produit':'engineering'; }
-function newRole(name){ const m=ROLE_LIB_MAP[name]||{}; const side=m.s||guessSide(name); return {id:uid(),name,family:m.f||familyGuess(name,side),blocks:(m.b||['member','cell']).slice(),side,definition:m.d||'',skills:(m.sk||[]).slice(),responsibilities:(m.r||[]).slice(),jobProfile:''}; }
+function newRole(name){ const m=ROLE_LIB_MAP[name]||{}; const side=m.s||guessSide(name); return {id:uid(),name,family:m.f||familyGuess(name,side),blocks:(m.b||['member','cell']).slice(),side,definition:m.d||'',skills:(m.sk||[]).slice(),responsibilities:(m.r||[]).slice(),jobProfile:'',levels:[],paths:[]}; }
 function defaultGlossary(){ return ROLE_LIB.map(x=>newRole(x.n)); }
 function rebuildRoleLists(){
   const names=[...new Set((state.glossary||[]).map(g=>(g.name||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
@@ -2405,8 +2431,11 @@ function migrate(){
     if(!Array.isArray(g.skills))g.skills=(m.sk||[]).slice();
     if(!Array.isArray(g.responsibilities))g.responsibilities=(m.r||[]).slice();
     if(g.jobProfile===undefined)g.jobProfile='';
+    if(!Array.isArray(g.levels))g.levels=[];       // P2 : niveaux de séniorité {name, expectations}
+    if(!Array.isArray(g.paths))g.paths=[];         // P2 : passerelles {name, kind:'up'|'lateral'}
   });
   const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.reqId===undefined)p.reqId='';
+    if(p.level===undefined)p.level='';             // P2 : niveau de séniorité porté par la personne
     // Identité ETP : découpe le champ « name » historique (1er mot = Prénom, reste = NOM).
     // == null couvre undefined ET null (données importées historiques : null explicite,
     // qui passait entre les mailles de ===undefined et faisait EFFACER le nom au chargement).
@@ -2492,7 +2521,7 @@ function cardHTML(p){
   reg(p);
   return `<div class="card ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>${overBadge(p)}
-    <div class="role"><span class="lead-mark">◆</span>${esc(p.role)}</div>
+    <div class="role"><span class="lead-mark">◆</span>${esc((p.level?p.level+' · ':'')+p.role)}</div>
     ${nameLine(p,'name')}
     ${chipsRow(p,'foot')}
   </div>`;
@@ -2501,7 +2530,7 @@ function miniHTML(p){
   reg(p);
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>${overBadge(p)}
-    <div class="m-role">${esc(p.role)}</div>
+    <div class="m-role">${esc((p.level?p.level+' · ':'')+p.role)}</div>
     ${nameLine(p,'m-name')}
     ${chipsRow(p,'foot')}
   </div>`;
@@ -2576,7 +2605,7 @@ function resourceMiniHTML(p){
   reg(p);
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>${overBadge(p)}
-    <div class="m-role">${esc(p.role)}</div>
+    <div class="m-role">${esc((p.level?p.level+' · ':'')+p.role)}</div>
     ${nameLine(p,'m-name')}
     ${chipsRow(p,'foot')}
   </div>`;
@@ -2868,6 +2897,11 @@ function openEditor(obj,kind){
     let roleNames=(loc0&&loc0.kind==='pool')?(state.glossary||[]).map(g=>g.name):rolesForBlock(block).map(g=>g.name);
     roleNames=[...new Set(roleNames)].sort((a,b)=>a.localeCompare(b,'fr'));
     const gdef=glossFor(p.role);
+    // Options de niveau : celles déclarées par le rôle dans le référentiel, sinon l'échelle globale
+    const levelOpts=(roleName,cur)=>{ const g=glossFor(roleName); const ls=(g&&(g.levels||[]).length)?g.levels.map(x=>x.name):LEVELS.slice();
+      let out='<option value="">— Non renseigné —</option>'+ls.map(l=>`<option value="${esc(l)}" ${cur===l?'selected':''}>${esc(l)}</option>`).join('');
+      if(cur&&!ls.includes(cur))out+=`<option value="${esc(cur)}" selected>${esc(cur)}</option>`;
+      return out; };
     const roleField=`<div class="field"><label>Rôle / poste</label>
         <select id="f-role" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
           <option value="">— Choisir un rôle —</option>
@@ -2875,6 +2909,8 @@ function openEditor(obj,kind){
           ${!roleNames.includes(p.role)&&p.role?`<option value="${esc(p.role)}" selected>${esc(p.role)} (hors référentiel)</option>`:''}
         </select>
         <input id="f-role-custom" placeholder="ou saisir un rôle personnalisé" value="" style="margin-top:6px;width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:12px;color:var(--muted)">
+        <div style="margin-top:8px"><label style="font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px">Niveau de séniorité</label>
+          <select id="f-level" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px">${levelOpts(p.role,p.level||'')}</select></div>
         <div class="hint" id="role-def" style="margin-top:8px;${gdef&&gdef.definition?'':'display:none'}">${gdef&&gdef.definition?esc(gdef.definition):''}</div>
       </div>`;
     const sideField=`
@@ -2930,7 +2966,7 @@ function openEditor(obj,kind){
     $('#f-temp').onchange=e=>{ $('#f-temp-wrap').style.display=e.target.checked?'block':'none'; };
     $('#seg-allocmode').querySelectorAll('button').forEach(b=>{ const orig=b.onclick; b.onclick=(e)=>{ if(orig)orig(e); const w=$('#alloc-wrap'); if(w)w.style.display=b.dataset.v==='part'?'block':'none'; }; });
     document.querySelectorAll('#seg-alloc button').forEach(b=>b.onclick=()=>{ $('#f-alloc').value=b.dataset.v; });
-    const rsel=$('#f-role'); if(rsel)rsel.onchange=()=>{ const g=glossFor(rsel.value); const rd=$('#role-def'); if(rd){ rd.textContent=g&&g.definition?g.definition:''; rd.style.display=g&&g.definition?'block':'none'; } };
+    const rsel=$('#f-role'); if(rsel)rsel.onchange=()=>{ const g=glossFor(rsel.value); const rd=$('#role-def'); if(rd){ rd.textContent=g&&g.definition?g.definition:''; rd.style.display=g&&g.definition?'block':'none'; } const lv=$('#f-level'); if(lv)lv.innerHTML=levelOpts(rsel.value,lv.value); };
     const canDel=loc0 && loc0.kind!=='pool';
     const delBtn=canDel?`<button class="btn" id="edDel" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button>`:'';
     $('#edFoot').innerHTML=`${delBtn}<button class="btn primary" id="edSave">Enregistrer</button>`;
@@ -2940,6 +2976,7 @@ function openEditor(obj,kind){
       // Logique stricte : un poste pourvu (nom renseigné) n'a pas de n° de demande
       p.reqId=p.name?'':($('#f-reqid')?$('#f-reqid').value.trim():(p.reqId||''));
       const custom=$('#f-role-custom')?.value.trim(); p.role=custom||$('#f-role').value.trim()||p.role;
+      p.level=($('#f-level')?$('#f-level').value:'')||'';
       const side=segVal('seg-side'); if(side)p.side=side;
       p.loc=segVal('seg-loc');
       p.temp=$('#f-temp').checked;
@@ -2990,6 +3027,7 @@ function detailPersonHTML(p){
   const total=p.name?totalAllocOf(p):0;
   const rows=[];
   if(!open && (p.matricule||'').trim()) rows.push(['ID / matricule', esc(p.matricule)]);
+  if(p.level) rows.push(['Niveau', esc(p.level)]);
   rows.push(['Filière', p.side==='produit'?'Produit':'Tech']);
   rows.push(['Localisation', p.loc==='FR'?'Hub · FR':p.loc==='Maroc'?'COE · Maroc':'—']);
   if(open){ rows.push(['N° de demande', p.reqId?('#'+esc(p.reqId)):'Non renseigné']); }
@@ -3489,7 +3527,7 @@ $('#rd-save').onclick=()=>{
   if(dup){ $('#rd-name').focus(); $('#rd-name').style.borderColor='#dc2626'; toast('Un rôle « '+dup.name+' » existe déjà ('+famLabel(dup.family)+')'); return; }
   const fam=$('#rd-fam').value;
   const blocks=[...$('#rd-blocks').querySelectorAll('input:checked')].map(i=>i.value);
-  const role={id:uid(),name,family:fam,blocks:blocks.length?blocks:['member','cell'],side:rdSide,definition:$('#rd-desc').value.trim(),skills:[],responsibilities:[],jobProfile:''};
+  const role={id:uid(),name,family:fam,blocks:blocks.length?blocks:['member','cell'],side:rdSide,definition:$('#rd-desc').value.trim(),skills:[],responsibilities:[],jobProfile:'',levels:[],paths:[]};
   state.glossary.push(role); save(); rebuildRoleLists();
   glossSel=role.id; if(glossExpanded)glossExpanded.add(fam);
   closeRoleDlg(); renderGlossary();
@@ -3502,7 +3540,7 @@ $('#rd-save').onclick=()=>{
 function computeAnalytics(){
   computeAllocByName();
   const A={tribes:0,squads:0,cells:0,people:0,open:0,filled:0,temp:0,fr:0,maroc:0,noloc:0,produit:0,tech:0,
-    byStatus:{}, byRole:{}, tempByRole:{}, tempByTribe:[], perTribe:[], flySquads:0, cellMembers:0, poolTotal:(state.pool||[]).length, poolByRole:{}, over:[]};
+    byStatus:{}, byRole:{}, byLevel:{}, tempByRole:{}, tempByTribe:[], perTribe:[], flySquads:0, cellMembers:0, poolTotal:(state.pool||[]).length, poolByRole:{}, over:[]};
   STATUSES.forEach(s=>A.byStatus[s]=0);
   const seenOver=new Set();
   const acc=(p,bucket)=>{ if(!p)return; A.people++; if(bucket)bucket.people++;
@@ -3512,6 +3550,7 @@ function computeAnalytics(){
     if(p.loc==='FR')A.fr++; else if(p.loc==='Maroc')A.maroc++; else A.noloc++;
     if(p.side==='produit')A.produit++; else A.tech++;
     if(p.role)A.byRole[p.role]=(A.byRole[p.role]||0)+1;
+    if(p.name){ const lv=p.level||'Non renseigné'; A.byLevel[lv]=(A.byLevel[lv]||0)+1; }
     if(p.name){ const tot=totalAllocOf(p); const k=p.name.trim().toLowerCase(); if(tot>100&&!seenOver.has(k)){ seenOver.add(k); A.over.push({name:p.name,total:tot}); } }
   };
   const scanSquad=(s,bucket)=>{ A.squads++; leadsOf(s).forEach(p=>acc(p,bucket)); s.members.forEach(m=>acc(m,bucket)); };
@@ -3607,6 +3646,12 @@ function renderDashboard(){
   const topRoles=Object.entries(A.byRole).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const rMax=topRoles.length?topRoles[0][1]:1;
   const rolesHTML=topRoles.length?topRoles.map(([r,n])=>barRow(r,n,rMax,'')).join(''):'<div class="dash-empty">Aucun rôle renseigné.</div>';
+  // pyramide de séniorité (postes pourvus)
+  const lvlKeys=LEVELS.filter(L=>A.byLevel[L]).concat(Object.keys(A.byLevel).filter(k=>!LEVELS.includes(k)&&k!=='Non renseigné')).concat(A.byLevel['Non renseigné']?['Non renseigné']:[]);
+  const lvlMax=Math.max(...lvlKeys.map(k=>A.byLevel[k]),1);
+  const lvlHTML=lvlKeys.length&&lvlKeys.some(k=>k!=='Non renseigné')
+    ? lvlKeys.map(k=>barRow(k,A.byLevel[k],lvlMax,k==='Non renseigné'?'g':(k==='Staff'||k==='Senior'?'p':''))).join('')
+    : '<div class="dash-empty">Renseigne le niveau des personnes (fiche personne → Niveau) pour voir la pyramide.</div>';
   // TEMP par rôle
   const tempRoles=Object.entries(A.tempByRole).sort((a,b)=>b[1]-a[1]);
   const tempRolesHTML=tempRoles.length?`<table class="dtable"><thead><tr><th>Rôle</th><th class="num">TEMP</th></tr></thead><tbody>${tempRoles.map(([r,n])=>`<tr><td>${esc(r)}</td><td class="num"><span class="pill temp">${n}</span></td></tr>`).join('')}</tbody></table>`:'<div class="dash-empty">Aucune ressource TEMP.</div>';
@@ -3627,6 +3672,7 @@ function renderDashboard(){
         <div class="panelbox"><h4>Produit / Tech</h4>${sideHTML}</div>
         <div class="panelbox"><h4>Par statut</h4>${stHTML}</div>
         <div class="panelbox"><h4>Top rôles</h4>${rolesHTML}</div>
+        <div class="panelbox"><h4>Pyramide de séniorité</h4>${lvlHTML}</div>
       </div>
     </div>
     <div class="dash-sec"><h3>Ressources temporaires (TEMP)</h3>
@@ -3665,9 +3711,19 @@ function commitDraft(){
   const dup=(state.glossary||[]).find(x=>x.id!==glossDraft.id && (x.name||'').toLowerCase()===nm.toLowerCase());
   if(dup){ toast('Un rôle « '+dup.name+' » existe déjà ('+famLabel(dup.family)+') — choisis un autre nom'); return false; }
   glossDraft.name=nm;
+  // Renommage propagé : la liaison rôle↔personnes se fait par NOM — renommer le
+  // rôle sans renommer ses porteurs les rendrait silencieusement « hors référentiel ».
+  const live=glossRoleById(glossDraft.id);
+  const oldName=live?(live.name||''):'';
+  let renamed=0;
+  if(oldName && oldName.toLowerCase()!==nm.toLowerCase()){
+    const k=oldName.toLowerCase();
+    allPersons().concat(state.pool||[]).forEach(p=>{ if((p.role||'').toLowerCase()===k){ p.role=nm; renamed++; } });
+  }
   const idx=(state.glossary||[]).findIndex(g=>g.id===glossDraft.id);
   if(idx>=0) state.glossary[idx]=JSON.parse(JSON.stringify(glossDraft));
   save(); rebuildRoleLists(); updateFicheSave();
+  if(renamed){ render(); renderPool(); toast(renamed+' personne'+(renamed>1?'s':'')+' « '+oldName+' » renommée'+(renamed>1?'s':'')+' en « '+nm+' »'); }
   return true;
 }
 function discardDraft(){ startDraft(); }
@@ -3739,6 +3795,23 @@ function ficheHTML(g){
     </div>
     <section class="fiche-sec"><h4>Mission</h4><textarea class="fiche-def" data-gf="definition" placeholder="Rôle, mission, périmètre…">${esc(g.definition||'')}</textarea></section>
     <section class="fiche-sec"><h4>Responsabilités clés</h4><ul class="resp-list">${resp}</ul><input class="resp-input" placeholder="+ responsabilité, Entrée pour ajouter"></section>
+    <section class="fiche-sec"><h4>Niveaux de séniorité</h4>
+      <div class="lvl-rows">${LEVELS.map(L=>{ const e=(g.levels||[]).find(x=>x.name===L);
+        return `<div class="lvl-row ${e?'on':''}">
+          <label class="lvl-tog"><input type="checkbox" data-lvl-tog="${L}" ${e?'checked':''}><span>${L}</span></label>
+          <input class="lvl-exp" data-lvl-exp="${L}" value="${esc(e?(e.expectations||''):'')}" placeholder="Attentes à ce niveau — périmètre, impact…" ${e?'':'disabled'}>
+        </div>`; }).join('')}</div>
+      <div class="fiche-hint">Coche les niveaux auxquels ce rôle existe et décris les attendus de chaque palier. Le niveau se choisit ensuite sur chaque personne (fiche personne → Niveau).</div>
+    </section>
+    <section class="fiche-sec"><h4>Passerelles de carrière</h4>
+      <div class="path-chips">${(g.paths||[]).map((p,i)=>{ const tgt=glossFor(p.name);
+        return `<span class="path-chip ${p.kind==='up'?'up':'lat'} ${tgt?'':'ghost'}"><b>${p.kind==='up'?'↑':'→'}</b><span ${tgt?`class="pc-nav" data-path-open="${esc(p.name)}"`:''}>${esc(p.name)}</span><button data-path-del="${i}" title="Retirer">×</button></span>`; }).join('')||'<span class="fiche-hint" style="margin:0">Aucune passerelle déclarée.</span>'}</div>
+      <div class="path-add">
+        <div class="seg path-kind" id="pathKind"><button type="button" data-pk="up" class="on">↑ Évolution</button><button type="button" data-pk="lateral">→ Mobilité</button></div>
+        <input class="path-input" list="roleList" placeholder="+ rôle cible, Entrée pour ajouter">
+      </div>
+      ${(function(){ const from=(state.glossary||[]).filter(x=>x.id!==g.id && (x.paths||[]).some(p=>(p.name||'').toLowerCase()===(g.name||'').toLowerCase())).map(x=>x.name); return from.length?`<div class="fiche-hint">Accessible depuis : <b>${from.map(esc).join(' · ')}</b></div>`:''; })()}
+    </section>
     <section class="fiche-sec"><h4>Compétences</h4><div class="rc-skills">${skills}<input class="skill-input" placeholder="+ compétence, Entrée pour ajouter"></div></section>
     <section class="fiche-sec"><h4>Disponible dans les blocs</h4><div class="blk-checks">${blocks}</div><div class="fiche-hint">Coche les types de bloc où ce rôle peut être ajouté (Direction, Tribu, Squad, Équipe R&D, Support Cell).</div></section>
     <section class="fiche-sec"><h4>Fiche de poste externe (lien)</h4><div class="rc-jp"><input class="rc-jp-input" data-gf="jobProfile" value="${esc(g.jobProfile||'')}" placeholder="https://notion.so/… ou lien Drive"><span class="rc-jp-actions">${jp}</span></div></section>
@@ -3773,9 +3846,13 @@ $('#sheetBody').addEventListener('click',e=>{
   const rail=e.target.closest('#gtreeRail'); if(rail){ glossTreeCollapsed=!glossTreeCollapsed; const g2=document.querySelector('.gloss2'); if(g2)g2.classList.toggle('tree-collapsed',glossTreeCollapsed); rail.textContent=glossTreeCollapsed?'⟩':'⟨ Replier'; return; }
   const gu=e.target.closest('[data-gusage]'); if(gu){ const name=gu.dataset.gusage; guardGloss(()=>{ doCloseSheet(); _hlNameDisp=name; hlMode='role:'+name; applyHighlight(); toast('Personnes portant « '+name+' » mises en évidence'); }); return; }
   const gp=e.target.closest('[data-gprint]'); if(gp){ printFicheDoc(); return; }
+  const po=e.target.closest('[data-path-open]'); if(po){ const tgt=glossFor(po.dataset.pathOpen); if(tgt){ guardGloss(()=>{ glossSel=tgt.id; glossExpanded.add(tgt.family); startDraft(); renderGlossary(); }); } return; }
   if(!can('roles.edit'))return; // édition du référentiel interdite
   const sv=e.target.closest('[data-gsave]'); if(sv){ if(commitDraft()){ renderGlossary(); toast('Fiche enregistrée'); } return; }
   const dup=e.target.closest('[data-gdup]'); if(dup){ duplicateRole(); return; }
+  const lt=e.target.closest('[data-lvl-tog]'); if(lt){ if(glossDraft){ const L=lt.dataset.lvlTog; glossDraft.levels=glossDraft.levels||[]; const i=glossDraft.levels.findIndex(x=>x.name===L); if(i>=0)glossDraft.levels.splice(i,1); else { glossDraft.levels.push({name:L,expectations:''}); glossDraft.levels.sort((a,b)=>LEVELS.indexOf(a.name)-LEVELS.indexOf(b.name)); } markDirty(); renderFiche(); } return; }
+  const pd=e.target.closest('[data-path-del]'); if(pd){ if(glossDraft){ (glossDraft.paths||[]).splice(+pd.dataset.pathDel,1); markDirty(); renderFiche(); } return; }
+  const pk=e.target.closest('[data-pk]'); if(pk){ const seg=pk.closest('.path-kind'); seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===pk)); return; }
   const eb=e.target.closest('#glossEditBtn'); if(eb){ guardGloss(()=>{ glossEdit=!glossEdit; renderGlossary(); }); return; }
   const add=e.target.closest('#glossAdd'); if(add){ guardGloss(openRoleDlg); return; }
   const del=e.target.closest('[data-gdel]'); if(del){ const g=glossDraft; if(g){ askConfirm({title:'Supprimer le rôle',message:`Le rôle « <b>${esc(g.name)}</b> » sera retiré du référentiel.`,confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.glossary=state.glossary.filter(x=>x.id!==g.id); glossSel=null; glossDraft=null; save(); rebuildRoleLists(); renderGlossary(); toast('Rôle supprimé'); } }); } return; }
@@ -3796,9 +3873,21 @@ $('#sheetBody').addEventListener('keydown',e=>{
   const addTo=(arrName,cls)=>{ e.preventDefault(); const v=e.target.value.trim(); if(!v)return; const g=glossDraft; if(!g)return; g[arrName]=g[arrName]||[]; g[arrName].push(v); markDirty(); renderFiche(); const inp=document.querySelector('.'+cls); if(inp)inp.focus(); };
   if(e.key==='Enter'&&e.target.classList.contains('skill-input')) addTo('skills','skill-input');
   else if(e.key==='Enter'&&e.target.classList.contains('resp-input')) addTo('responsibilities','resp-input');
+  else if(e.key==='Enter'&&e.target.classList.contains('path-input')){
+    e.preventDefault(); const v=e.target.value.trim(); if(!v||!glossDraft)return;
+    if(v.toLowerCase()===(glossDraft.name||'').toLowerCase()){ toast('Un rôle ne peut pas être sa propre passerelle'); return; }
+    glossDraft.paths=glossDraft.paths||[];
+    if(glossDraft.paths.some(p=>(p.name||'').toLowerCase()===v.toLowerCase())){ toast('Passerelle déjà déclarée'); return; }
+    const kind=(document.querySelector('.path-kind button.on')||{}).dataset?.pk||'up';
+    glossDraft.paths.push({name:v,kind});
+    markDirty(); renderFiche();
+    const inp=document.querySelector('.path-input'); if(inp)inp.focus();
+  }
 });
 $('#sheetBody').addEventListener('input',e=>{
   if(sheetView!=='gloss'||!can('roles.edit'))return;
+  const lx=e.target.closest('[data-lvl-exp]');
+  if(lx){ const g=glossDraft; if(!g)return; const L=lx.dataset.lvlExp; const ent=(g.levels||[]).find(x=>x.name===L); if(ent){ ent.expectations=lx.value; markDirty(); } return; }
   const f=e.target.closest('[data-gf]'); if(!f)return;
   const g=glossDraft; if(!g)return;
   const field=f.dataset.gf;
@@ -3841,7 +3930,9 @@ function printFicheDoc(){
       <div class="pf-badges"><span class="pf-bdg">Filière ${live.side==='produit'?'Produit':'Tech'}</span><span class="pf-bdg">${esc(famLabel(live.family))}</span>${(live.blocks||[]).map(b=>{ const t=BLOCK_TYPES.find(x=>x.key===b); return '<span class="pf-bdg">'+esc(t?t.label:b)+'</span>'; }).join('')}</div>
       ${live.definition?`<div class="pf-h">Mission</div><p class="pf-p">${esc(live.definition)}</p>`:''}
       ${(live.responsibilities||[]).length?`<div class="pf-h">Responsabilités clés</div>${live.responsibilities.map(r=>'<p class="pf-li">'+esc(r)+'</p>').join('')}`:''}
+      ${(live.levels||[]).length?`<div class="pf-h">Niveaux de séniorité</div>${live.levels.map(l=>'<p class="pf-li"><b>'+esc(l.name)+'</b>'+(l.expectations?' — '+esc(l.expectations):'')+'</p>').join('')}`:''}
       ${(live.skills||[]).length?`<div class="pf-h">Compétences</div><div class="pf-chips">${live.skills.map(s=>'<span class="pf-chip">'+esc(s)+'</span>').join('')}</div>`:''}
+      ${(live.paths||[]).length?`<div class="pf-h">Passerelles de carrière</div><div class="pf-chips">${live.paths.map(p=>'<span class="pf-chip">'+(p.kind==='up'?'↑ ':'→ ')+esc(p.name)+'</span>').join('')}</div>`:''}
       ${live.jobProfile?`<div class="pf-h">Fiche de poste externe</div><p class="pf-p">${esc(live.jobProfile)}</p>`:''}
       <div class="pf-foot">Porté par ${u.total} personne${u.total>1?'s':''} dans ce projet · Généré depuis SquadBuilder — ${new Date().toLocaleDateString('fr-FR')}</div>`;
     document.body.classList.add('print-fiche');
@@ -4077,7 +4168,7 @@ function poolPersonHTML(p){
     <span class="pc-grip">⠿</span>
     <div class="pc-main">
       <div class="pc-name">${esc(p.name||'Sans nom')}</div>
-      <div class="pc-role">${esc(p.role||'—')}</div>
+      <div class="pc-role">${esc((p.level?p.level+' · ':'')+(p.role||'—'))}</div>
       ${parts.length?`<div class="pc-foot">${parts.join('')}</div>`:''}
     </div>
     <span class="pc-edit" aria-hidden="true">✎</span>
@@ -4182,6 +4273,7 @@ function rowToPerson(row){
   const tempRaw=pickField(row,['temp','temporaire','mission','tempsplein']);
   const tempUntil=pickField(row,['jusqua','tempuntil','findetemp','datefin','until']);
   const allocRaw=pickField(row,['allocation','alloc','tauxdalloc','pourcentage','pct','tempsdetravail','taux']);
+  const levelRaw=pickField(row,['niveau','seniorite','seniority','level','grade']);
   const p=person(role||'Ressource',guessSide(role),'',loc,'',tempUntil);
   // Identité : colonnes Prénom/Nom si présentes, sinon découpage du nom complet
   if(prenom||nom){ p.firstName=fmtFirst(prenom); p.lastName=fmtLast(nom); }
@@ -4190,6 +4282,8 @@ function rowToPerson(row){
   if(/temp/i.test(statusRaw)||/oui|yes|true|temp|1/i.test(tempRaw)){ p.temp=true; p.tempUntil=tempUntil||''; }
   const a=parseInt(String(allocRaw).replace('%','').trim(),10);
   if(!isNaN(a)&&a>0){ p.alloc=Math.max(0,Math.min(300,a)); p.allocMode=a===100?'full':'part'; }
+  // Niveau : rapproché de l'échelle si possible, sinon tel quel
+  if(levelRaw){ const m=LEVELS.find(L=>hsNorm(L)===hsNorm(levelRaw)); p.level=m||levelRaw; }
   return p;
 }
 function downloadTemplate(){
