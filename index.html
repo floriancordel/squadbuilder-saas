@@ -1208,6 +1208,7 @@
   .gh-what{color:var(--muted)}
   .fiche-meta{font-size:11.5px;color:var(--faint);padding:10px 4px 0;text-align:right}
   .esg-cost{margin-top:10px;font-size:12.5px;font-weight:700;color:var(--ink);background:#fbfcfe;border:1px solid var(--border);border-radius:9px;padding:8px 12px;cursor:help}
+  .esg-cost.empty{color:var(--faint);font-weight:600;border-style:dashed}
   .esgc-cov{font-weight:500;color:var(--faint);font-size:11px}
   .cost-big{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
   .cost-big span{font-size:12px;font-weight:600;color:var(--muted)}
@@ -2918,7 +2919,9 @@ function statsGridHTML(obj,kind){
   const cell=(n,l,cls)=>`<div class="esg ${cls||''}"><b>${n}</b><span>${l}</span></div>`;
   const bar=(s.prod+s.tech>0)?`<div class="esg-bar"><div class="esgb prod" style="flex:${s.prod||0.0001}"></div><div class="esgb tech" style="flex:${s.tech||0.0001}"></div></div><div class="esg-barleg"><span><i class="d prod"></i>Produit ${s.prod}</span><span><i class="d tech"></i>Tech ${s.tech}</span></div>`:'';
   const ca=costAgg(statPersons(obj,kind));
-  const cost=ca.covered?`<div class="esg-cost" title="Estimation : bandes par rôle × allocation — ${ca.covered}/${ca.total} poste(s) avec fourchette${ca.openN?` · dont ${fmtCostRange(ca.openMin,ca.openMax)} de postes à pourvoir`:''}">💶 ${fmtCostRange(ca.min,ca.max)}/an<span class="esgc-cov">${ca.covered<ca.total?` · ${ca.covered}/${ca.total} postes chiffrés`:''}</span></div>`:'';
+  const cost=!ca.total?'' : ca.covered
+    ? `<div class="esg-cost" title="Estimation : bandes par rôle × allocation — ${ca.covered}/${ca.total} poste(s) avec fourchette${ca.openN?` · dont ${fmtCostRange(ca.openMin,ca.openMax)} de postes à pourvoir`:''}">💶 ${fmtCostRange(ca.min,ca.max)}/an<span class="esgc-cov">${ca.covered<ca.total?` · ${ca.covered}/${ca.total} postes chiffrés`:''}</span></div>`
+    : `<div class="esg-cost empty" title="Renseigne des fourchettes de coût dans le Référentiel des postes (fiche → « Coût du poste » → 💾 Enregistrer) pour chiffrer ce bloc.">💶 Non chiffré<span class="esgc-cov"> · 0/${ca.total} poste${ca.total>1?'s':''} avec fourchette de rôle — voir Référentiel</span></div>`;
   return `<div class="ed-stats"><div class="esg-grid">
     ${cell(s.total,'postes')}
     ${cell(s.filled,'pourvus','ok')}
@@ -3700,6 +3703,12 @@ function computeAlerts(){
   const hyg=[];
   if(noMat)hyg.push({label:'Postes pourvus sans matricule',n:noMat});
   if(openNoReq)hyg.push({label:'Postes ouverts sans référence de recrutement',n:openNoReq});
+  // Rôles portés par des personnes mais absents du référentiel (pas de fiche,
+  // pas de famille/contraintes/coût) — regroupés par nom de rôle
+  const orphan={};
+  persons.concat(state.pool||[]).forEach(p=>{ const r=(p.role||'').trim(); if(r && !glossFor(r)) orphan[r]=(orphan[r]||0)+1; });
+  const orphanRoles=Object.entries(orphan).sort((a,b)=>b[1]-a[1]);
+  if(orphanRoles.length)hyg.push({label:'Rôles hors référentiel : '+orphanRoles.slice(0,6).map(([r,n])=>r+' ×'+n).join(', ')+(orphanRoles.length>6?'…':''),n:orphanRoles.reduce((s,x)=>s+x[1],0)});
   return {groups,hyg};
 }
 function alertsHTML(){
