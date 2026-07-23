@@ -1932,7 +1932,9 @@ function forcePasswordChange(){
     $('#pw-confirm').onkeydown=e=>{ if(e.key==='Enter')$('#pw-save').click(); };
   });
 }
+let _authUid=null;   // garde anti-réémission SIGNED_IN (refocus d'onglet)
 async function onLogin(user) {
+  _authUid=user.id;
   $('#loginScreen').classList.add('hidden');
   $('#userBar').style.display = 'flex';
   if(user.user_metadata && user.user_metadata.must_change_password){ await forcePasswordChange(); }
@@ -2334,7 +2336,7 @@ $('#histList')&&$('#histList').addEventListener('click',e=>{
 });
 
 function onLogout() {
-  switching=true; orgGen++;
+  switching=true; orgGen++; _authUid=null;
   leaveRoom();
   currentOrg = null; state = null; userPrefs=null; myEmail=''; _homeReturn=null;
   myAppPerms={ can_create_projects:true, is_platform_admin:false };
@@ -5327,8 +5329,12 @@ if (_viewMatch) {
   render();
 } else {
   // Vrai login par utilisateur (chacun son compte).
+  // NB : supabase-js ré-émet SIGNED_IN à chaque retour sur l'onglet (refresh de
+  // token au refocus). Sans garde, onLogin() rouvrait le projet et REMETTAIT LA
+  // VUE À ZÉRO (pan/zoom perdus à chaque changement d'onglet/fenêtre).
   sb.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session?.user) {
+      if (_authUid === session.user.id) return;   // même session déjà ouverte : ignorer
       onLogin(session.user);
     } else if (event === 'SIGNED_OUT') {
       onLogout();
