@@ -1209,6 +1209,28 @@
   .fiche-meta{font-size:11.5px;color:var(--faint);padding:10px 4px 0;text-align:right}
   .esg-cost{margin-top:10px;font-size:12.5px;font-weight:700;color:var(--ink);background:#fbfcfe;border:1px solid var(--border);border-radius:9px;padding:8px 12px;cursor:help}
   .esg-cost.empty{color:var(--faint);font-weight:600;border-style:dashed}
+  /* Rôle hors référentiel : souligné pointillé ambré sur les cartes */
+  .role-off,.m-role.role-off,.pc-role.role-off{text-decoration:underline dashed var(--open);text-underline-offset:3px;text-decoration-thickness:1px}
+  /* Détail personne : encart rôle orphelin + évaluation des compétences */
+  .dp-orphan{background:var(--open-bg);border:1px solid var(--open-bd);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--ink);margin:10px 0 4px;line-height:1.55}
+  .dp-orphan .btn{margin-top:9px;width:100%;justify-content:center}
+  .dp-hint{font-size:11.5px;color:var(--muted);margin:6px 0 8px;line-height:1.5}
+  .as-grid{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+  .as-row{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;background:#fff}
+  .as-row[data-assess]{cursor:pointer}
+  .as-row[data-assess]:hover{border-color:var(--tech);background:var(--tech-soft)}
+  .as-row.miss{border-left:3px solid var(--open)}
+  .as-row.mid{border-left:3px solid var(--open-bd)}
+  .as-row.ok{border-left:3px solid #86efac}
+  .as-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .as-pips{display:inline-flex;gap:4px;flex:0 0 auto}
+  .ap{width:9px;height:9px;border-radius:50%;background:#e5e9f0}
+  .ap.on{background:var(--tech)}
+  .as-row.ok .ap.on{background:#15803d}
+  .ap.tgt{box-shadow:0 0 0 1.5px var(--open)}
+  .as-exp{font-size:9.5px;color:var(--muted);flex:0 0 auto;letter-spacing:1px;white-space:nowrap}
+  .as-sum{font-size:10px;font-weight:700;background:var(--open-bg);color:var(--open);border-radius:20px;padding:1px 8px;margin-left:6px;text-transform:none;letter-spacing:0}
+  .as-sum.ok{background:#dcfce7;color:#166534}
   .esgc-cov{font-weight:500;color:var(--faint);font-size:11px}
   .cost-big{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
   .cost-big span{font-size:12px;font-weight:600;color:var(--muted)}
@@ -2325,7 +2347,7 @@ function syncName(p){ p.name=fullNameOf(p); return p; }
 function setPersonName(p,full){ const s=splitFullName(full); p.firstName=s.first; p.lastName=s.last; syncName(p); p.status=p.name?'Occupé':'Ouvert'; return p; }
 // Clé d'identité : matricule si présent, sinon Prénom+NOM normalisés ; '' pour un poste ouvert
 function etpKey(p){ if(!p)return ''; const m=(p.matricule||'').trim(); if(m)return 'id:'+idNorm(m); const nk=idNorm(fullNameOf(p)); return nk?'nk:'+nk:''; }
-function person(role,side,name='',loc='',status='',tempUntil=''){const temp=status==='TEMP';const s=splitFullName(name);const nm=[s.first,s.last].filter(Boolean).join(' ').trim();return{pid:uid(),role,side,firstName:s.first,lastName:s.last,matricule:'',name:nm,loc,status:nm?'Occupé':'Ouvert',temp,tempUntil:temp?tempUntil:'',alloc:100,allocMode:'full',reqId:'',level:''};}
+function person(role,side,name='',loc='',status='',tempUntil=''){const temp=status==='TEMP';const s=splitFullName(name);const nm=[s.first,s.last].filter(Boolean).join(' ').trim();return{pid:uid(),role,side,firstName:s.first,lastName:s.last,matricule:'',name:nm,loc,status:nm?'Occupé':'Ouvert',temp,tempUntil:temp?tempUntil:'',alloc:100,allocMode:'full',reqId:'',level:'',assess:{}};}
 function isOpen(p){ return !p.name; }
 function isTemp(p){ return p.temp===true||p.status==='TEMP'; }
 const OPEN_LABEL='À pourvoir';
@@ -2524,6 +2546,7 @@ function migrate(){
   });
   const fixP=p=>{ if(!p)return; if(p.tempUntil===undefined)p.tempUntil=''; if(p.reqId===undefined)p.reqId='';
     if(p.level===undefined)p.level='';             // P2 : niveau de séniorité porté par la personne
+    if(p.assess==null)p.assess={};                 // évaluation des compétences {nom: 0..3}
     // Identité ETP : découpe le champ « name » historique (1er mot = Prénom, reste = NOM).
     // == null couvre undefined ET null (données importées historiques : null explicite,
     // qui passait entre les mailles de ===undefined et faisait EFFACER le nom au chargement).
@@ -2609,7 +2632,7 @@ function cardHTML(p){
   reg(p);
   return `<div class="card ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>${overBadge(p)}
-    <div class="role"><span class="lead-mark">◆</span>${esc((p.level?p.level+' · ':'')+p.role)}</div>
+    <div class="role${p.role&&!glossFor(p.role)?' role-off':''}"><span class="lead-mark">◆</span>${esc((p.level?p.level+' · ':'')+p.role)}</div>
     ${nameLine(p,'name')}
     ${chipsRow(p,'foot')}
   </div>`;
@@ -2618,7 +2641,7 @@ function miniHTML(p){
   reg(p);
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>${overBadge(p)}
-    <div class="m-role">${esc((p.level?p.level+' · ':'')+p.role)}</div>
+    <div class="m-role${p.role&&!glossFor(p.role)?' role-off':''}">${esc((p.level?p.level+' · ':'')+p.role)}</div>
     ${nameLine(p,'m-name')}
     ${chipsRow(p,'foot')}
   </div>`;
@@ -2703,7 +2726,7 @@ function resourceMiniHTML(p){
   reg(p);
   return `<div class="mini ${pClasses(p)}" data-action="edit" data-pid="${p.pid}" ${dragAttr(p.pid)}>
     <div class="accent"></div>${overBadge(p)}
-    <div class="m-role">${esc((p.level?p.level+' · ':'')+p.role)}</div>
+    <div class="m-role${p.role&&!glossFor(p.role)?' role-off':''}">${esc((p.level?p.level+' · ':'')+p.role)}</div>
     ${nameLine(p,'m-name')}
     ${chipsRow(p,'foot')}
   </div>`;
@@ -3140,12 +3163,39 @@ function detailPersonHTML(p){
   if(isTemp(p)) rows.push(['Mission', 'TEMP'+(p.tempUntil?(' · jusqu\'au '+esc(p.tempUntil)):'')]);
   if(sp.where) rows.push(['Rattachement', esc(sp.where)]);
   const jp=g&&g.jobProfile?`<a class="dp-link" href="${esc(g.jobProfile)}" target="_blank" rel="noopener">📄 Fiche de poste ↗</a>`:'';
+  // Rôle sans fiche au référentiel : mis en évidence, avec création rapide
+  const orphan=(p.role&&!g)?`<div class="dp-orphan">⚠ <b>Rôle hors référentiel</b> — « ${esc(p.role)} » n'a pas de fiche de poste : pas de mission, de compétences attendues, de famille ni de coût.${can('roles.edit')?`<button class="btn" data-mkfiche="${esc(p.role)}">＋ Créer la fiche « ${esc(p.role)} »</button>`:''}</div>`:'';
+  // Évaluation des compétences vs la fiche de poste (matrice du référentiel)
+  let assess='';
+  if(g && !open && (g.skills||[]).length){
+    const lvls=(g.levels||[]).map(l=>l.name);
+    const hasLevel=!!(p.level&&lvls.includes(p.level));
+    let okN=0, expN=0;
+    const rws=(g.skills||[]).map(s=>{
+      const nm=s.name||s;
+      const exp=hasLevel?((s.expect||{})[p.level]||0):0;
+      const got=(p.assess||{})[nm]||0;
+      let cls='';
+      if(exp){ expN++; if(got>=exp){ cls='ok'; okN++; } else cls=got?'mid':'miss'; }
+      const pips=[1,2,3].map(k=>`<span class="ap ${k<=got?'on':''} ${exp&&k===exp?'tgt':''}"></span>`).join('');
+      return `<div class="as-row ${cls}" ${can('org.edit')?`data-assess="${esc(nm)}" title="Évaluer « ${esc(nm)} » — clic : 0 → 1 → 2 → 3"`:''}>
+        <span class="as-name">${esc(nm)}</span>
+        <span class="as-pips">${pips}</span>
+        ${exp?`<span class="as-exp">attendu ${'●'.repeat(exp)}</span>`:''}
+      </div>`;
+    }).join('');
+    assess=`<div class="dp-sec">Compétences · évaluation${(hasLevel&&expN)?` <span class="as-sum ${okN===expN?'ok':''}">${okN}/${expN} au niveau</span>`:''}</div>
+      ${hasLevel?'':`<div class="dp-hint">Renseigne le <b>niveau</b> (Éditer → Niveau de séniorité) pour comparer l'évaluation aux attendus « ${esc((g.levels||[]).map(l=>l.name).join(' / ')||'—')} » de la fiche.</div>`}
+      <div class="as-grid">${rws}</div>`;
+  }
   return `<div class="dp-role">${esc(p.role||'—')}</div>
     <div class="dp-title ${open?'':''}" ${open?'style="color:var(--open)"':''}>${open?(p.reqId?('#'+esc(p.reqId)):OPEN_LABEL):esc(p.name)}</div>
     ${chips?`<div class="dp-chips">${chips}</div>`:''}
+    ${orphan}
     <div class="dp-sec">Informations</div>
     ${rows.map(r=>`<div class="dp-row"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')}
     ${g&&g.definition?`<div class="dp-sec">Mission du rôle</div><div class="dp-def">${esc(g.definition)}</div>`:''}
+    ${assess}
     ${jp}`;
 }
 function detailPeopleList(list){
@@ -3172,6 +3222,33 @@ function openDetail(obj,kind){
   $('#detailPanel').classList.add('open');
 }
 function closeDetail(){ $('#detailPanel').classList.remove('open'); detailCtx=null; }
+// Évaluation des compétences depuis le détail : clic = cycle 0→3, propagé à
+// toutes les occurrences de la même identité ETP (l'évaluation suit la personne).
+$('#dpBody').addEventListener('click',e=>{
+  const ar=e.target.closest('[data-assess]');
+  if(ar){
+    if(!can('org.edit')||!detailCtx||detailCtx.kind!=='person')return;
+    const p=detailCtx.obj; const nm=ar.dataset.assess;
+    const nv=(((p.assess||{})[nm]||0)+1)%4;
+    const k=etpKey(p);
+    const applyTo=x=>{ x.assess=x.assess||{}; if(nv)x.assess[nm]=nv; else delete x.assess[nm]; };
+    if(k) allPersons().concat(state.pool||[]).forEach(x=>{ if(etpKey(x)===k)applyTo(x); });
+    else applyTo(p);
+    commit();
+    $('#dpBody').innerHTML=detailPersonHTML(p);
+    return;
+  }
+  const mk=e.target.closest('[data-mkfiche]');
+  if(mk){
+    if(!can('roles.edit'))return;
+    const name=mk.dataset.mkfiche;
+    if(!glossFor(name)){ const r=newRole(name); r.name=name; state.glossary.push(r); save(); rebuildRoleLists(); toast('Fiche « '+name+' » créée — complète-la'); }
+    const g2=glossFor(name); if(!g2)return;
+    closeDetail(); glossSel=g2.id; glossDraft=null; if(glossExpanded)glossExpanded.add(g2.family);
+    openSheet('gloss');
+    return;
+  }
+});
 $('#dpClose').onclick=closeDetail;
 $('#dpEdit').onclick=()=>{ if(!detailCtx)return; const {obj,kind}=detailCtx; closeDetail(); setMode('affect'); openEditor(obj,kind); };
 
@@ -4506,7 +4583,7 @@ function poolPersonHTML(p){
     <span class="pc-grip">⠿</span>
     <div class="pc-main">
       <div class="pc-name">${esc(p.name||'Sans nom')}</div>
-      <div class="pc-role">${esc((p.level?p.level+' · ':'')+(p.role||'—'))}</div>
+      <div class="pc-role${p.role&&!glossFor(p.role)?' role-off':''}">${esc((p.level?p.level+' · ':'')+(p.role||'—'))}</div>
       ${parts.length?`<div class="pc-foot">${parts.join('')}</div>`:''}
     </div>
     <span class="pc-edit" aria-hidden="true">✎</span>
