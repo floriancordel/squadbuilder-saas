@@ -1231,6 +1231,24 @@
   .as-exp{font-size:9.5px;color:var(--muted);flex:0 0 auto;letter-spacing:1px;white-space:nowrap}
   .as-sum{font-size:10px;font-weight:700;background:var(--open-bg);color:var(--open);border-radius:20px;padding:1px 8px;margin-left:6px;text-transform:none;letter-spacing:0}
   .as-sum.ok{background:#dcfce7;color:#166534}
+  /* Zones de pilotage (roadmap / Power BI) */
+  .pl-grid{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .pl-btn{display:flex;align-items:center;gap:11px;border:1px solid var(--border);background:#fff;border-radius:10px;padding:10px 13px;font-size:12.5px;color:var(--ink);cursor:pointer;text-decoration:none;text-align:left;width:100%;box-sizing:border-box;font-family:inherit;transition:.12s}
+  .pl-btn:hover{border-color:var(--tech);background:var(--tech-soft)}
+  .pl-btn .pl-ic{font-size:16px;flex:0 0 auto}
+  .pl-txt{flex:1;min-width:0}
+  .pl-txt b{display:block;font-size:12.5px;font-weight:700}
+  .pl-txt small{display:block;font-size:10.5px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pl-arrow{color:var(--tech);font-weight:800;flex:0 0 auto}
+  .pl-btn.empty{border-style:dashed;background:#fcfdff}
+  .pl-btn.empty .pl-txt b{color:var(--muted)}
+  .pl-btn.empty .pl-arrow{color:var(--faint)}
+  .pl-btn.empty.ro{cursor:default}
+  .pl-btn.empty.ro:hover{border-color:var(--border);background:#fcfdff}
+  .pl-in{display:flex;align-items:center;gap:8px;margin-top:6px}
+  .pl-in .pl-ic2{flex:0 0 auto;font-size:14px}
+  .pl-in input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:12.5px;min-width:0}
+  .pl-in input:focus{outline:none;border-color:var(--tech);box-shadow:0 0 0 3px var(--tech-soft)}
   .esgc-cov{font-weight:500;color:var(--faint);font-size:11px}
   .cost-big{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
   .cost-big span{font-size:12px;font-weight:600;color:var(--muted)}
@@ -2575,6 +2593,11 @@ function migrate(){
     (h.cells||[]).forEach(c=>c.members.forEach(fixP));
   });
   (state.squads||[]).forEach(fixSquad);
+  // Zones de pilotage : liens externes (roadmap, Power BI) sur squads / tribus / direction
+  const fixLinks=o=>{ if(!o)return; if(!o.links||typeof o.links!=='object')o.links={}; if(o.links.roadmap===undefined)o.links.roadmap=''; if(o.links.bi===undefined)o.links.bi=''; };
+  fixLinks(state.direction);
+  (state.heads||[]).forEach(h=>{ fixLinks(h); (h.squads||[]).forEach(fixLinks); });
+  (state.squads||[]).forEach(fixLinks);
 }
 
 /* ---------------- Rendu ---------------- */
@@ -2955,6 +2978,20 @@ function statsGridHTML(obj,kind){
     ${s.over?cell(s.over,'suralloués','bad'):''}
   </div>${bar}${cost}</div>`;
 }
+// Zones de pilotage : champs d'édition des liens externes (roadmap / Power BI)
+function linksFieldsHTML(obj){
+  const l=obj.links||{};
+  return `<div class="field"><label>Pilotage — liens externes</label>
+    <div class="pl-in"><span class="pl-ic2">🗺</span><input id="f-lnk-roadmap" placeholder="Lien roadmap (avancement du travail)" value="${esc(l.roadmap||'')}"></div>
+    <div class="pl-in"><span class="pl-ic2">📊</span><input id="f-lnk-bi" placeholder="Lien Power BI (performance économique)" value="${esc(l.bi||'')}"></div>
+  </div>`;
+}
+function readLinksFields(obj){
+  obj.links=obj.links||{};
+  const r=$('#f-lnk-roadmap'), b=$('#f-lnk-bi');
+  if(r)obj.links.roadmap=r.value.trim();
+  if(b)obj.links.bi=b.value.trim();
+}
 let edCtx=null;
 function openEditor(obj,kind){
   edCtx={obj,kind}; if(typeof setEditing==='function') setEditing(kind==='person'?obj.pid:(obj.id||'__dir__'));
@@ -2971,10 +3008,12 @@ function openEditor(obj,kind){
         <select id="f-sqhead" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13.5px">
           <option value="__dir__" ${!curHead?'selected':''}>Direction — squad volante (hors tribu)</option>
           ${hopts}<option value="__new__">＋ Nouvelle tribu</option></select></div>
+      ${linksFieldsHTML(obj)}
       <div class="hint">Ajoute/retire les leads (PM, Tech Lead, autre rôle) avec le bouton <b>＋</b> sur la squad, ou clique une carte pour l'éditer.</div>`;
     $('#edFoot').innerHTML=`<button class="btn" id="edDelSquad" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button><button class="btn primary" id="edSave">Enregistrer</button>`;
     $('#edSave').onclick=()=>{
       obj.name=$('#f-sqname').value.trim()||'Squad'; obj.desc=$('#f-sqdesc').value.trim();
+      readLinksFields(obj);
       let target=$('#f-sqhead').value;
       if(target==='__new__'){ const nh=newHead(); state.heads.push(nh); target=nh.id; }
       const curId=curHead?curHead.id:'__dir__';
@@ -3008,11 +3047,12 @@ function openEditor(obj,kind){
       ${statsGridHTML(obj,isDir?'dir':'tribe')}
       ${extra}
       <div class="field"><label>Description / mission</label><textarea class="f big" id="f-tdesc" placeholder="Mission, périmètre, objectifs, OKRs…">${esc(obj.desc||'')}</textarea></div>
+      ${linksFieldsHTML(obj)}
       <div class="hint">${isDir?'Statistiques calculées sur toute l\'organisation. ':''}Ajoute des rôles (${isDir?'CPO, CTO, CPTO…':'HoP, EM, autre…'}) avec le bouton <b>＋</b> sur le bloc.</div>`;
     $('#edFoot').innerHTML=isDir
       ? `<button class="btn primary" id="edSave" style="flex:1;justify-content:center">Enregistrer</button>`
       : `<button class="btn" id="edDelTribe" style="flex:0 0 auto;color:#dc2626;border-color:#fecaca">Supprimer</button><button class="btn primary" id="edSave">Enregistrer</button>`;
-    $('#edSave').onclick=()=>{ if(!isDir)obj.name=$('#f-tname').value.trim(); obj.desc=$('#f-tdesc').value.trim(); commit(); closeEditor(); };
+    $('#edSave').onclick=()=>{ if(!isDir)obj.name=$('#f-tname').value.trim(); obj.desc=$('#f-tdesc').value.trim(); readLinksFields(obj); commit(); closeEditor(); };
     if(!isDir)$('#edDelTribe').onclick=()=>{ askConfirm({title:'Supprimer la tribu',message:'Cette tribu, ses squads et Support Cells seront supprimés.',confirmLabel:'Supprimer'}).then(ok=>{ if(ok){ state.heads=state.heads.filter(x=>x.id!==obj.id); collapsed.delete(obj.id); commit(); closeEditor(); } }); };
   } else {
     const p=obj; const loc0=locate(p.pid);
@@ -3202,6 +3242,23 @@ function detailPeopleList(list){
   return `<div class="dp-people">${list.map(p=>{ const open=isOpen(p); return `<div class="dp-person"><span class="dpp-dot" style="background:${p.side==='produit'?'var(--produit)':'var(--tech)'}"></span><div class="dpp-main"><div class="dpp-name ${open?'open':''}">${open?(p.reqId?('#'+esc(p.reqId)):OPEN_LABEL):esc(p.name)}</div><div class="dpp-role">${esc(p.role||'—')}</div></div>${chipsInline(p)}</div>`; }).join('')}</div>`;
 }
 function chipsInline(p){ const parts=[tempChip(p),(p.allocMode==='part'?`<span class="chip alloc">${allocOf(p)}%</span>`:'')].filter(Boolean); return parts.join(''); }
+// Zones de pilotage dans le détail d'un bloc : avancement du travail (roadmap)
+// et performance économique (Power BI). Prévu dès maintenant, connecté plus tard.
+function pilotageHTML(obj,kind){
+  if(kind==='cell')return '';
+  const l=obj.links||{};
+  const canEd=can('org.edit');
+  const item=(url,ic,title,sub)=> url
+    ? `<a class="pl-btn" href="${esc(url)}" target="_blank" rel="noopener"><span class="pl-ic">${ic}</span><span class="pl-txt"><b>${title}</b><small>${sub}</small></span><span class="pl-arrow">↗</span></a>`
+    : (canEd
+      ? `<button class="pl-btn empty" data-pl-connect="1"><span class="pl-ic">${ic}</span><span class="pl-txt"><b>Connecter ${title}</b><small>${sub}</small></span><span class="pl-arrow">＋</span></button>`
+      : `<div class="pl-btn empty ro"><span class="pl-ic">${ic}</span><span class="pl-txt"><b>${title}</b><small>non connecté</small></span></div>`);
+  return `<div class="dp-sec">Pilotage</div>
+    <div class="pl-grid">
+      ${item(l.roadmap,'🗺','Roadmap','avancement du travail — outil de roadmapping')}
+      ${item(l.bi,'📊','Power BI','performance économique — rapport BI')}
+    </div>`;
+}
 function detailBlockHTML(obj,kind){
   const name=kind==='dir'?'Direction':(kind==='tribe'?('Tribu'+(obj.name?' · '+esc(obj.name):'')):esc(obj.name||(kind==='cell'?'Support Cell':'Squad')));
   const desc=obj.desc?`<div class="dp-sub">${esc(obj.desc)}</div>`:'';
@@ -3211,7 +3268,7 @@ function detailBlockHTML(obj,kind){
   else if(kind==='cell'){ people=`<div class="dp-sec">Ressources · ${obj.members.length}</div>${detailPeopleList(obj.members)}`; }
   else if(kind==='tribe'){ const sq=(obj.squads||[]).map(s=>s.name).join(', ')||'—'; people=`<div class="dp-sec">Leads</div>${detailPeopleList(leadsOf(obj))}<div class="dp-sec">Squads · ${(obj.squads||[]).length}</div><div class="dp-sub">${esc(sq)}</div>`; }
   else if(kind==='dir'){ people=`<div class="dp-sec">Direction</div>${detailPeopleList(leadsOf(obj))}`; }
-  return `<div class="dp-title">${name}</div>${desc}${stats}${people}`;
+  return `<div class="dp-title">${name}</div>${desc}${stats}${pilotageHTML(obj,kind)}${people}`;
 }
 function openDetail(obj,kind){
   detailCtx={obj,kind};
@@ -3236,6 +3293,14 @@ $('#dpBody').addEventListener('click',e=>{
     else applyTo(p);
     commit();
     $('#dpBody').innerHTML=detailPersonHTML(p);
+    return;
+  }
+  const pc=e.target.closest('[data-pl-connect]');
+  if(pc){
+    if(!can('org.edit')||!detailCtx)return;
+    const {obj,kind}=detailCtx;
+    closeDetail(); setMode('affect'); openEditor(obj,kind);
+    setTimeout(()=>{ const f=$('#f-lnk-roadmap'); if(f)f.focus(); },120);
     return;
   }
   const mk=e.target.closest('[data-mkfiche]');
