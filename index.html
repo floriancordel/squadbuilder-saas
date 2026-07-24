@@ -1656,9 +1656,9 @@
 
 <div id="importOv"></div>
 <div id="importDlg" role="dialog" aria-modal="true">
-  <div class="rd-head"><div class="rd-ic">📥</div><div><h3>Rapport d'import</h3><div class="rd-sub" id="imp-status">—</div></div><button class="close" id="impClose">×</button></div>
+  <div class="rd-head"><div class="rd-ic">📥</div><div><h3>Import de personnes</h3><div class="rd-sub" id="imp-status">—</div></div><button class="close" id="impClose">×</button></div>
   <div class="rd-body" id="imp-body"></div>
-  <div class="rd-foot"><button class="btn primary" id="imp-ok" style="justify-content:center">Terminé</button></div>
+  <div class="rd-foot"><button class="btn" id="imp-cancel" style="justify-content:center">Annuler</button><button class="btn primary" id="imp-ok" style="justify-content:center">Terminé</button></div>
 </div>
 
 <div id="pwdOv"></div>
@@ -4682,8 +4682,12 @@ function poolMatch(p){
   if(poolSide!=='all' && p.side!==poolSide) return false;
   if(poolLoc!=='all' && (p.loc||'')!==poolLoc) return false;
   if(poolFam!=='all' && famOfRole(p.role)!==poolFam) return false;
-  const f=poolFilter.trim().toLowerCase();
-  if(f && !((p.name||'')+' '+(p.role||'')).toLowerCase().includes(f)) return false;
+  // Recherche insensible aux accents/casse, multi-champs, tokens cumulés (« dev maroc »)
+  const f=idNorm(poolFilter);
+  if(f){
+    const hay=idNorm([p.name,p.role,p.matricule,p.level,p.loc].filter(Boolean).join(' '));
+    if(!f.split(' ').every(t=>hay.includes(t))) return false;
+  }
   return true;
 }
 function updatePoolFilterUI(){
@@ -4700,18 +4704,21 @@ function renderPool(){
   const body=$('#poolBody'); if(!body) return;
   const pool=state.pool||[];
   const rems=buildRemainders();
-  $('#poolCount').textContent=(poolType==='partial'?rems.length:pool.length);
   $('#ptPool')&&($('#ptPool').textContent=pool.length);
   $('#ptPart')&&($('#ptPart').textContent=rems.length);
   updatePoolFilterUI();
+  // Compteur honnête : « filtré / total » quand un filtre réduit la liste
+  const setCount=(shown,total)=>{ $('#poolCount').textContent=(shown<total?shown+' / '+total:total); };
   let html='';
   if(poolType==='partial'){
     const list=rems.filter(poolMatch);
+    setCount(list.length,rems.length);
     if(!rems.length) html=`<div class="pool-empty">Aucun temps partiel à réaffecter.<br>Passez quelqu'un en temps partiel (&lt; 100%) pour libérer du temps.</div>`;
     else if(!list.length) html=`<div class="pool-empty">Aucun résultat pour ces filtres.</div>`;
     else html=`<div class="pool-group rem-group"><div class="pg-body">${list.map(remainderPersonHTML).join('')}</div></div>`;
   } else {
     const filtered=pool.filter(poolMatch);
+    setCount(filtered.length,pool.length);
     const groups={};
     filtered.forEach(p=>{ const k=p.role||'Sans rôle'; (groups[k]=groups[k]||[]).push(p); });
     const keys=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'fr'));
@@ -4744,18 +4751,35 @@ fillPoolFamilies();
 function normKey(k){ return String(k).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
 function pickField(row,names){ for(const key in row){ if(names.includes(normKey(key))){ const v=row[key]; if(v!=null&&String(v).trim()!=='')return String(v).trim(); } } return ''; }
 function mapLoc(v){ const s=(v||'').toLowerCase(); if(/maroc|morocco|\bcoe\b|casa|rabat/.test(s))return 'Maroc'; if(/\bfr\b|france|\bhub\b|paris|lyon/.test(s))return 'FR'; return ''; }
+// Mapping DÉCLARATIF colonnes → champs (source unique de vérité des alias)
+const FIELD_DEFS=[
+  {key:'prenom',    label:'Prénom',         aliases:['prenom','firstname','givenname']},
+  {key:'nom',       label:'NOM',            aliases:['nom','lastname','surname','familyname']},
+  {key:'name',      label:'Nom complet',    aliases:['name','nomcomplet','fullname','collaborateur','personne','identite']},
+  {key:'matricule', label:'Matricule',      aliases:['matricule','id','identifiant','employeeid','trigramme','uid','numero']},
+  {key:'role',      label:'Rôle / poste',   aliases:['role','poste','fonction','job','jobtitle','title','metier','intitule','profil']},
+  {key:'loc',       label:'Localisation',   aliases:['hub','coe','site','lieu','localisation','location','ville','pays','country','bureau','entite']},
+  {key:'statut',    label:'Statut',         aliases:['statut','status','etat']},
+  {key:'temp',      label:'TEMP',           aliases:['temp','temporaire','mission','tempsplein']},
+  {key:'tempUntil', label:'Fin de mission', aliases:['jusqua','tempuntil','findetemp','datefin','until']},
+  {key:'alloc',     label:'Allocation',     aliases:['allocation','alloc','tauxdalloc','pourcentage','pct','tempsdetravail','taux']},
+  {key:'level',     label:'Niveau',         aliases:['niveau','seniorite','seniority','level','grade']},
+];
+const FIELD_ALIAS_MAP={}; FIELD_DEFS.forEach(d=>FIELD_ALIAS_MAP[d.key]=d.aliases);
+const FIELD_ALIAS_SET=new Set(FIELD_DEFS.flatMap(d=>d.aliases));
+// Rapprochement étage 1 : un rôle importé qui matche une fiche (insensible casse,
+// accents, ponctuation) est RÉÉCRIT au nom canonique du référentiel.
+function resolveRole(raw){
+  if(!raw)return raw;
+  const g=(state.glossary||[]).find(x=>normKey(x.name||'')===normKey(raw));
+  return g?g.name:raw;
+}
 function rowToPerson(row){
-  const prenom=pickField(row,['prenom','firstname','givenname']);
-  const nom=pickField(row,['nom','lastname','surname','familyname']);
-  let name=pickField(row,['name','nomcomplet','fullname','collaborateur','personne','identite']);
-  const matricule=pickField(row,['matricule','id','identifiant','employeeid','trigramme','uid','numero']);
-  const role=pickField(row,['role','poste','fonction','job','jobtitle','title','metier','intitule','profil']);
-  let loc=mapLoc(pickField(row,['hub','coe','site','lieu','localisation','location','ville','pays','country','bureau','entite']));
-  const statusRaw=pickField(row,['statut','status','etat']);
-  const tempRaw=pickField(row,['temp','temporaire','mission','tempsplein']);
-  const tempUntil=pickField(row,['jusqua','tempuntil','findetemp','datefin','until']);
-  const allocRaw=pickField(row,['allocation','alloc','tauxdalloc','pourcentage','pct','tempsdetravail','taux']);
-  const levelRaw=pickField(row,['niveau','seniorite','seniority','level','grade']);
+  const F=k=>pickField(row,FIELD_ALIAS_MAP[k]);
+  const prenom=F('prenom'), nom=F('nom'), name=F('name'), matricule=F('matricule');
+  const role=resolveRole(F('role'));
+  const loc=mapLoc(F('loc'));
+  const statusRaw=F('statut'), tempRaw=F('temp'), tempUntil=F('tempUntil'), allocRaw=F('alloc'), levelRaw=F('level');
   const p=person(role||'Ressource',guessSide(role),'',loc,'',tempUntil);
   // Identité : colonnes Prénom/Nom si présentes, sinon découpage du nom complet
   if(prenom||nom){ p.firstName=fmtFirst(prenom); p.lastName=fmtLast(nom); }
@@ -4783,33 +4807,81 @@ function downloadTemplate(){
 }
 $('#templateBtn').onclick=downloadTemplate;
 function fullKey(name){ return (name||'').trim().toLowerCase().replace(/\s+/g,' '); }
-function importPeopleFromRows(rows){
+/* Plan d'import (PUR — zéro mutation) : classe les lignes en arrivées / doublons /
+   conflits de matricule / vides, et repère les rôles hors référentiel. */
+let _importPlan=null;
+function computeImportPlan(rows){
   const parsed=rows.map(rowToPerson);
-  // Unicité sur l'identité ETP (matricule sinon Prénom+NOM) : on ignore les doublons (orga OU vivier)
-  const existing=new Set();
-  allPersons().forEach(p=>{ const k=etpKey(p); if(k)existing.add(k); });
-  (state.pool||[]).forEach(p=>{ const k=etpKey(p); if(k)existing.add(k); });
-  const added=[], dupes=[], empties=[]; const seen=new Set();
+  const known=new Map();   // etpKey → nom déjà porté (board + vivier)
+  allPersons().forEach(p=>{ const k=etpKey(p); if(k&&!known.has(k))known.set(k,p.name||''); });
+  (state.pool||[]).forEach(p=>{ const k=etpKey(p); if(k&&!known.has(k))known.set(k,p.name||''); });
+  const added=[], dupes=[], empties=[], conflicts=[]; const seen=new Map();
   parsed.forEach(p=>{
     const hasContent=p.name||(p.role&&p.role!=='Ressource');
     if(!hasContent){ empties.push(p); return; }
     const k=etpKey(p);
     if(k){
-      if(existing.has(k)||seen.has(k)){ dupes.push(p); return; }
-      seen.add(k);
+      const prev=known.has(k)?known.get(k):(seen.has(k)?seen.get(k):null);
+      if(prev!==null){
+        // même MATRICULE mais identité différente : un conflit, pas un doublon
+        if(k.indexOf('id:')===0 && p.name && idNorm(p.name)!==idNorm(prev||'')){ conflicts.push({p, other:prev}); return; }
+        dupes.push(p); return;
+      }
+      seen.set(k,p.name||'');
     }
     added.push(p);
   });
-  if(added.length){
-    state.pool=(state.pool||[]).concat(added);
-    if(mode!=='affect'){ mode='affect'; applyMode(); }
-    commit();
-    if(currentOrg) saveOrg(); // persistance immédiate (au-delà du debounce)
-  }
-  showImportReport({total:parsed.length, added, dupes, empties});
+  const orphan={};
+  added.forEach(p=>{ if(p.role && !glossFor(p.role)) orphan[p.role]=(orphan[p.role]||0)+1; });
+  return {total:parsed.length, added, dupes, empties, conflicts, orphan, unrecognized:[], sheetName:null};
+}
+/* Aperçu AVANT toute écriture : arrivées cochables, conflits et pertes rendus visibles. */
+function showImportPlan(plan){
+  _importPlan=plan;
+  const arrivals=plan.added.length?`<div class="sy-grp"><h5>Arrivées au vivier<span class="n">${plan.added.length}</span></h5>${
+    plan.added.map((p,i)=>`<label class="sy-row ${p.side==='produit'?'produit':'tech'}"><input type="checkbox" data-imp="${i}" checked><span class="sy-dot"></span><span class="sy-name">${esc(p.name||OPEN_LABEL)}</span><span class="sy-diff">${esc((p.level?p.level+' · ':'')+(p.role||'—'))}${p.loc?' · '+esc(p.loc):''}</span></label>`).join('')
+  }</div>`:'<div class="imp-note">Aucune nouvelle personne dans ce fichier.</div>';
+  const confl=plan.conflicts.length?`<div class="sy-grp"><h5 style="color:#dc2626">Conflits de matricule — non importés<span class="n">${plan.conflicts.length}</span></h5>${
+    plan.conflicts.map(c=>`<div class="sy-row" style="border-color:#fecaca"><span class="sy-name">${esc(c.p.name||'—')}</span><span class="sy-diff">matricule « ${esc(c.p.matricule)} » déjà porté par « ${esc(c.other||'—')} » — corrige le fichier ou la fiche</span></div>`).join('')
+  }</div>`:'';
+  const orphKeys=Object.keys(plan.orphan);
+  const orph=orphKeys.length?`<div class="sy-grp"><h5>Rôles hors référentiel<span class="n">${orphKeys.length}</span></h5><div class="imp-note">${orphKeys.map(r=>esc(r)+' ×'+plan.orphan[r]).join(' · ')} — importés tels quels (soulignés en ambre), à rapprocher ensuite dans le référentiel.</div></div>`:'';
+  const unrec=(plan.unrecognized||[]).length?`<div class="admin-note warn" style="margin-top:10px">Colonnes non reconnues (données ignorées) : <b>${plan.unrecognized.map(esc).join(', ')}</b></div>`:'';
+  const sheetNote=plan.sheetName?`<div class="imp-note">Feuille retenue : « ${esc(plan.sheetName)} » (celle qui matche le mieux les colonnes attendues).</div>`:'';
+  const dupList=plan.dupes.length?`<div class="imp-sec"><div class="imp-sec-h">Doublons ignorés (déjà présents) · ${plan.dupes.length}</div><ul class="imp-list">${plan.dupes.map(p=>`<li>${esc(p.name||'—')}<span class="imp-role">${esc(p.role||'')}</span></li>`).join('')}</ul></div>`:'';
+  const emptyNote=plan.empties.length?`<div class="imp-note">${plan.empties.length} ligne(s) vide(s) / sans rôle ignorée(s).</div>`:'';
+  $('#imp-body').innerHTML=`
+    <div class="imp-kpis">
+      <div class="imp-kpi ok"><div class="n">${plan.added.length}</div><div class="l">à importer</div></div>
+      <div class="imp-kpi warn"><div class="n">${plan.dupes.length+plan.conflicts.length}</div><div class="l">doublons / conflits</div></div>
+      <div class="imp-kpi"><div class="n">${plan.total}</div><div class="l">lignes lues</div></div>
+    </div>
+    ${sheetNote}${unrec}${confl}${arrivals}${orph}${dupList}${emptyNote}`;
+  $('#imp-status').textContent='Aperçu — rien n\'est encore écrit.';
+  const ok=$('#imp-ok'), ca=$('#imp-cancel');
+  ok.textContent=`Importer ${plan.added.length} ligne(s)`;
+  ok.disabled=!plan.added.length;
+  ok.onclick=applyImportPlan;
+  if(ca)ca.style.display='';
+  $('#imp-body').oninput=()=>{ const n=document.querySelectorAll('#imp-body [data-imp]:checked').length; ok.textContent=`Importer ${n} ligne(s)`; ok.disabled=!n; };
+  $('#importOv').classList.add('open'); $('#importDlg').classList.add('open');
+}
+/* Application — uniquement au clic, undo immédiat disponible. */
+function applyImportPlan(){
+  const plan=_importPlan; if(!plan)return;
+  const sel=[...document.querySelectorAll('#imp-body [data-imp]:checked')].map(cb=>plan.added[+cb.dataset.imp]).filter(Boolean);
+  if(!sel.length)return;
+  _undoState=deepClone(state);   // Cmd/Ctrl+Z restaure l'état d'avant import
+  state.pool=(state.pool||[]).concat(sel);
+  if(mode!=='affect'){ mode='affect'; applyMode(); }
+  commit();
+  if(currentOrg) saveOrg(); // persistance immédiate (au-delà du debounce)
+  showImportReport({total:plan.total, added:sel, dupes:plan.dupes, empties:plan.empties, conflicts:plan.conflicts});
 }
 function showImportReport(r){
+  _importPlan=null;
   const dupList=r.dupes.length?`<div class="imp-sec"><div class="imp-sec-h">Doublons ignorés (déjà présents) · ${r.dupes.length}</div><ul class="imp-list">${r.dupes.map(p=>`<li>${esc(p.name||'—')}<span class="imp-role">${esc(p.role||'')}</span></li>`).join('')}</ul></div>`:'';
+  const conflNote=(r.conflicts||[]).length?`<div class="admin-note warn" style="margin-top:10px">${r.conflicts.length} conflit(s) de matricule non importé(s).</div>`:'';
   const emptyNote=r.empties.length?`<div class="imp-note">${r.empties.length} ligne(s) vide(s) / sans rôle ignorée(s).</div>`:'';
   $('#imp-body').innerHTML=`
     <div class="imp-kpis">
@@ -4817,21 +4889,46 @@ function showImportReport(r){
       <div class="imp-kpi warn"><div class="n">${r.dupes.length}</div><div class="l">doublons ignorés</div></div>
       <div class="imp-kpi"><div class="n">${r.total}</div><div class="l">lignes lues</div></div>
     </div>
-    ${dupList}${emptyNote}`;
-  $('#imp-status').textContent=r.added.length?`${r.added.length} profil(s) ajouté(s) au vivier « à affecter » et sauvegardés.`:'Aucun nouveau profil ajouté.';
+    ${conflNote}${dupList}${emptyNote}`;
+  $('#imp-status').textContent=r.added.length?`${r.added.length} profil(s) ajouté(s) au vivier « à affecter » et sauvegardés — Cmd/Ctrl+Z pour annuler.`:'Aucun nouveau profil ajouté.';
+  const ok=$('#imp-ok'), ca=$('#imp-cancel');
+  ok.textContent='Terminé'; ok.disabled=false; ok.onclick=closeImportDlg;
+  if(ca)ca.style.display='none';
+  $('#imp-body').oninput=null;
   $('#importOv').classList.add('open'); $('#importDlg').classList.add('open');
 }
-function closeImportDlg(){ $('#importOv').classList.remove('open'); $('#importDlg').classList.remove('open'); }
-$('#impClose').onclick=closeImportDlg; $('#importOv').onclick=closeImportDlg; $('#imp-ok').onclick=closeImportDlg;
+function closeImportDlg(){ _importPlan=null; $('#importOv').classList.remove('open'); $('#importDlg').classList.remove('open'); }
+$('#impClose').onclick=closeImportDlg; $('#importOv').onclick=closeImportDlg;
+$('#imp-cancel')&&($('#imp-cancel').onclick=closeImportDlg);
 function parsePeopleFile(file){
   if(typeof XLSX==='undefined'){ toast('Lecteur Excel non chargé (réseau ?)'); return; }
   const r=new FileReader();
   r.onload=ev=>{
     try{
-      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
+      const bytes=new Uint8Array(ev.target.result);
+      let wb;
+      if(/\.csv$/i.test(file.name||'')){
+        // Encodage durci : UTF-8 strict, repli Windows-1252 (protège les accents → etpKey)
+        let txt; try{ txt=new TextDecoder('utf-8',{fatal:true}).decode(bytes); }catch(_){ txt=new TextDecoder('windows-1252').decode(bytes); }
+        wb=XLSX.read(txt,{type:'string'});
+      } else {
+        wb=XLSX.read(bytes,{type:'array'});
+      }
+      // Feuille retenue = celle qui matche le plus d'en-têtes attendus (pas SheetNames[0] aveugle)
+      let best=wb.SheetNames[0], bestScore=-1;
+      wb.SheetNames.forEach(sn=>{
+        const hdr=(XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1})[0]||[]);
+        const score=hdr.filter(h=>FIELD_ALIAS_SET.has(normKey(h))).length;
+        if(score>bestScore){ bestScore=score; best=sn; }
+      });
+      const ws=wb.Sheets[best];
+      const headers=((XLSX.utils.sheet_to_json(ws,{header:1})[0])||[]).map(h=>String(h||'').trim()).filter(Boolean);
       const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-      importPeopleFromRows(rows);
+      if(!rows.length){ toast('Fichier vide ou feuille sans données'); return; }
+      const plan=computeImportPlan(rows);
+      plan.unrecognized=headers.filter(h=>!FIELD_ALIAS_SET.has(normKey(h)));
+      plan.sheetName=wb.SheetNames.length>1?best:null;
+      showImportPlan(plan);
     }catch(err){ console.error(err); toast('Impossible de lire le fichier'); }
   };
   r.readAsArrayBuffer(file);
